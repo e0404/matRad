@@ -95,15 +95,15 @@ if isfield(apertureInfo, 'scaleFacRx')
         apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) / apertureInfo.scaleFacRx;
 end
 
-if ~isfield(pln.propOpt, 'preconditioner')
-    pln.propOpt.preconditioner = false;
-end
-
 if ~isfield(pln.propOpt, 'runVMAT')
     pln.propOpt.runVMAT = false;
 end
 
-if pln.propOpt.preconditioner
+% the preconditioner flag travels with the apertureInfo (set by the
+% sequencer from pln.propSeq.preconditioner)
+preconditioner = matRad_getFieldOrDefault(apertureInfo, 'preconditioner', false);
+
+if preconditioner
     % rescale dij matrix, so that apertureWeight/bixelWidth ~= 1
     % gradient wrt weights ~ 1, gradient wrt leaf pos
     % ~ apertureWeight/(bixelWidth) ~1
@@ -150,11 +150,11 @@ optimizer = optimizer.optimize(apertureInfo.apertureVector, optiProb, dij, cst);
 optApertureInfoVec = optimizer.wResult;
 
 % Additional VMAT stuff
-if pln.propOpt.preconditioner
-    % revert scaling
-
+if preconditioner
+    % revert the dij/vector scaling; resultGUI.apertureInfo (the template
+    % for the conversion below) was never scaled, so its weightToMU
+    % already holds the original value
     dij.weightToMU = dij.weightToMU ./ dij.scaleFactor;
-    resultGUI.apertureInfo.weightToMU = resultGUI.apertureInfo.weightToMU ./ dij.scaleFactor;
     optApertureInfoVec(1:apertureInfo.totalNumOfShapes) = optApertureInfoVec(1:apertureInfo.totalNumOfShapes) .* dij.scaleFactor;
 end
 
@@ -211,6 +211,5 @@ if pln.propOpt.runVMAT
     resultGUI.apertureInfo = matRad_maxLeafSpeed(resultGUI.apertureInfo);
 
     % optimize delivery
-    resultGUI = matRad_optDelivery(resultGUI, 1);
-    % resultGUI = matRad_calcDeliveryMetrics(resultGUI,pln,stf);
+    resultGUI.apertureInfo = matRad_optDelivery(resultGUI.apertureInfo, 1);
 end

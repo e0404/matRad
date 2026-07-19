@@ -87,7 +87,6 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             % representation via matRad_OptimizationProblemVMAT.
 
             bixelWidth = stf(1).bixelWidth; % [mm]
-            centralLeafPair = ceil(this.numOfMLCLeafPairs / 2);
 
             bixelIndOffset = 0;
             totalNumOfBixels = sum([stf(:).totalNumOfBixels]);
@@ -104,40 +103,9 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
 
             for i = 1:size(stf, 2)
 
-                rayPos_bev = reshape([stf(i).ray.rayPos_bev], 3, []);
-                X = rayPos_bev(1, :)';
-                Z = rayPos_bev(3, :)';
-
-                maxX = max(X);
-                minX = min(X);
-                maxZ = max(Z);
-                minZ = min(Z);
-
-                dimX = (maxX - minX) / stf(i).bixelWidth + 1;
-                dimZ = (maxZ - minZ) / stf(i).bixelWidth + 1;
-
-                rayMap = zeros(dimZ, dimX);
-
-                xPos = (X - minX) / stf(i).bixelWidth + 1;
-                zPos = (Z - minZ) / stf(i).bixelWidth + 1;
-
-                indInRay = zPos + (xPos - 1) * dimZ;
-                rayMap(indInRay) = 1;
-
-                bixelIndMap = NaN * ones(dimZ, dimX);
-                bixelIndMap(indInRay) = (1:stf(i).numOfRays) + bixelIndOffset;
-                bixelIndOffset = bixelIndOffset + stf(i).numOfRays;
-
-                posOfCornerBixel = [minX 0 minZ];
-
-                lim_l = NaN * ones(dimZ, 1);
-                lim_r = NaN * ones(dimZ, 1);
-                for l = 1:dimZ
-                    lim_lInd = find(rayMap(l, :), 1, 'first');
-                    lim_rInd = find(rayMap(l, :), 1, 'last');
-                    lim_l(l) = (lim_lInd - 1) * bixelWidth + minX - 1 / 2 * bixelWidth;
-                    lim_r(l) = (lim_rInd - 1) * bixelWidth + minX + 1 / 2 * bixelWidth;
-                end
+                [geometry, bixelIndOffset] = matRad_getMLCGeometry(stf(i), this.numOfMLCLeafPairs, bixelIndOffset);
+                dimZ = geometry.numOfActiveLeafPairs;
+                minX = geometry.posOfCornerBixel(1);
 
                 for m = 1:sequence.beam(i).numOfShapes
 
@@ -150,18 +118,18 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
                             rightLeafPosInd = find(shapeMap(l, :), 1, 'last');
 
                             if isempty(leftLeafPosInd) && isempty(rightLeafPosInd)
-                                leftLeafPos(l) = (lim_l(l) + lim_r(l)) / 2;
+                                leftLeafPos(l) = (geometry.lim_l(l) + geometry.lim_r(l)) / 2;
                                 rightLeafPos(l) = leftLeafPos(l);
                             else
                                 leftLeafPos(l) = (leftLeafPosInd - 1) * bixelWidth + minX - 1 / 2 * bixelWidth;
                                 rightLeafPos(l) = (rightLeafPosInd - 1) * bixelWidth + minX + 1 / 2 * bixelWidth;
 
                                 % can happen in some cases in SW trajectory sampling
-                                if leftLeafPos(l) < lim_l(l)
-                                    leftLeafPos(l) = lim_l(l);
+                                if leftLeafPos(l) < geometry.lim_l(l)
+                                    leftLeafPos(l) = geometry.lim_l(l);
                                 end
-                                if rightLeafPos(l) > lim_r(l)
-                                    rightLeafPos(l) = lim_r(l);
+                                if rightLeafPos(l) > geometry.lim_r(l)
+                                    rightLeafPos(l) = geometry.lim_r(l);
                                 end
                             end
                         end
@@ -186,26 +154,16 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
                     end
                 end
 
-                leafPairPos = unique(Z);
-                topLeafPair = centralLeafPair - maxZ / bixelWidth;
-                bottomLeafPair = centralLeafPair - minZ / bixelWidth;
-
-                isActiveLeafPair = zeros(this.numOfMLCLeafPairs, 1);
-                isActiveLeafPair(topLeafPair:bottomLeafPair) = 1;
-
-                MLCWindow = [minX - bixelWidth / 2 maxX + bixelWidth / 2 ...
-                             minZ - bixelWidth / 2 maxZ + bixelWidth / 2];
-
                 apertureInfo.beam(i).numOfShapes = sequence.beam(i).numOfShapes;
-                apertureInfo.beam(i).numOfActiveLeafPairs = dimZ;
-                apertureInfo.beam(i).leafPairPos = leafPairPos;
-                apertureInfo.beam(i).isActiveLeafPair = isActiveLeafPair;
-                apertureInfo.beam(i).centralLeafPair = centralLeafPair;
-                apertureInfo.beam(i).lim_l = lim_l;
-                apertureInfo.beam(i).lim_r = lim_r;
-                apertureInfo.beam(i).bixelIndMap = bixelIndMap;
-                apertureInfo.beam(i).posOfCornerBixel = posOfCornerBixel;
-                apertureInfo.beam(i).MLCWindow = MLCWindow;
+                apertureInfo.beam(i).numOfActiveLeafPairs = geometry.numOfActiveLeafPairs;
+                apertureInfo.beam(i).leafPairPos = geometry.leafPairPos;
+                apertureInfo.beam(i).isActiveLeafPair = geometry.isActiveLeafPair;
+                apertureInfo.beam(i).centralLeafPair = geometry.centralLeafPair;
+                apertureInfo.beam(i).lim_l = geometry.lim_l;
+                apertureInfo.beam(i).lim_r = geometry.lim_r;
+                apertureInfo.beam(i).bixelIndMap = geometry.bixelIndMap;
+                apertureInfo.beam(i).posOfCornerBixel = geometry.posOfCornerBixel;
+                apertureInfo.beam(i).MLCWindow = geometry.MLCWindow;
                 apertureInfo.beam(i).gantryAngle = stf(i).gantryAngle;
 
                 apertureInfo.beam(i).bixOffset = bixOffset;
@@ -331,11 +289,7 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
 
             apertureInfo = matRad_OptimizationProblemVMAT.matRad_daoVec2ApertureInfo(apertureInfo, apertureInfo.apertureVector);
             apertureInfo = matRad_maxLeafSpeed(apertureInfo);
-
-            result.apertureInfo = apertureInfo;
-            result = matRad_optDelivery(result, 0);
-            apertureInfo = result.apertureInfo;
-
+            apertureInfo = matRad_optDelivery(apertureInfo, 0);
             apertureInfo = matRad_maxLeafSpeed(apertureInfo);
         end
 

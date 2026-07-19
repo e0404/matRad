@@ -76,10 +76,6 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
         function sequence = sequencing2ApertureInfo(this, sequence, stf)
             % MLC parameters:
             bixelWidth = stf(1).bixelWidth; % [mm]
-            %     define central leaf pair (here we want the 0mm position to be in the
-            %     center of a leaf pair (e.g. leaf 41 stretches from -2.5mm to 2.5mm
-            %     for a bixel/leafWidth of 5mm and 81 leaf pairs)
-            centralLeafPair = ceil(this.numOfMLCLeafPairs / 2);
 
             % initializing variables
             bixelIndOffset = 0; % used for creation of bixel index maps
@@ -91,53 +87,10 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             % loop over all beams
             for i = 1:size(stf, 2)
 
-                %% 1. read stf and create maps (Ray & Bixelindex)
-
-                % get x- and z-coordinates of bixels
-                rayPos_bev = reshape([stf(i).ray.rayPos_bev], 3, []);
-                X = rayPos_bev(1, :)';
-                Z = rayPos_bev(3, :)';
-
-                % create ray-map
-                maxX = max(X);
-                minX = min(X);
-                maxZ = max(Z);
-                minZ = min(Z);
-
-                dimX = (maxX - minX) / stf(i).bixelWidth + 1;
-                dimZ = (maxZ - minZ) / stf(i).bixelWidth + 1;
-
-                rayMap = zeros(dimZ, dimX);
-
-                % get indices for x and z positions
-                xPos = (X - minX) / stf(i).bixelWidth + 1;
-                zPos = (Z - minZ) / stf(i).bixelWidth + 1;
-
-                % get indices in the ray-map
-                indInRay = zPos + (xPos - 1) * dimZ;
-
-                % fill ray-map
-                rayMap(indInRay) = 1;
-
-                % create map of bixel indices
-                bixelIndMap = NaN * ones(dimZ, dimX);
-                bixelIndMap(indInRay) = [1:stf(i).numOfRays] + bixelIndOffset;
-                bixelIndOffset = bixelIndOffset + stf(i).numOfRays;
-
-                % store physical position of first entry in bixelIndMap
-                posOfCornerBixel = [minX 0 minZ];
-
-                % get leaf limits from the leaf map
-                lim_l = NaN * ones(dimZ, 1);
-                lim_r = NaN * ones(dimZ, 1);
-                % looping order leaf pairs
-                for l = 1:dimZ
-                    lim_lInd = find(rayMap(l, :), 1, 'first');
-                    lim_rInd = find(rayMap(l, :), 1, 'last');
-                    % the physical position [mm] can be calculated from the indices
-                    lim_l(l) = (lim_lInd - 1) * bixelWidth + minX - 1 / 2 * bixelWidth;
-                    lim_r(l) = (lim_rInd - 1) * bixelWidth + minX + 1 / 2 * bixelWidth;
-                end
+                %% 1. read stf and derive the MLC geometry (Ray & Bixelindex maps)
+                [geometry, bixelIndOffset] = matRad_getMLCGeometry(stf(i), this.numOfMLCLeafPairs, bixelIndOffset);
+                dimZ = geometry.numOfActiveLeafPairs;
+                minX = geometry.posOfCornerBixel(1);
 
                 % get leaf positions for all shapes
                 % leaf positions can be extracted from the shapes created in Sequencing
@@ -155,7 +108,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                         rightLeafPosInd = find(shapeMap(l, :), 1, 'last');
 
                         if isempty(leftLeafPosInd) && isempty(rightLeafPosInd) % if no bixel is open, use limits from Ray positions
-                            leftLeafPos(l) = (lim_l(l) + lim_r(l)) / 2;
+                            leftLeafPos(l) = (geometry.lim_l(l) + geometry.lim_r(l)) / 2;
                             rightLeafPos(l) = leftLeafPos(l);
                         else
                             % the physical position [mm] can be calculated from the indices
@@ -182,38 +135,17 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
                 end
 
-                % z-coordinates of active leaf pairs
-                % get z-coordinates from bixel positions
-                leafPairPos = unique(Z);
-
-                % find upmost and downmost leaf pair
-                topLeafPairPos = maxZ;
-                bottomLeafPairPos = minZ;
-
-                topLeafPair = centralLeafPair - topLeafPairPos / bixelWidth;
-                bottomLeafPair = centralLeafPair - bottomLeafPairPos / bixelWidth;
-
-                % create bool map of active leaf pairs
-                isActiveLeafPair = zeros(this.numOfMLCLeafPairs, 1);
-                isActiveLeafPair(topLeafPair:bottomLeafPair) = 1;
-
-                % create MLC window
-                % getting the dimensions of the MLC in order to be able to plot the
-                % shapes using physical coordinates
-                MLCWindow = [minX - bixelWidth / 2 maxX + bixelWidth / 2 ...
-                             minZ - bixelWidth / 2 maxZ + bixelWidth / 2];
-
                 % save data for each beam
                 sequence.apertureInfo.beam(i).numOfShapes = sequence.beam(i).numOfShapes;
-                sequence.apertureInfo.beam(i).numOfActiveLeafPairs = dimZ;
-                sequence.apertureInfo.beam(i).leafPairPos = leafPairPos;
-                sequence.apertureInfo.beam(i).isActiveLeafPair = isActiveLeafPair;
-                sequence.apertureInfo.beam(i).centralLeafPair = centralLeafPair;
-                sequence.apertureInfo.beam(i).lim_l = lim_l;
-                sequence.apertureInfo.beam(i).lim_r = lim_r;
-                sequence.apertureInfo.beam(i).bixelIndMap = bixelIndMap;
-                sequence.apertureInfo.beam(i).posOfCornerBixel = posOfCornerBixel;
-                sequence.apertureInfo.beam(i).MLCWindow = MLCWindow;
+                sequence.apertureInfo.beam(i).numOfActiveLeafPairs = geometry.numOfActiveLeafPairs;
+                sequence.apertureInfo.beam(i).leafPairPos = geometry.leafPairPos;
+                sequence.apertureInfo.beam(i).isActiveLeafPair = geometry.isActiveLeafPair;
+                sequence.apertureInfo.beam(i).centralLeafPair = geometry.centralLeafPair;
+                sequence.apertureInfo.beam(i).lim_l = geometry.lim_l;
+                sequence.apertureInfo.beam(i).lim_r = geometry.lim_r;
+                sequence.apertureInfo.beam(i).bixelIndMap = geometry.bixelIndMap;
+                sequence.apertureInfo.beam(i).posOfCornerBixel = geometry.posOfCornerBixel;
+                sequence.apertureInfo.beam(i).MLCWindow = geometry.MLCWindow;
 
             end
 
@@ -287,7 +219,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                         if isempty(rightLeafIx) && isempty (leftLeafIx)
                             plot(seqSubPlots(4), [dimX + .5 .5], j - [.5 .5], 'w', 'LineWidth', 2);
                             plot(seqSubPlots(4), [dimX + .5 .5], j + [.5 .5], 'w', 'LineWidth', 2);
-                            plot(seqSubPlots(4), .5 * dimX * [1 1] + [0.5], j + [.5 -.5], 'w', 'LineWidth', 2);
+                            plot(seqSubPlots(4), .5 * dimX * [1 1] + 0.5, j + [.5 -.5], 'w', 'LineWidth', 2);
                         end
                     end
                     pause(1);

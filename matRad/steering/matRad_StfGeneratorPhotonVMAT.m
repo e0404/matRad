@@ -89,6 +89,26 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
             this.couchAngles  = [0, 0];
         end
 
+        function assignPropertiesFromPln(this, pln, warnWhenPropertyChanged)
+            if nargin < 3
+                warnWhenPropertyChanged = false;
+            end
+            this.assignPropertiesFromPln@matRad_StfGeneratorPhotonRayBixelAbstract(pln, warnWhenPropertyChanged);
+
+            % continuousAperture canonically lives under pln.propSeq (it is
+            % a sequencing/delivery-mode setting that the stf generator also
+            % needs); the base class only auto-maps pln.propStf.*, so bridge
+            % it here. A value under pln.propStf is deprecated but honored
+            % by the base-class mapping above when propSeq does not set it.
+            if isfield(pln, 'propSeq') && isstruct(pln.propSeq) && isfield(pln.propSeq, 'continuousAperture')
+                this.continuousAperture = pln.propSeq.continuousAperture;
+            elseif isfield(pln, 'propStf') && isstruct(pln.propStf) && isfield(pln.propStf, 'continuousAperture')
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispDeprecationWarning(['pln.propStf.continuousAperture is deprecated. ' ...
+                                                   'Use pln.propSeq.continuousAperture instead!']);
+            end
+        end
+
     end
 
     methods (Access = protected)

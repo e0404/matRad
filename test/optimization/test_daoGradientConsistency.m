@@ -61,8 +61,8 @@ pln.propStf.couchAngles              = [0, 0];
 pln.propStf.maxGantryAngleSpacing    = 15;
 pln.propStf.maxDAOGantryAngleSpacing = 30;
 pln.propStf.maxFMOGantryAngleSpacing = 45;
-pln.propStf.continuousAperture       = false;
 pln.propStf.isoCenter                = matRad_getIsoCenter(p.cst, p.ct, 0);
+pln.propSeq.continuousAperture       = false;
 pln.propOpt.runVMAT                  = true;
 
 stf = matRad_generateStf(p.ct, p.cst, pln);

@@ -22,9 +22,9 @@ pln.propStf.couchAngles              = [0, 0];
 pln.propStf.maxGantryAngleSpacing    = 15;
 pln.propStf.maxDAOGantryAngleSpacing = 30;
 pln.propStf.maxFMOGantryAngleSpacing = 45;
-pln.propStf.continuousAperture       = false;
 pln.propStf.isoCenter                = matRad_getIsoCenter(p.cst, p.ct, 0);
 
+pln.propSeq.continuousAperture = false;
 pln.propOpt.runVMAT = true;
 
 stf = matRad_generateStf(p.ct, p.cst, pln);
@@ -115,3 +115,42 @@ w = ones(sum([stf.numOfRays]), 1);
 sequence = sequencer.sequence(w, stf);
 
 assertTrue(isfield(sequence.apertureInfo, 'jacobiScale'));
+
+function test_vmatDeliveryMetrics
+[stf, pln] = helper_getVmatStf();
+sequencer = helper_getSequencer(pln);
+
+w = ones(sum([stf.numOfRays]), 1);
+sequence = sequencer.sequence(w, stf);
+
+result.apertureInfo = sequence.apertureInfo;
+result = matRad_calcDeliveryMetrics(result, pln, stf);
+
+assertTrue(isfinite(result.apertureInfo.planMU) && result.apertureInfo.planMU > 0);
+assertTrue(isfinite(result.apertureInfo.planTime) && result.apertureInfo.planTime > 0);
+
+function test_vmatRecalcApertureChain
+% fine-angle aperture recalculation: interpolate the sequenced apertures
+% onto a finer dose grid and recompute the bixel weights
+[stf, pln] = helper_getVmatStf();
+sequencer = helper_getSequencer(pln);
+
+w = ones(sum([stf.numOfRays]), 1);
+sequence = sequencer.sequence(w, stf);
+apertureInfo = sequence.apertureInfo;
+
+p = load('photons_testData.mat', 'ct', 'cst');
+recalc.pln = pln;
+recalc.pln.propStf.maxGantryAngleSpacing = 7.5;
+recalc.interpNew = true;
+recalc.continuousAperture = false;
+recalc.stf = matRad_generateStf(p.ct, p.cst, recalc.pln);
+
+recalc = matRad_recalcApertureInfo(recalc, apertureInfo);
+recalc.apertureInfo.continuousAperture = recalc.continuousAperture;
+recalc.apertureInfo = matRad_recalcApertureBixelWeights(recalc.apertureInfo);
+
+assertEqual(numel(recalc.apertureInfo.bixelWeights), sum([recalc.stf.totalNumOfBixels]));
+assertTrue(all(isfinite(recalc.apertureInfo.bixelWeights)));
+assertTrue(all(recalc.apertureInfo.bixelWeights >= 0));
+assertTrue(any(recalc.apertureInfo.bixelWeights > 0));

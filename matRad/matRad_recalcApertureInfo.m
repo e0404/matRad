@@ -51,12 +51,7 @@ if recalc.interpNew
 end
 
 % MLC parameters:
-bixelWidth = stf(1).bixelWidth; % [mm]
 numOfMLCLeafPairs = 80;
-%     define central leaf pair (here we want the 0mm position to be in the
-%     center of a leaf pair (e.g. leaf 41 stretches from -2.5mm to 2.5mm
-%     for a bixel/leafWidth of 5mm and 81 leaf pairs)
-centralLeafPair = ceil(numOfMLCLeafPairs / 2);
 
 % initializing variables
 totalNumOfShapes = numel(stf);
@@ -69,77 +64,21 @@ for i = 1:numel(apertureInfoOld.beam)
     totalAmountOfOldWeight = 0;
 
     for j = newInd
-        % get x- and z-coordinates of bixels
-        rayPos_bev = reshape([stf(j).ray.rayPos_bev], 3, []);
-        X = rayPos_bev(1, :)';
-        Z = rayPos_bev(3, :)';
-
-        % create ray-map
-        maxX = max(X);
-        minX = min(X);
-        maxZ = max(Z);
-        minZ = min(Z);
-
-        dimX = (maxX - minX) / stf(j).bixelWidth + 1;
-        dimZ = (maxZ - minZ) / stf(j).bixelWidth + 1;
-
-        rayMap = zeros(dimZ, dimX);
-
-        % get indices for x and z positions
-        xPos = (X - minX) / stf(j).bixelWidth + 1;
-        zPos = (Z - minZ) / stf(j).bixelWidth + 1;
-
-        % get indices in the ray-map
-        indInRay = zPos + (xPos - 1) * dimZ;
-
-        % fill ray-map
-        rayMap(indInRay) = 1;
-
-        % create map of bixel indices
-        bixelIndMap = NaN * ones(dimZ, dimX);
-        bixelIndMap(indInRay) = (1:stf(j).numOfRays) + (j - 1) * stf(1).numOfRays;
-
-        % store physical position of first entry in bixelIndMap
-        posOfCornerBixel = [minX 0 minZ];
-
-        % get leaf limits from the leaf map
-        lim_l = NaN * ones(dimZ, 1);
-        lim_r = NaN * ones(dimZ, 1);
-        % looping over leaf pairs
-        for l = 1:dimZ
-            lim_lInd = find(rayMap(l, :), 1, 'first');
-            lim_rInd = find(rayMap(l, :), 1, 'last');
-            % the physical position [mm] can be calculated from the indices
-            lim_l(l) = (lim_lInd - 1) * bixelWidth + minX - 1 / 2 * bixelWidth;
-            lim_r(l) = (lim_rInd - 1) * bixelWidth + minX + 1 / 2 * bixelWidth;
-        end
-
-        leafPairPos = unique(Z);
-
-        % find upmost and downmost leaf pair
-        topLeafPairPos = maxZ;
-        bottomLeafPairPos = minZ;
-
-        topLeafPair = centralLeafPair - topLeafPairPos / bixelWidth;
-        bottomLeafPair = centralLeafPair - bottomLeafPairPos / bixelWidth;
-
-        % create bool map of active leaf pairs
-        isActiveLeafPair = zeros(numOfMLCLeafPairs, 1);
-        isActiveLeafPair(topLeafPair:bottomLeafPair) = 1;
-
-        MLCWindow = [minX - bixelWidth / 2 maxX + bixelWidth / 2 ...
-                     minZ - bixelWidth / 2 maxZ + bixelWidth / 2];
+        % derive the MLC geometry for this beam; the bixel numbering
+        % restarts per beam index (equal ray count per beam)
+        geometry = matRad_getMLCGeometry(stf(j), numOfMLCLeafPairs, (j - 1) * stf(1).numOfRays);
+        dimZ = geometry.numOfActiveLeafPairs;
 
         % save data for each beam
         apertureInfoNew.beam(j).numOfActiveLeafPairs = dimZ;
-        apertureInfoNew.beam(j).leafPairPos = leafPairPos;
-        apertureInfoNew.beam(j).isActiveLeafPair = isActiveLeafPair;
-        apertureInfoNew.beam(j).centralLeafPair = centralLeafPair;
-        apertureInfoNew.beam(j).lim_l = lim_l;
-        apertureInfoNew.beam(j).lim_r = lim_r;
-        apertureInfoNew.beam(j).bixelIndMap = bixelIndMap;
-        apertureInfoNew.beam(j).posOfCornerBixel = posOfCornerBixel;
-        apertureInfoNew.beam(j).MLCWindow = MLCWindow;
+        apertureInfoNew.beam(j).leafPairPos = geometry.leafPairPos;
+        apertureInfoNew.beam(j).isActiveLeafPair = geometry.isActiveLeafPair;
+        apertureInfoNew.beam(j).centralLeafPair = geometry.centralLeafPair;
+        apertureInfoNew.beam(j).lim_l = geometry.lim_l;
+        apertureInfoNew.beam(j).lim_r = geometry.lim_r;
+        apertureInfoNew.beam(j).bixelIndMap = geometry.bixelIndMap;
+        apertureInfoNew.beam(j).posOfCornerBixel = geometry.posOfCornerBixel;
+        apertureInfoNew.beam(j).MLCWindow = geometry.MLCWindow;
         apertureInfoNew.beam(j).bixOffset = 1 + (j - 1) * dimZ;
         apertureInfoNew.beam(j).shape(1).vectorOffset = totalNumOfShapes + 1 + (j - 1) * dimZ;
 

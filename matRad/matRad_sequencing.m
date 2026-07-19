@@ -78,12 +78,28 @@ if strcmp(pln.radiationMode, 'photons')
     numLevels = matRad_getFieldOrDefault(pln.propSeq, 'numLevels', 5, ...
                                          'pln.propSeq.numLevels not specified. Using 5 sequencing levels (default).');
 
-    preconditioner = matRad_getFieldOrDefault(pln.propOpt, 'preconditioner', false);
-    dynamic = matRad_getFieldOrDefault(pln.propOpt, 'runVMAT', false);
-    continuousAperture = matRad_getFieldOrDefault(pln.propOpt, 'continuousAperture', false);
+    % Sequencer configuration canonically lives under pln.propSeq (from
+    % where assignPropertiesFromPln auto-maps it onto the sequencer); the
+    % old pln.propOpt locations are still honored with a deprecation
+    % warning for one release.
+    if isfield(pln.propSeq, 'preconditioner')
+        preconditioner = pln.propSeq.preconditioner;
+    else
+        deprMsg = 'pln.propOpt.preconditioner is deprecated. Use pln.propSeq.preconditioner instead!';
+        preconditioner = matRad_getFieldOrDefault(pln.propOpt, 'preconditioner', false, deprMsg, true);
+    end
+    if isfield(pln.propSeq, 'continuousAperture')
+        continuousAperture = pln.propSeq.continuousAperture;
+    else
+        deprMsg = 'pln.propOpt.continuousAperture is deprecated. Use pln.propSeq.continuousAperture instead!';
+        continuousAperture = matRad_getFieldOrDefault(pln.propOpt, 'continuousAperture', false, deprMsg, true);
+    end
 
-    % bridge legacy pln.propOpt/propSeq fields onto the sequencer object,
-    % since assignPropertiesFromPln only auto-maps pln.propSeq.*
+    % pln.propOpt.runVMAT deliberately remains the canonical mode flag
+    % (like runDAO): optimization needs it first to select the problem
+    % class, so it is bridged here rather than moved to propSeq.
+    dynamic = matRad_getFieldOrDefault(pln.propOpt, 'runVMAT', false);
+
     sequencer.sequencingLevel = numLevels;
     sequencer.preconditioner = preconditioner;
     if isa(sequencer, 'matRad_PhotonSequencerVMATAbstract')
