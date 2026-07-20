@@ -91,7 +91,7 @@ for i = 1:numel(apertureInfoOld.beam)
         apertureInfoNew.arc.beam(j).doseAngleBorderCentreDiff = stf(j).arc.doseAngleBorderCentreDiff;
         apertureInfoNew.arc.beam(j).doseAngleBordersDiff = stf(j).arc.doseAngleBordersDiff;
         apertureInfoNew.arc.beam(j).lastDAOIndex = stf(j).arc.lastDAOIndex;
-        apertureInfoNew.arc.beam(j).nextDAOIndex = stf(j).arc.lastDAOIndex;
+        apertureInfoNew.arc.beam(j).nextDAOIndex = stf(j).arc.nextDAOIndex;
 
         amountOfOldSpeed = (min(apertureInfoNew.arc.beam(j).doseAngleBorders(2), ...
                                 apertureInfoOld.arc.beam(i).doseAngleBorders(2)) - ...
