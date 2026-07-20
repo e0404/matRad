@@ -40,28 +40,28 @@ vectorIndices.totalNumOfShapes = apertureInfo.totalNumOfShapes;
 w = zeros(apertureInfo.totalNumOfBixels, 1);
 
 % dummy jacobian containers (unused with saveJacobian = false)
-bixelJApVec_vec = [];
-bixelJApVec_i = 0;
-bixelJApVec_j = 0;
-counters.bixelJApVec_offset = 0;
+bixelJApVecVec = [];
+bixelJApVecI = 0;
+bixelJApVecJ = 0;
+counters.bixelJApVecOffset = 0;
 
 % loop over all beams
 for i = 1:numel(updatedInfo.beam)
 
     % pre compute left and right bixel edges
-    edges_l = updatedInfo.beam(i).posOfCornerBixel(1) + ...
+    edgesLeft = updatedInfo.beam(i).posOfCornerBixel(1) + ...
         ((1:size(apertureInfo.beam(i).bixelIndMap, 2)) - 1 - 1 / 2) * updatedInfo.bixelWidth;
-    edges_r = updatedInfo.beam(i).posOfCornerBixel(1) + ...
+    edgesRight = updatedInfo.beam(i).posOfCornerBixel(1) + ...
         ((1:size(apertureInfo.beam(i).bixelIndMap, 2)) - 1 + 1 / 2) * updatedInfo.bixelWidth;
 
     n = apertureInfo.beam(i).numOfActiveLeafPairs;
 
-    mlcOptions.lim_l = apertureInfo.beam(i).limLeft;
-    mlcOptions.lim_r = apertureInfo.beam(i).limRight;
-    mlcOptions.edges_l = edges_l;
-    mlcOptions.edges_r = edges_r;
-    mlcOptions.centres = (edges_l + edges_r) / 2;
-    mlcOptions.widths = edges_r - edges_l;
+    mlcOptions.limLeft = apertureInfo.beam(i).limLeft;
+    mlcOptions.limRight = apertureInfo.beam(i).limRight;
+    mlcOptions.edgesLeft = edgesLeft;
+    mlcOptions.edgesRight = edgesRight;
+    mlcOptions.centres = (edgesLeft + edgesRight) / 2;
+    mlcOptions.widths = edgesRight - edgesLeft;
     mlcOptions.n = n;
     mlcOptions.numBix = size(apertureInfo.beam(i).bixelIndMap, 2);
     mlcOptions.bixelIndMap = apertureInfo.beam(i).bixelIndMap;
@@ -92,34 +92,55 @@ for i = 1:numel(updatedInfo.beam)
     % position with the initial half-sector weight
     variables.weight = weight_I;
     if updatedInfo.continuousAperture
-        variables.leftLeafPos_I     = updatedInfo.beam(i).shape(1).leftLeafPosInitial;
-        variables.leftLeafPos_F     = updatedInfo.beam(i).shape(1).leftLeafPos;
-        variables.rightLeafPos_I    = updatedInfo.beam(i).shape(1).rightLeafPosInitial;
-        variables.rightLeafPos_F    = updatedInfo.beam(i).shape(1).rightLeafPos;
+        variables.leftLeafPosInitial     = updatedInfo.beam(i).shape(1).leftLeafPosInitial;
+        variables.leftLeafPosFinal     = updatedInfo.beam(i).shape(1).leftLeafPos;
+        variables.rightLeafPosInitial    = updatedInfo.beam(i).shape(1).rightLeafPosInitial;
+        variables.rightLeafPosFinal    = updatedInfo.beam(i).shape(1).rightLeafPos;
     else
-        variables.leftLeafPos_I     = updatedInfo.beam(i).shape(1).leftLeafPos;
-        variables.leftLeafPos_F     = updatedInfo.beam(i).shape(1).leftLeafPos;
-        variables.rightLeafPos_I    = updatedInfo.beam(i).shape(1).rightLeafPos;
-        variables.rightLeafPos_F    = updatedInfo.beam(i).shape(1).rightLeafPos;
+        variables.leftLeafPosInitial     = updatedInfo.beam(i).shape(1).leftLeafPos;
+        variables.leftLeafPosFinal     = updatedInfo.beam(i).shape(1).leftLeafPos;
+        variables.rightLeafPosInitial    = updatedInfo.beam(i).shape(1).rightLeafPos;
+        variables.rightLeafPosFinal    = updatedInfo.beam(i).shape(1).rightLeafPos;
     end
 
-    [w, ~, ~, ~, sumGradSq, shapeMap_I, counters] = ...
-        matRad_bixWeightAndGrad(calcOptions, mlcOptions, variables, vectorIndices, counters, ...
-                                w, bixelJApVec_vec, bixelJApVec_i, bixelJApVec_j, sumGradSq, shapeMap_I);
+    accum.w               = w;
+    accum.bixelJApVec.vec = bixelJApVecVec;
+    accum.bixelJApVec.i   = bixelJApVecI;
+    accum.bixelJApVec.j   = bixelJApVecJ;
+    accum.sumGradSq       = sumGradSq;
+    accum.shapeMapW       = shapeMap_I;
+    accum.counters        = counters;
+
+    accum = matRad_bixWeightAndGrad(calcOptions, mlcOptions, variables, vectorIndices, accum);
+
+    w          = accum.w;
+    sumGradSq  = accum.sumGradSq;
+    shapeMap_I = accum.shapeMapW;
+    counters   = accum.counters;
 
     % final half sector: sweep from the central to the final leaf
     % position with the final half-sector weight
     variables.weight = weight_F;
     if updatedInfo.continuousAperture
-        variables.leftLeafPos_I     = updatedInfo.beam(i).shape(1).leftLeafPos;
-        variables.leftLeafPos_F     = updatedInfo.beam(i).shape(1).leftLeafPosFinal;
-        variables.rightLeafPos_I    = updatedInfo.beam(i).shape(1).rightLeafPos;
-        variables.rightLeafPos_F    = updatedInfo.beam(i).shape(1).rightLeafPosFinal;
+        variables.leftLeafPosInitial     = updatedInfo.beam(i).shape(1).leftLeafPos;
+        variables.leftLeafPosFinal     = updatedInfo.beam(i).shape(1).leftLeafPosFinal;
+        variables.rightLeafPosInitial    = updatedInfo.beam(i).shape(1).rightLeafPos;
+        variables.rightLeafPosFinal    = updatedInfo.beam(i).shape(1).rightLeafPosFinal;
     end
 
-    [w, ~, ~, ~, ~, shapeMap_F, counters] = ...
-        matRad_bixWeightAndGrad(calcOptions, mlcOptions, variables, vectorIndices, counters, ...
-                                w, bixelJApVec_vec, bixelJApVec_i, bixelJApVec_j, sumGradSq, shapeMap_F);
+    accum.w               = w;
+    accum.bixelJApVec.vec = bixelJApVecVec;
+    accum.bixelJApVec.i   = bixelJApVecI;
+    accum.bixelJApVec.j   = bixelJApVecJ;
+    accum.sumGradSq       = sumGradSq;
+    accum.shapeMapW       = shapeMap_F;
+    accum.counters        = counters;
+
+    accum = matRad_bixWeightAndGrad(calcOptions, mlcOptions, variables, vectorIndices, accum);
+
+    w          = accum.w;
+    shapeMap_F = accum.shapeMapW;
+    counters   = accum.counters;
 
     updatedInfo.beam(i).shape(1).shapeMap = shapeMap_I + shapeMap_F;
 

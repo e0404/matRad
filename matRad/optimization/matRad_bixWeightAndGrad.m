@@ -1,16 +1,26 @@
-function [w,bixelJApVec_vec,bixelJApVec_i,bixelJApVec_j,sumGradSq,shapeMapW,counters] = ...
-    matRad_bixWeightAndGrad(calcOptions,mlcOptions,variables,vectorIndices,counters,w,bixelJApVec_vec,bixelJApVec_i,bixelJApVec_j,sumGradSq,shapeMapW)
+function accum = matRad_bixWeightAndGrad(calcOptions, mlcOptions, variables, vectorIndices, accum)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate the bixel weights from the aperture vector,
 % and also the Jacobian matrix relating these two.
 %
 % call
-%   [w,bixelJApVec_vec,bixelJApVec_i,bixelJApVec_j,sqrtSumGradSq,shapeMap,counters] = ...
-%    matRad_bixWeightAndGrad(calcOptions,mlcOptions,variables,vectorIndices,counters,w,bixelJApVec_vec,bixelJApVec_i,bixelJApVec_j)
+%   accum = matRad_bixWeightAndGrad(calcOptions,mlcOptions,variables,vectorIndices,accum)
 %
 % input
+%   calcOptions:    what to compute for this shape (isDAOBeam, saveJacobian)
+%   mlcOptions:     MLC geometry of the beam (leaf limits, bixel edges, maps)
+%   variables:      leaf positions, weights and times of the current shape
+%   vectorIndices:  where this shape's variables live in the aperture vector
+%   accum:          accumulators carried across the per-shape calls:
+%                     .w             bixel weight vector
+%                     .bixelJApVec   Jacobian triplets, fields .vec .i .j
+%                     .sumGradSq     squared gradient sum (Jacobi precond.)
+%                     .shapeMapW     weighted shape map of the current shape
+%                     .counters      running offsets, see .bixelJApVecOffset
 %
 % output
+%   accum:          the same accumulator struct, updated with this shape's
+%                   contribution
 %
 % References
 %
@@ -41,13 +51,13 @@ function [w,bixelJApVec_vec,bixelJApVec_i,bixelJApVec_j,sumGradSq,shapeMapW,coun
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-round2 = @(a,b) round(a*10^b)/10^b;
+round2 = @(a, b) round(a * 10^b) / 10^b;
 
 %% extract variables from inputs
-lim_l = mlcOptions.lim_l;
-lim_r = mlcOptions.lim_r;
-edges_l = mlcOptions.edges_l;
-edges_r = mlcOptions.edges_r;
+limLeft = mlcOptions.limLeft;
+limRight = mlcOptions.limRight;
+edgesLeft = mlcOptions.edgesLeft;
+edgesRight = mlcOptions.edgesRight;
 centres = mlcOptions.centres;
 widths = mlcOptions.widths;
 n = mlcOptions.n;
@@ -55,14 +65,23 @@ numBix = mlcOptions.numBix;
 bixelWidth = mlcOptions.bixelWidth;
 bixelIndMap = mlcOptions.bixelIndMap;
 
-weight        = variables.weight;
-leftLeafPos_I   = variables.leftLeafPos_I;
-leftLeafPos_F   = variables.leftLeafPos_F;
-rightLeafPos_I  = variables.rightLeafPos_I;
-rightLeafPos_F  = variables.rightLeafPos_F;
+weight               = variables.weight;
+leftLeafPosInitial   = variables.leftLeafPosInitial;
+leftLeafPosFinal     = variables.leftLeafPosFinal;
+rightLeafPosInitial  = variables.rightLeafPosInitial;
+rightLeafPosFinal    = variables.rightLeafPosFinal;
 
-bixelJApVec_offset = counters.bixelJApVec_offset;
+% Accumulators are unpacked into plain locals here and repacked at the end,
+% so that the inner loops below index arrays rather than struct fields.
+w              = accum.w;
+bixelJApVecVec = accum.bixelJApVec.vec;
+bixelJApVecI   = accum.bixelJApVec.i;
+bixelJApVecJ   = accum.bixelJApVec.j;
+sumGradSq      = accum.sumGradSq;
+shapeMapW      = accum.shapeMapW;
+counters       = accum.counters;
 
+bixelJApVecOffset = counters.bixelJApVecOffset;
 
 %% sort out order, set up calculation of bixel weight and gradients
 
@@ -71,352 +90,372 @@ bixelJApVec_offset = counters.bixelJApVec_offset;
 % of the arc
 % this simplifies the calculation
 % remember which one is actually I and F in leftMinInd
-[leftLeafPosI,leftMinInd] = min([leftLeafPos_I,leftLeafPos_F],[],2);
-leftLeafPosF = max([leftLeafPos_I,leftLeafPos_F],[],2);
-[rightLeafPosI,rightMinInd] = min([rightLeafPos_I,rightLeafPos_F],[],2);
-rightLeafPosF = max([rightLeafPos_I,rightLeafPos_F],[],2);
+[leftLeafPosI, leftMinInd] = min([leftLeafPosInitial, leftLeafPosFinal], [], 2);
+leftLeafPosF = max([leftLeafPosInitial, leftLeafPosFinal], [], 2);
+[rightLeafPosI, rightMinInd] = min([rightLeafPosInitial, rightLeafPosFinal], [], 2);
+rightLeafPosF = max([rightLeafPosInitial, rightLeafPosFinal], [], 2);
 
 if calcOptions.saveJacobian
     % only need these variables for the Jacobian
-    
-    if calcOptions.DAOBeam
+
+    if calcOptions.isDAOBeam
         jacobiScale = variables.jacobiScale;
-        
-        vectorIx_LI = vectorIndices.vectorIx_LI;
-        vectorIx_LF = vectorIndices.vectorIx_LF;
-        vectorIx_RI = vectorIndices.vectorIx_RI;
-        vectorIx_RF = vectorIndices.vectorIx_RF;
-        DAOindex = vectorIndices.DAOindex;
-        
+
+        vectorIxLI = vectorIndices.vectorIxLI;
+        vectorIxLF = vectorIndices.vectorIxLF;
+        vectorIxRI = vectorIndices.vectorIxRI;
+        vectorIxRF = vectorIndices.vectorIxRF;
+        DAOBeamNumber = vectorIndices.DAOBeamNumber;
+
         % change the vectorIx_xy elements to remember which
         % apertureVector elements the "new" I and F
         % if leftMinInd is 2, the I and F are switched
-        tempL = vectorIx_LI;
-        tempR = vectorIx_RI;
-        vectorIx_LI(leftMinInd == 2) = vectorIx_LF(leftMinInd == 2);
-        vectorIx_LF(leftMinInd == 2) = tempL(leftMinInd == 2);
-        vectorIx_RI(rightMinInd == 2) = vectorIx_RF(rightMinInd == 2);
-        vectorIx_RF(rightMinInd == 2) = tempR(rightMinInd == 2);
+        tempL = vectorIxLI;
+        tempR = vectorIxRI;
+        vectorIxLI(leftMinInd == 2) = vectorIxLF(leftMinInd == 2);
+        vectorIxLF(leftMinInd == 2) = tempL(leftMinInd == 2);
+        vectorIxRI(rightMinInd == 2) = vectorIxRF(rightMinInd == 2);
+        vectorIxRF(rightMinInd == 2) = tempR(rightMinInd == 2);
     else
-        
-        weight_last = variables.weight_last;
-        weight_next = variables.weight_next;
-        jacobiScale_last = variables.jacobiScale_last;
-        jacobiScale_next = variables.jacobiScale_next;
-        
-        time_last = variables.time_last;
-        time_next = variables.time_next;
+
+        weightLast = variables.weightLast;
+        weightNext = variables.weightNext;
+        jacobiScaleLast = variables.jacobiScaleLast;
+        jacobiScaleNext = variables.jacobiScaleNext;
+
+        timeLast = variables.timeLast;
+        timeNext = variables.timeNext;
         time = variables.time;
-        
+
         fracFromLastOptI = variables.fracFromLastOptI;
         fracFromLastOptF = variables.fracFromLastOptF;
         fracFromNextOptI = variables.fracFromNextOptI;
         fracFromNextOptF = variables.fracFromNextOptF;
         fracFromLastOpt = variables.fracFromLastOpt;
-        
+
         % replicate
-        fracFromLastOptI = repmat(fracFromLastOptI,1,numBix);
-        fracFromLastOptF = repmat(fracFromLastOptF,1,numBix);
-        fracFromNextOptI = repmat(fracFromNextOptI,1,numBix);
-        fracFromNextOptF = repmat(fracFromNextOptF,1,numBix);
-        
+        fracFromLastOptI = repmat(fracFromLastOptI, 1, numBix);
+        fracFromLastOptF = repmat(fracFromLastOptF, 1, numBix);
+        fracFromNextOptI = repmat(fracFromNextOptI, 1, numBix);
+        fracFromNextOptF = repmat(fracFromNextOptF, 1, numBix);
+
         doseAngleBordersDiff = variables.doseAngleBordersDiff;
-        doseAngleBordersDiff_last = variables.doseAngleBordersDiff_last;
-        doseAngleBordersDiff_next = variables.doseAngleBordersDiff_next;
-        timeFacCurr_last = variables.timeFacCurr_last;
-        timeFacCurr_next = variables.timeFacCurr_next;
-        fracFromLastDAO = variables.fracFromLastDAO;
+        doseAngleBordersDiffLast = variables.doseAngleBordersDiffLast;
+        doseAngleBordersDiffNext = variables.doseAngleBordersDiffNext;
+        timeFactorCurrentLast = variables.timeFactorCurrentLast;
+        timeFactorCurrentNext = variables.timeFactorCurrentNext;
+        weightFracFromLastDAO = variables.weightFracFromLastDAO;
         timeFracFromLastDAO = variables.timeFracFromLastDAO;
         timeFracFromNextDAO = variables.timeFracFromNextDAO;
-        
-        vectorIx_LF_last = vectorIndices.vectorIx_LF_last;
-        vectorIx_LI_next = vectorIndices.vectorIx_LI_next;
-        vectorIx_RF_last = vectorIndices.vectorIx_RF_last;
-        vectorIx_RI_next = vectorIndices.vectorIx_RI_next;
-        DAOindex_last   = vectorIndices.DAOindex_last;
-        DAOindex_next   = vectorIndices.DAOindex_next;
-        tIx_last        = vectorIndices.tIx_last;
-        tIx_next        = vectorIndices.tIx_next;
-        
-        tempL = vectorIx_LF_last;
-        tempR = vectorIx_RF_last;
-        
-        vectorIx_LF_last(leftMinInd == 2) = vectorIx_LI_next(leftMinInd == 2);
-        vectorIx_LI_next(leftMinInd == 2) = tempL(leftMinInd == 2);
-        
-        vectorIx_RF_last(rightMinInd == 2) = vectorIx_RI_next(rightMinInd == 2);
-        vectorIx_RI_next(rightMinInd == 2) = tempR(rightMinInd == 2);
+
+        vectorIxLFLast = vectorIndices.vectorIxLFLast;
+        vectorIxLINext = vectorIndices.vectorIxLINext;
+        vectorIxRFLast = vectorIndices.vectorIxRFLast;
+        vectorIxRINext = vectorIndices.vectorIxRINext;
+        DAOBeamNumberLast   = vectorIndices.DAOBeamNumberLast;
+        DAOBeamNumberNext   = vectorIndices.DAOBeamNumberNext;
+        tIxLast        = vectorIndices.tIxLast;
+        tIxNext        = vectorIndices.tIxNext;
+
+        tempL = vectorIxLFLast;
+        tempR = vectorIxRFLast;
+
+        vectorIxLFLast(leftMinInd == 2) = vectorIxLINext(leftMinInd == 2);
+        vectorIxLINext(leftMinInd == 2) = tempL(leftMinInd == 2);
+
+        vectorIxRFLast(rightMinInd == 2) = vectorIxRINext(rightMinInd == 2);
+        vectorIxRINext(rightMinInd == 2) = tempR(rightMinInd == 2);
     end
 end
 
-leftLeafPosI = round2(leftLeafPosI,10);
-leftLeafPosF = round2(leftLeafPosF,10);
-rightLeafPosI = round2(rightLeafPosI,10);
-rightLeafPosF = round2(rightLeafPosF,10);
+leftLeafPosI = round2(leftLeafPosI, 10);
+leftLeafPosF = round2(leftLeafPosF, 10);
+rightLeafPosI = round2(rightLeafPosI, 10);
+rightLeafPosF = round2(rightLeafPosF, 10);
 
-leftLeafPosI(leftLeafPosI <= lim_l) = lim_l(leftLeafPosI <= lim_l);
-leftLeafPosF(leftLeafPosF <= lim_l) = lim_l(leftLeafPosF <= lim_l);
-rightLeafPosI(rightLeafPosI <= lim_l) = lim_l(rightLeafPosI <= lim_l);
-rightLeafPosF(rightLeafPosF <= lim_l) = lim_l(rightLeafPosF <= lim_l);
-leftLeafPosI(leftLeafPosI >= lim_r) = lim_r(leftLeafPosI >= lim_r);
-leftLeafPosF(leftLeafPosF >= lim_r) = lim_r(leftLeafPosF >= lim_r);
-rightLeafPosI(rightLeafPosI >= lim_r) = lim_r(rightLeafPosI >= lim_r);
-rightLeafPosF(rightLeafPosF >= lim_r) = lim_r(rightLeafPosF >= lim_r);
+leftLeafPosI(leftLeafPosI <= limLeft) = limLeft(leftLeafPosI <= limLeft);
+leftLeafPosF(leftLeafPosF <= limLeft) = limLeft(leftLeafPosF <= limLeft);
+rightLeafPosI(rightLeafPosI <= limLeft) = limLeft(rightLeafPosI <= limLeft);
+rightLeafPosF(rightLeafPosF <= limLeft) = limLeft(rightLeafPosF <= limLeft);
+leftLeafPosI(leftLeafPosI >= limRight) = limRight(leftLeafPosI >= limRight);
+leftLeafPosF(leftLeafPosF >= limRight) = limRight(leftLeafPosF >= limRight);
+rightLeafPosI(rightLeafPosI >= limRight) = limRight(rightLeafPosI >= limRight);
+rightLeafPosF(rightLeafPosF >= limRight) = limRight(rightLeafPosF >= limRight);
 
 % find bixel indices where leaves are located
-xPosIndLeftLeafI = min(floor((leftLeafPosI-edges_l(1))./bixelWidth)+1,numBix);
-xPosIndLeftLeafF = min(floor((leftLeafPosF-edges_l(1))./bixelWidth)+1,numBix);
-xPosIndRightLeafI = min(floor((rightLeafPosI-edges_l(1))./bixelWidth)+1,numBix);
-xPosIndRightLeafF = min(floor((rightLeafPosF-edges_l(1))./bixelWidth)+1,numBix);
+xPosIndLeftLeafI = min(floor((leftLeafPosI - edgesLeft(1)) ./ bixelWidth) + 1, numBix);
+xPosIndLeftLeafF = min(floor((leftLeafPosF - edgesLeft(1)) ./ bixelWidth) + 1, numBix);
+xPosIndRightLeafI = min(floor((rightLeafPosI - edgesLeft(1)) ./ bixelWidth) + 1, numBix);
+xPosIndRightLeafF = min(floor((rightLeafPosF - edgesLeft(1)) ./ bixelWidth) + 1, numBix);
 %
-xPosLinearIndLeftLeafI = sub2ind([n numBix],(1:n)',xPosIndLeftLeafI);
-xPosLinearIndLeftLeafF = sub2ind([n numBix],(1:n)',xPosIndLeftLeafF);
-xPosLinearIndRightLeafI = sub2ind([n numBix],(1:n)',xPosIndRightLeafI);
-xPosLinearIndRightLeafF = sub2ind([n numBix],(1:n)',xPosIndRightLeafF);
+xPosLinearIndLeftLeafI = sub2ind([n numBix], (1:n)', xPosIndLeftLeafI);
+xPosLinearIndLeftLeafF = sub2ind([n numBix], (1:n)', xPosIndLeftLeafF);
+xPosLinearIndRightLeafI = sub2ind([n numBix], (1:n)', xPosIndRightLeafI);
+xPosLinearIndRightLeafF = sub2ind([n numBix], (1:n)', xPosIndRightLeafF);
 
+% distance each leaf sweeps, and the bixel edges/widths at the bixels the
+% initial and final leaf positions fall into. Hoisted out of the overshoot
+% corrections and gradients below, which all reuse them.
+leftLeafSpan = leftLeafPosF - leftLeafPosI;
+rightLeafSpan = rightLeafPosF - rightLeafPosI;
+edgeLeftAtLI = edgesLeft(xPosIndLeftLeafI)';
+edgeRightAtLF = edgesRight(xPosIndLeftLeafF)';
+edgeLeftAtRI = edgesLeft(xPosIndRightLeafI)';
+edgeRightAtRF = edgesRight(xPosIndRightLeafF)';
+widthAtLI = widths(xPosIndLeftLeafI)';
+widthAtLF = widths(xPosIndLeftLeafF)';
+widthAtRI = widths(xPosIndRightLeafI)';
+widthAtRF = widths(xPosIndRightLeafF)';
 
 %
 % leaves sweep from _I to _F, with weight
 %
 
-
 %% bixel weight calculation
 
-%calculate fraction of fluence uncovered by left leaf
-%initial computation
-uncoveredByLeftLeaf = bsxfun(@minus,centres,leftLeafPosI)./repmat(leftLeafPosF-leftLeafPosI,1,numBix);
-%correct for overshoot in initial and final leaf positions
-uncoveredByLeftLeaf(xPosLinearIndLeftLeafI) = uncoveredByLeftLeaf(xPosLinearIndLeftLeafI) + (leftLeafPosI-edges_l(xPosIndLeftLeafI)').^2./((leftLeafPosF-leftLeafPosI).*(widths(xPosIndLeftLeafI)').*2);
-uncoveredByLeftLeaf(xPosLinearIndLeftLeafF) = uncoveredByLeftLeaf(xPosLinearIndLeftLeafF) - (edges_r(xPosIndLeftLeafF)'-leftLeafPosF).^2./((leftLeafPosF-leftLeafPosI).*(widths(xPosIndLeftLeafF)').*2);
-%round <0 to 0, >1 to 1
+% calculate fraction of fluence uncovered by left leaf
+% initial computation
+uncoveredByLeftLeaf = bsxfun(@minus, centres, leftLeafPosI) ./ repmat(leftLeafSpan, 1, numBix);
+% correct for overshoot in initial and final leaf positions
+uncoveredByLeftLeaf(xPosLinearIndLeftLeafI) = uncoveredByLeftLeaf(xPosLinearIndLeftLeafI) + ...
+    (leftLeafPosI - edgeLeftAtLI).^2 ./ (leftLeafSpan .* widthAtLI .* 2);
+uncoveredByLeftLeaf(xPosLinearIndLeftLeafF) = uncoveredByLeftLeaf(xPosLinearIndLeftLeafF) - ...
+    (edgeRightAtLF - leftLeafPosF).^2 ./ (leftLeafSpan .* widthAtLF .* 2);
+% round <0 to 0, >1 to 1
 uncoveredByLeftLeaf(uncoveredByLeftLeaf < 0) = 0;
 uncoveredByLeftLeaf(uncoveredByLeftLeaf > 1) = 1;
 
-%calculate fraction of fluence covered by right leaf
-%initial computation
-coveredByRightLeaf = bsxfun(@minus,centres,rightLeafPosI)./repmat(rightLeafPosF-rightLeafPosI,1,numBix);
-%correct for overshoot in initial and final leaf positions
-coveredByRightLeaf(xPosLinearIndRightLeafI) = coveredByRightLeaf(xPosLinearIndRightLeafI) + (rightLeafPosI-edges_l(xPosIndRightLeafI)').^2./((rightLeafPosF-rightLeafPosI).*(widths(xPosIndRightLeafI)').*2);
-coveredByRightLeaf(xPosLinearIndRightLeafF) = coveredByRightLeaf(xPosLinearIndRightLeafF) - (edges_r(xPosIndRightLeafF)'-rightLeafPosF).^2./((rightLeafPosF-rightLeafPosI).*(widths(xPosIndRightLeafF)').*2);
-%round <0 to 0, >1 to 1
+% calculate fraction of fluence covered by right leaf
+% initial computation
+coveredByRightLeaf = bsxfun(@minus, centres, rightLeafPosI) ./ repmat(rightLeafSpan, 1, numBix);
+% correct for overshoot in initial and final leaf positions
+coveredByRightLeaf(xPosLinearIndRightLeafI) = coveredByRightLeaf(xPosLinearIndRightLeafI) + ...
+    (rightLeafPosI - edgeLeftAtRI).^2 ./ (rightLeafSpan .* widthAtRI .* 2);
+coveredByRightLeaf(xPosLinearIndRightLeafF) = coveredByRightLeaf(xPosLinearIndRightLeafF) - ...
+    (edgeRightAtRF - rightLeafPosF).^2 ./ (rightLeafSpan .* widthAtRF .* 2);
+% round <0 to 0, >1 to 1
 coveredByRightLeaf(coveredByRightLeaf < 0) = 0;
 coveredByRightLeaf(coveredByRightLeaf > 1) = 1;
 
 %% gradient calculation
 
-dUl_dLI = bsxfun(@minus,centres,leftLeafPosF)./(repmat(leftLeafPosF-leftLeafPosI,1,numBix)).^2;
-dUl_dLF = bsxfun(@minus,leftLeafPosI,centres)./(repmat(leftLeafPosF-leftLeafPosI,1,numBix)).^2;
+dUl_dLI = bsxfun(@minus, centres, leftLeafPosF) ./ (repmat(leftLeafSpan, 1, numBix)).^2;
+dUl_dLF = bsxfun(@minus, leftLeafPosI, centres) ./ (repmat(leftLeafSpan, 1, numBix)).^2;
 
-dCr_dRI = bsxfun(@minus,centres,rightLeafPosF)./(repmat(rightLeafPosF-rightLeafPosI,1,numBix)).^2;
-dCr_dRF = bsxfun(@minus,rightLeafPosI,centres)./(repmat(rightLeafPosF-rightLeafPosI,1,numBix)).^2;
+dCr_dRI = bsxfun(@minus, centres, rightLeafPosF) ./ (repmat(rightLeafSpan, 1, numBix)).^2;
+dCr_dRF = bsxfun(@minus, rightLeafPosI, centres) ./ (repmat(rightLeafSpan, 1, numBix)).^2;
 
-dUl_dLI(xPosLinearIndLeftLeafI) = dUl_dLI(xPosLinearIndLeftLeafI) + ((leftLeafPosI-edges_l(xPosIndLeftLeafI)').*(2*leftLeafPosF-leftLeafPosI-edges_l(xPosIndLeftLeafI)'))./((leftLeafPosF-leftLeafPosI).^2.*(widths(xPosIndLeftLeafI)').*2);
-dUl_dLF(xPosLinearIndLeftLeafI) = dUl_dLF(xPosLinearIndLeftLeafI) - ((leftLeafPosI-edges_l(xPosIndLeftLeafI)').^2)./((leftLeafPosF-leftLeafPosI).^2.*(widths(xPosIndLeftLeafI)').*2);
-dUl_dLI(xPosLinearIndLeftLeafF) = dUl_dLI(xPosLinearIndLeftLeafF) - ((edges_r(xPosIndLeftLeafF)'-leftLeafPosF).^2)./((leftLeafPosF-leftLeafPosI).^2.*(widths(xPosIndLeftLeafF)').*2);
-dUl_dLF(xPosLinearIndLeftLeafF) = dUl_dLF(xPosLinearIndLeftLeafF) + ((edges_r(xPosIndLeftLeafF)'-leftLeafPosF).*(leftLeafPosF+edges_r(xPosIndLeftLeafF)'-2*leftLeafPosI))./((leftLeafPosF-leftLeafPosI).^2.*(widths(xPosIndLeftLeafF)').*2);
+dUl_dLI(xPosLinearIndLeftLeafI) = dUl_dLI(xPosLinearIndLeftLeafI) + ...
+    ((leftLeafPosI - edgeLeftAtLI) .* (2 * leftLeafPosF - leftLeafPosI - edgeLeftAtLI)) ./ (leftLeafSpan.^2 .* widthAtLI .* 2);
+dUl_dLF(xPosLinearIndLeftLeafI) = dUl_dLF(xPosLinearIndLeftLeafI) - ((leftLeafPosI - edgeLeftAtLI).^2) ./ (leftLeafSpan.^2 .* widthAtLI .* 2);
+dUl_dLI(xPosLinearIndLeftLeafF) = dUl_dLI(xPosLinearIndLeftLeafF) - ((edgeRightAtLF - leftLeafPosF).^2) ./ (leftLeafSpan.^2 .* widthAtLF .* 2);
+dUl_dLF(xPosLinearIndLeftLeafF) = dUl_dLF(xPosLinearIndLeftLeafF) + ...
+    ((edgeRightAtLF - leftLeafPosF) .* (leftLeafPosF + edgeRightAtLF - 2 * leftLeafPosI)) ./ (leftLeafSpan.^2 .* widthAtLF .* 2);
 
-dCr_dRI(xPosLinearIndRightLeafI) = dCr_dRI(xPosLinearIndRightLeafI) + ((rightLeafPosI-edges_l(xPosIndRightLeafI)').*(2*rightLeafPosF-rightLeafPosI-edges_l(xPosIndRightLeafI)'))./((rightLeafPosF-rightLeafPosI).^2.*(widths(xPosIndRightLeafI)').*2);
-dCr_dRF(xPosLinearIndRightLeafI) = dCr_dRF(xPosLinearIndRightLeafI) - ((rightLeafPosI-edges_l(xPosIndRightLeafI)').^2)./((rightLeafPosF-rightLeafPosI).^2.*(widths(xPosIndRightLeafI)').*2);
-dCr_dRI(xPosLinearIndRightLeafF) = dCr_dRI(xPosLinearIndRightLeafF) - ((edges_r(xPosIndRightLeafF)'-rightLeafPosF).^2)./((rightLeafPosF-rightLeafPosI).^2.*(widths(xPosIndRightLeafF)').*2);
-dCr_dRF(xPosLinearIndRightLeafF) = dCr_dRF(xPosLinearIndRightLeafF) + ((edges_r(xPosIndRightLeafF)'-rightLeafPosF).*(rightLeafPosF+edges_r(xPosIndRightLeafF)'-2*rightLeafPosI))./((rightLeafPosF-rightLeafPosI).^2.*(widths(xPosIndRightLeafF)').*2);
+dCr_dRI(xPosLinearIndRightLeafI) = dCr_dRI(xPosLinearIndRightLeafI) + ...
+    ((rightLeafPosI - edgeLeftAtRI) .* (2 * rightLeafPosF - rightLeafPosI - edgeLeftAtRI)) ./ (rightLeafSpan.^2 .* widthAtRI .* 2);
+dCr_dRF(xPosLinearIndRightLeafI) = dCr_dRF(xPosLinearIndRightLeafI) - ((rightLeafPosI - edgeLeftAtRI).^2) ./ (rightLeafSpan.^2 .* widthAtRI .* 2);
+dCr_dRI(xPosLinearIndRightLeafF) = dCr_dRI(xPosLinearIndRightLeafF) - ((edgeRightAtRF - rightLeafPosF).^2) ./ (rightLeafSpan.^2 .* widthAtRF .* 2);
+dCr_dRF(xPosLinearIndRightLeafF) = dCr_dRF(xPosLinearIndRightLeafF) + ...
+    ((edgeRightAtRF - rightLeafPosF) .* (rightLeafPosF + edgeRightAtRF - 2 * rightLeafPosI)) ./ (rightLeafSpan.^2 .* widthAtRF .* 2);
 
 for k = 1:n
-    dUl_dLI(k,1:(xPosIndLeftLeafI(k)-1)) = 0;
-    dUl_dLF(k,1:(xPosIndLeftLeafI(k)-1)) = 0;
-    dUl_dLI(k,(xPosIndLeftLeafF(k)+1):numBix) = 0;
-    dUl_dLF(k,(xPosIndLeftLeafF(k)+1):numBix) = 0;
-    
+    dUl_dLI(k, 1:(xPosIndLeftLeafI(k) - 1)) = 0;
+    dUl_dLF(k, 1:(xPosIndLeftLeafI(k) - 1)) = 0;
+    dUl_dLI(k, (xPosIndLeftLeafF(k) + 1):numBix) = 0;
+    dUl_dLF(k, (xPosIndLeftLeafF(k) + 1):numBix) = 0;
+
     if xPosIndLeftLeafI(k) >= xPosIndLeftLeafF(k)
         % in discrete aperture, the xPosIndLeftLeafI is greater than
         % xPosIndLeftLeafM when leaf positions are at a bixel boundary
-        
-        %19 July 2017 in journal
-        dUl_dLI(k,xPosIndLeftLeafI(k)) = -1/(2*widths(xPosIndLeftLeafI(k))');
-        dUl_dLF(k,xPosIndLeftLeafF(k)) = -1/(2*widths(xPosIndLeftLeafF(k))');
-        if leftLeafPosF(k)-leftLeafPosI(k) <= eps(max(lim_r))
-            uncoveredByLeftLeaf(k,xPosIndLeftLeafI(k)) = (edges_r(xPosIndLeftLeafI(k))-leftLeafPosI(k))./widths(xPosIndLeftLeafI(k));
-            uncoveredByLeftLeaf(k,xPosIndLeftLeafF(k)) = (edges_r(xPosIndLeftLeafF(k))-leftLeafPosF(k))./widths(xPosIndLeftLeafF(k));
+
+        % 19 July 2017 in journal
+        dUl_dLI(k, xPosIndLeftLeafI(k)) = -1 / (2 * widths(xPosIndLeftLeafI(k))');
+        dUl_dLF(k, xPosIndLeftLeafF(k)) = -1 / (2 * widths(xPosIndLeftLeafF(k))');
+        if leftLeafPosF(k) - leftLeafPosI(k) <= eps(max(limRight))
+            uncoveredByLeftLeaf(k, xPosIndLeftLeafI(k)) = (edgesRight(xPosIndLeftLeafI(k)) - leftLeafPosI(k)) ./ widths(xPosIndLeftLeafI(k));
+            uncoveredByLeftLeaf(k, xPosIndLeftLeafF(k)) = (edgesRight(xPosIndLeftLeafF(k)) - leftLeafPosF(k)) ./ widths(xPosIndLeftLeafF(k));
         end
     end
-    
-    dCr_dRI(k,1:(xPosIndRightLeafI(k)-1)) = 0;
-    dCr_dRF(k,1:(xPosIndRightLeafI(k)-1)) = 0;
-    dCr_dRI(k,(xPosIndRightLeafF(k)+1):numBix) = 0;
-    dCr_dRF(k,(xPosIndRightLeafF(k)+1):numBix) = 0;
-    
+
+    dCr_dRI(k, 1:(xPosIndRightLeafI(k) - 1)) = 0;
+    dCr_dRF(k, 1:(xPosIndRightLeafI(k) - 1)) = 0;
+    dCr_dRI(k, (xPosIndRightLeafF(k) + 1):numBix) = 0;
+    dCr_dRF(k, (xPosIndRightLeafF(k) + 1):numBix) = 0;
+
     if xPosIndRightLeafI(k) >= xPosIndRightLeafF(k)
-        dCr_dRI(k,xPosIndRightLeafI(k)) = -1/(2*widths(xPosIndRightLeafI(k))');
-        dCr_dRF(k,xPosIndRightLeafF(k)) = -1/(2*widths(xPosIndRightLeafF(k))');
-        if rightLeafPosF(k)-rightLeafPosI(k) <= eps(max(lim_r))
-            coveredByRightLeaf(k,xPosIndRightLeafI(k)) = (edges_r(xPosIndRightLeafI(k))-rightLeafPosI(k))./widths(xPosIndRightLeafI(k));
-            coveredByRightLeaf(k,xPosIndRightLeafF(k)) = (edges_r(xPosIndRightLeafF(k))-rightLeafPosF(k))./widths(xPosIndRightLeafF(k));
+        dCr_dRI(k, xPosIndRightLeafI(k)) = -1 / (2 * widths(xPosIndRightLeafI(k))');
+        dCr_dRF(k, xPosIndRightLeafF(k)) = -1 / (2 * widths(xPosIndRightLeafF(k))');
+        if rightLeafPosF(k) - rightLeafPosI(k) <= eps(max(limRight))
+            coveredByRightLeaf(k, xPosIndRightLeafI(k)) = (edgesRight(xPosIndRightLeafI(k)) - rightLeafPosI(k)) ./ widths(xPosIndRightLeafI(k));
+            coveredByRightLeaf(k, xPosIndRightLeafF(k)) = (edgesRight(xPosIndRightLeafF(k)) - rightLeafPosF(k)) ./ widths(xPosIndRightLeafF(k));
         end
     end
 end
 
 % store information for Jacobi preconditioning
-sumGradSq = sumGradSq+mean([sum((dUl_dLI).^2,2); sum((dUl_dLF).^2,2); sum((dUl_dLF).^2,2); sum((dCr_dRI).^2,2); sum((dCr_dRF).^2,2); sum((dCr_dRF).^2,2)]);
+sumGradSq = sumGradSq + ...
+    mean([sum((dUl_dLI).^2, 2); sum((dUl_dLF).^2, 2); sum((dUl_dLF).^2, 2); sum((dCr_dRI).^2, 2); sum((dCr_dRF).^2, 2); sum((dCr_dRF).^2, 2)]);
 
 %% save the bixel weights
-%fluence is equal to fluence not covered by left leaf minus
-%fluence covered by left leaf
-shapeMap = uncoveredByLeftLeaf-coveredByRightLeaf;
-shapeMap = round2(shapeMap,15);
+% fluence is equal to fluence not covered by left leaf minus
+% fluence covered by left leaf
+shapeMap = uncoveredByLeftLeaf - coveredByRightLeaf;
+shapeMap = round2(shapeMap, 15);
 shapeMap(isnan(shapeMap)) = 0;
 
 % find open bixels
-%shapeMapIx = shapeMap > 0;
+% shapeMapIx = shapeMap > 0;
 shapeMapIx = ~isnan(bixelIndMap);
 
 currBixelIx = bixelIndMap(shapeMapIx);
-w(currBixelIx) = w(currBixelIx) + shapeMap(shapeMapIx).*weight;
-shapeMapW = shapeMapW+shapeMap.*weight;
+w(currBixelIx) = w(currBixelIx) + shapeMap(shapeMapIx) .* weight;
+shapeMapW = shapeMapW + shapeMap .* weight;
 
 %% save the gradients
 
 if calcOptions.saveJacobian
-    
+
     numSaveBixel = nnz(shapeMapIx);
-    
-    if calcOptions.DAOBeam
+
+    if calcOptions.isDAOBeam
         % indices
-        vectorIxMat_LI = repmat(vectorIx_LI',1,numBix);
-        vectorIxMat_LF = repmat(vectorIx_LF',1,numBix);
-        vectorIxMat_RI = repmat(vectorIx_RI',1,numBix);
-        vectorIxMat_RF = repmat(vectorIx_RF',1,numBix);
-        
+        vectorIxMatLI = repmat(vectorIxLI', 1, numBix);
+        vectorIxMatLF = repmat(vectorIxLF', 1, numBix);
+        vectorIxMatRI = repmat(vectorIxRI', 1, numBix);
+        vectorIxMatRF = repmat(vectorIxRF', 1, numBix);
+
         % wrt weight
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = shapeMap(shapeMapIx)./jacobiScale;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = DAOindex;
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = shapeMap(shapeMapIx) ./ jacobiScale;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = DAOBeamNumber;
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt initial left
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = dUl_dLI(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_LI(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = dUl_dLI(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatLI(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt final left
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = dUl_dLF(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_LF(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = dUl_dLF(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatLF(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt initial right
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = -dCr_dRI(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_RI(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = -dCr_dRI(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatRI(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt final right
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = -dCr_dRF(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_RF(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = -dCr_dRF(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatRF(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
     else
         % indices
-        vectorIxMat_LF_last = repmat(vectorIx_LF_last',1,numBix);
-        vectorIxMat_LI_next = repmat(vectorIx_LI_next',1,numBix);
-        vectorIxMat_RF_last = repmat(vectorIx_RF_last',1,numBix);
-        vectorIxMat_RI_next = repmat(vectorIx_RI_next',1,numBix);
-        
+        vectorIxMatLFLast = repmat(vectorIxLFLast', 1, numBix);
+        vectorIxMatLINext = repmat(vectorIxLINext', 1, numBix);
+        vectorIxMatRFLast = repmat(vectorIxRFLast', 1, numBix);
+        vectorIxMatRINext = repmat(vectorIxRINext', 1, numBix);
+
         % wrt last weight
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = fracFromLastOpt*(time./time_last)*shapeMap(shapeMapIx)./jacobiScale_last;
-        %bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = (updatedInfo.beam(i).doseAngleBordersDiff*fracFromLastOpt*updatedInfo.beam(apertureInfo.beam(i).lastOptIndex).gantryRot ...
-        %/(updatedInfo.beam(apertureInfo.beam(i).lastOptIndex).doseAngleBordersDiff*updatedInfo.beam(i).gantryRot))*updatedInfo.beam(i).shape(j).shapeMap(shapeMapIx) ...
-        %./ apertureInfo.beam(apertureInfo.beam(i).lastOptIndex).shape(1).jacobiScale;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = DAOindex_last;
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = fracFromLastOpt * (time ./ timeLast) * shapeMap(shapeMapIx) ./ jacobiScaleLast;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = DAOBeamNumberLast;
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt next weight
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = (1-fracFromLastOpt)*(time./time_next)*shapeMap(shapeMapIx)./jacobiScale_next;
-        %bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = (updatedInfo.beam(i).doseAngleBordersDiff*(1-fracFromLastOpt)*updatedInfo.beam(apertureInfo.beam(i).nextOptIndex).gantryRot ...
-        %/(updatedInfo.beam(apertureInfo.beam(i).nextOptIndex).doseAngleBordersDiff*updatedInfo.beam(i).gantryRot))*updatedInfo.beam(i).shape(j).shapeMap(shapeMapIx) ...
-        %./ apertureInfo.beam(apertureInfo.beam(i).nextOptIndex).shape(1).jacobiScale;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = DAOindex_next;
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
-        
-        % updatedInfo.beam(i).shape(j).leftLeafPos_I = fracFromLastOptI.*leftLeafPos_F_last+fracFromNextOptI.*leftLeafPos_I_next;
-        %updatedInfo.beam(i).shape(j).rightLeafPos_I = fracFromLastOptI.*rightLeafPos_F_last+fracFromNextOptI.*rightLeafPos_I_next;
-        
-        % updatedInfo.beam(i).shape(j).leftLeafPos_F = fracFromLastOptF.*leftLeafPos_F_last+fracFromNextOptF.*leftLeafPos_I_next;
-        % updatedInfo.beam(i).shape(j).rightLeafPos_F = fracFromLastOptF.*rightLeafPos_F_last+fracFromNextOptF.*rightLeafPos_I_next;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = (1 - fracFromLastOpt) * (time ./ timeNext) * shapeMap(shapeMapIx) ./ jacobiScaleNext;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = DAOBeamNumberNext;
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt initial left (optimization vector)
         % initial (interpolated arc)
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = fracFromLastOptI(shapeMapIx).*dUl_dLI(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_LF_last(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = fracFromLastOptI(shapeMapIx) .* dUl_dLI(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatLFLast(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
         % final (interpolated arc)
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = fracFromLastOptF(shapeMapIx).*dUl_dLF(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_LF_last(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = fracFromLastOptF(shapeMapIx) .* dUl_dLF(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatLFLast(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt final left (optimization vector)
         % initial (interpolated arc)
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = fracFromNextOptI(shapeMapIx).*dUl_dLI(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_LI_next(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = fracFromNextOptI(shapeMapIx) .* dUl_dLI(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatLINext(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
         % final (interpolated arc)
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = fracFromNextOptF(shapeMapIx).*dUl_dLF(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_LI_next(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = fracFromNextOptF(shapeMapIx) .* dUl_dLF(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatLINext(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt initial right (optimization vector)
         % initial (interpolated arc)
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = -fracFromLastOptI(shapeMapIx).*dCr_dRI(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_RF_last(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = -fracFromLastOptI(shapeMapIx) .* dCr_dRI(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatRFLast(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
         % final (interpolated arc)
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = -fracFromLastOptF(shapeMapIx).*dCr_dRF(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_RF_last(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = -fracFromLastOptF(shapeMapIx) .* dCr_dRF(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatRFLast(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt final right (optimization vector)
         % initial (interpolated arc)
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = -fracFromNextOptI(shapeMapIx).*dCr_dRI(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_RI_next(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = -fracFromNextOptI(shapeMapIx) .* dCr_dRI(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatRINext(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
         % final (interpolated arc)
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = -fracFromNextOptF(shapeMapIx).*dCr_dRF(shapeMapIx).*weight;
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = vectorIxMat_RI_next(shapeMapIx);
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = -fracFromNextOptF(shapeMapIx) .* dCr_dRF(shapeMapIx) .* weight;
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = vectorIxMatRINext(shapeMapIx);
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt last time
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = (doseAngleBordersDiff.*timeFacCurr_last) ...
-            .*(-fracFromLastDAO.*timeFracFromNextDAO.*(weight_last./doseAngleBordersDiff_next).*(time_next./time_last.^2) ...
-            +(1-fracFromLastDAO).*timeFracFromLastDAO.*(weight_next./doseAngleBordersDiff_last).*(1./time_next)) ...
-            * shapeMap(shapeMapIx);
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = tIx_last;
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
-        
+        dTimeLast = -weightFracFromLastDAO .* timeFracFromNextDAO .* ...
+                    (weightLast ./ doseAngleBordersDiffNext) .* (timeNext ./ timeLast.^2) + ...
+                    (1 - weightFracFromLastDAO) .* timeFracFromLastDAO .* ...
+                    (weightNext ./ doseAngleBordersDiffLast) .* (1 ./ timeNext);
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = ...
+            (doseAngleBordersDiff .* timeFactorCurrentLast) .* dTimeLast * shapeMap(shapeMapIx);
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = tIxLast;
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
+
         % wrt next time
-        bixelJApVec_vec(bixelJApVec_offset+(1:numSaveBixel)) = (doseAngleBordersDiff.*timeFacCurr_next) ...
-            .*(fracFromLastDAO.*timeFracFromNextDAO.*(weight_last./doseAngleBordersDiff_next).*(1./time_last) ...
-            -(1-fracFromLastDAO).*timeFracFromLastDAO.*(weight_next./doseAngleBordersDiff_last).*(time_last./time_next.^2)) ...
-            * shapeMap(shapeMapIx);
-        bixelJApVec_i(bixelJApVec_offset+(1:numSaveBixel)) = tIx_next;
-        bixelJApVec_j(bixelJApVec_offset+(1:numSaveBixel)) = bixelIndMap(shapeMapIx);
-        bixelJApVec_offset = bixelJApVec_offset+numSaveBixel;
+        dTimeNext = weightFracFromLastDAO .* timeFracFromNextDAO .* ...
+                    (weightLast ./ doseAngleBordersDiffNext) .* (1 ./ timeLast) - ...
+                    (1 - weightFracFromLastDAO) .* timeFracFromLastDAO .* ...
+                    (weightNext ./ doseAngleBordersDiffLast) .* (timeLast ./ timeNext.^2);
+        bixelJApVecVec(bixelJApVecOffset + (1:numSaveBixel)) = ...
+            (doseAngleBordersDiff .* timeFactorCurrentNext) .* dTimeNext * shapeMap(shapeMapIx);
+        bixelJApVecI(bixelJApVecOffset + (1:numSaveBixel)) = tIxNext;
+        bixelJApVecJ(bixelJApVecOffset + (1:numSaveBixel)) = bixelIndMap(shapeMapIx);
+        bixelJApVecOffset = bixelJApVecOffset + numSaveBixel;
     end
-    
+
 end
 
-% update counters
-counters.bixelJApVec_offset = bixelJApVec_offset;
+% update counters and repack the accumulators
+counters.bixelJApVecOffset = bixelJApVecOffset;
+
+accum.w               = w;
+accum.bixelJApVec.vec = bixelJApVecVec;
+accum.bixelJApVec.i   = bixelJApVecI;
+accum.bixelJApVec.j   = bixelJApVecJ;
+accum.sumGradSq       = sumGradSq;
+accum.shapeMapW       = shapeMapW;
+accum.counters        = counters;
 
 end

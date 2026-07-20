@@ -154,3 +154,35 @@ assertEqual(numel(recalc.apertureInfo.bixelWeights), sum([recalc.stf.totalNumOfB
 assertTrue(all(isfinite(recalc.apertureInfo.bixelWeights)));
 assertTrue(all(recalc.apertureInfo.bixelWeights >= 0));
 assertTrue(any(recalc.apertureInfo.bixelWeights > 0));
+
+function test_vmatRecalcPreservesDAOAnchors
+% Regression: matRad_recalcApertureInfo used to populate nextDAOBeamIx from
+% stf.arc.lastDAOBeamIx (the two assignments shared a right-hand side), so
+% every recalculated beam believed its next DAO anchor was its previous one
+% and the interpolation between DAO control points was weighted against the
+% wrong pair of apertures.
+[stf, pln] = helper_getVmatStf();
+sequencer = helper_getSequencer(pln);
+w = ones(sum([stf.numOfRays]), 1);
+apertureInfo = sequencer.sequence(w, stf).apertureInfo;
+
+p = load('photons_testData.mat', 'ct', 'cst');
+recalc.pln = pln;
+recalc.pln.propStf.maxGantryAngleSpacing = 7.5;
+recalc.interpNew = true;
+recalc.continuousAperture = false;
+recalc.stf = matRad_generateStf(p.ct, p.cst, recalc.pln);
+
+recalc = matRad_recalcApertureInfo(recalc, apertureInfo);
+
+lastIx = [recalc.apertureInfo.arc.beam.lastDAOBeamIx];
+nextIx = [recalc.apertureInfo.arc.beam.nextDAOBeamIx];
+
+% each anchor must come from its own stf field, not from the other one
+% (stf is a struct array, so the nested field needs arrayfun rather than [])
+assertEqual(lastIx, arrayfun(@(b) b.arc.lastDAOBeamIx, recalc.stf));
+assertEqual(nextIx, arrayfun(@(b) b.arc.nextDAOBeamIx, recalc.stf));
+
+% and the two must genuinely differ somewhere: were next copied from last,
+% as in the original bug, these would be identical for every beam
+assertTrue(any(nextIx ~= lastIx));
