@@ -61,13 +61,13 @@ w = zeros(apertureInfo.totalNumOfBixels, 1);
 % first index of the gantry time entries in the aperture vector
 tIxOffset = updatedInfo.totalNumOfShapes + updatedInfo.totalNumOfLeafPairs * 2;
 
-if ~all([updatedInfo.arc.beam.DAOBeam])
+if ~all([updatedInfo.arc.beam.isDAOBeam])
     % pre-pass: update weights/times of all DAO beams first, since the
     % interpolated beams below reference their last/next DAO beam - which
     % may come later in the main loop
     j = 1;
     for i = 1:numel(updatedInfo.beam)
-        if updatedInfo.arc.beam(i).DAOBeam
+        if updatedInfo.arc.beam(i).isDAOBeam
             % update the shape weight
             % rescale the weight from the vector using the previous
             % iteration scaling factor
@@ -75,8 +75,8 @@ if ~all([updatedInfo.arc.beam.DAOBeam])
                 updatedInfo.beam(i).shape(j).jacobiScale;
 
             updatedInfo.beam(i).shape(j).MU = updatedInfo.beam(i).shape(j).weight * updatedInfo.weightToMU;
-            updatedInfo.beam(i).time = apertureInfoVect(tIxOffset + updatedInfo.arc.beam(i).DAOIndex) * ...
-                updatedInfo.arc.beam(i).timeFacCurr;
+            updatedInfo.beam(i).time = apertureInfoVect(tIxOffset + updatedInfo.arc.beam(i).DAOBeamNumber) * ...
+                updatedInfo.arc.beam(i).timeFactorCurrent;
             updatedInfo.beam(i).gantryRot = updatedInfo.arc.beam(i).doseAngleBordersDiff / updatedInfo.beam(i).time;
             updatedInfo.beam(i).shape(j).MURate = updatedInfo.beam(i).shape(j).MU ./ updatedInfo.beam(i).time;
         end
@@ -131,7 +131,7 @@ for i = 1:numel(updatedInfo.beam)
 
     % in VMAT there is always exactly one shape per beam
     numOfShapes = 1;
-    calcOptions.DAOBeam = updatedInfo.arc.beam(i).DAOBeam;
+    calcOptions.DAOBeam = updatedInfo.arc.beam(i).isDAOBeam;
 
     mlcOptions.lim_l = apertureInfo.beam(i).lim_l;
     mlcOptions.lim_r = apertureInfo.beam(i).lim_r;
@@ -145,7 +145,7 @@ for i = 1:numel(updatedInfo.beam)
 
     for j = 1:numOfShapes
 
-        if updatedInfo.arc.beam(i).DAOBeam
+        if updatedInfo.arc.beam(i).isDAOBeam
             % this is a DAO beam
 
             % update the shape weight
@@ -153,8 +153,8 @@ for i = 1:numel(updatedInfo.beam)
                 updatedInfo.beam(i).shape(j).jacobiScale;
 
             updatedInfo.beam(i).shape(j).MU = updatedInfo.beam(i).shape(j).weight * updatedInfo.weightToMU;
-            updatedInfo.beam(i).time = apertureInfoVect(tIxOffset + updatedInfo.arc.beam(i).DAOIndex) * ...
-                updatedInfo.arc.beam(i).timeFacCurr;
+            updatedInfo.beam(i).time = apertureInfoVect(tIxOffset + updatedInfo.arc.beam(i).DAOBeamNumber) * ...
+                updatedInfo.arc.beam(i).timeFactorCurrent;
             updatedInfo.beam(i).gantryRot = updatedInfo.arc.beam(i).doseAngleBordersDiff / updatedInfo.beam(i).time;
             updatedInfo.beam(i).shape(j).MURate = updatedInfo.beam(i).shape(j).MU ./ updatedInfo.beam(i).time;
 
@@ -194,16 +194,16 @@ for i = 1:numel(updatedInfo.beam)
 
         else
             % this is an interpolated beam
-            lastDAOIx = updatedInfo.arc.beam(i).lastDAOIndex;
-            nextDAOIx = updatedInfo.arc.beam(i).nextDAOIndex;
-            fracFromLastDAO = updatedInfo.arc.beam(i).fracFromLastDAO;
+            lastDAOIx = updatedInfo.arc.beam(i).lastDAOBeamIx;
+            nextDAOIx = updatedInfo.arc.beam(i).nextDAOBeamIx;
+            weightFracFromLastDAO = updatedInfo.arc.beam(i).weightFracFromLastDAO;
 
             % MURate is interpolated between MURates of optimized apertures
             updatedInfo.beam(i).gantryRot = 1 ./ (updatedInfo.arc.beam(i).timeFracFromLastDAO ./ updatedInfo.beam(lastDAOIx).gantryRot + ...
                                                   updatedInfo.arc.beam(i).timeFracFromNextDAO ./ updatedInfo.beam(nextDAOIx).gantryRot);
             updatedInfo.beam(i).time = updatedInfo.arc.beam(i).doseAngleBordersDiff ./ updatedInfo.beam(i).gantryRot;
-            updatedInfo.beam(i).shape(j).MURate = fracFromLastDAO * updatedInfo.beam(lastDAOIx).shape(j).MURate + ...
-                (1 - fracFromLastDAO) * updatedInfo.beam(nextDAOIx).shape(j).MURate;
+            updatedInfo.beam(i).shape(j).MURate = weightFracFromLastDAO * updatedInfo.beam(lastDAOIx).shape(j).MURate + ...
+                (1 - weightFracFromLastDAO) * updatedInfo.beam(nextDAOIx).shape(j).MURate;
 
             % calculate MU, weight
             updatedInfo.beam(i).shape(j).MU = updatedInfo.beam(i).shape(j).MURate .* updatedInfo.beam(i).time;
@@ -211,11 +211,11 @@ for i = 1:numel(updatedInfo.beam)
 
             if ~updatedInfo.continuousAperture
 
-                fracFromLastOpt = updatedInfo.arc.beam(i).fracFromLastDAO;
-                fracFromLastOptI = updatedInfo.arc.beam(i).fracFromLastDAO * ones(n, 1);
-                fracFromLastOptF = updatedInfo.arc.beam(i).fracFromLastDAO * ones(n, 1);
-                fracFromNextOptI = (1 - updatedInfo.arc.beam(i).fracFromLastDAO) * ones(n, 1);
-                fracFromNextOptF = (1 - updatedInfo.arc.beam(i).fracFromLastDAO) * ones(n, 1);
+                fracFromLastOpt = updatedInfo.arc.beam(i).weightFracFromLastDAO;
+                fracFromLastOptI = updatedInfo.arc.beam(i).weightFracFromLastDAO * ones(n, 1);
+                fracFromLastOptF = updatedInfo.arc.beam(i).weightFracFromLastDAO * ones(n, 1);
+                fracFromNextOptI = (1 - updatedInfo.arc.beam(i).weightFracFromLastDAO) * ones(n, 1);
+                fracFromNextOptF = (1 - updatedInfo.arc.beam(i).weightFracFromLastDAO) * ones(n, 1);
 
                 % obtain leaf positions at last DAO beam
                 vectorIx_LF_last = updatedInfo.beam(lastDAOIx).shape(j).vectorOffset + ((1:n) - 1);
@@ -230,8 +230,8 @@ for i = 1:numel(updatedInfo.beam)
                 rightLeafPos_next = apertureInfoVect(vectorIx_RI_next);
 
                 % interpolate leaf positions
-                leftLeafPos = fracFromLastDAO * leftLeafPos_last + (1 - fracFromLastDAO) * leftLeafPos_next;
-                rightLeafPos = fracFromLastDAO * rightLeafPos_last + (1 - fracFromLastDAO) * rightLeafPos_next;
+                leftLeafPos = weightFracFromLastDAO * leftLeafPos_last + (1 - weightFracFromLastDAO) * leftLeafPos_next;
+                rightLeafPos = weightFracFromLastDAO * rightLeafPos_last + (1 - weightFracFromLastDAO) * rightLeafPos_next;
 
                 % update information in shape structure
                 updatedInfo.beam(i).shape(j).leftLeafPos  = leftLeafPos;
@@ -242,20 +242,20 @@ for i = 1:numel(updatedInfo.beam)
                 updatedInfo.beam(i).shape(j).rightLeafPos_F = rightLeafPos;
             else
 
-                fracFromLastOpt = updatedInfo.arc.beam(i).fracFromLastDAO;
-                fracFromLastOptI = updatedInfo.arc.beam(i).fracFromLastDAO_I * ones(n, 1);
-                fracFromLastOptF = updatedInfo.arc.beam(i).fracFromLastDAO_F * ones(n, 1);
-                fracFromNextOptI = updatedInfo.arc.beam(i).fracFromNextDAO_I * ones(n, 1);
-                fracFromNextOptF = updatedInfo.arc.beam(i).fracFromNextDAO_F * ones(n, 1);
+                fracFromLastOpt = updatedInfo.arc.beam(i).weightFracFromLastDAO;
+                fracFromLastOptI = updatedInfo.arc.beam(i).weightFracFromLastDAOInitial * ones(n, 1);
+                fracFromLastOptF = updatedInfo.arc.beam(i).weightFracFromLastDAOFinal * ones(n, 1);
+                fracFromNextOptI = updatedInfo.arc.beam(i).weightFracFromNextDAOInitial * ones(n, 1);
+                fracFromNextOptF = updatedInfo.arc.beam(i).weightFracFromNextDAOFinal * ones(n, 1);
 
                 % obtain leaf positions at last DAO beam
-                vectorIx_LF_last = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOIndex).shape(j).vectorOffset(2) + ((1:n) - 1);
+                vectorIx_LF_last = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOBeamIx).shape(j).vectorOffset(2) + ((1:n) - 1);
                 vectorIx_RF_last = vectorIx_LF_last + apertureInfo.totalNumOfLeafPairs;
                 leftLeafPos_F_last = apertureInfoVect(vectorIx_LF_last);
                 rightLeafPos_F_last = apertureInfoVect(vectorIx_RF_last);
 
                 % obtain leaf positions at next DAO beam
-                vectorIx_LI_next = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOIndex).shape(j).vectorOffset(1) + ((1:n) - 1);
+                vectorIx_LI_next = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOBeamIx).shape(j).vectorOffset(1) + ((1:n) - 1);
                 vectorIx_RI_next = vectorIx_LI_next + apertureInfo.totalNumOfLeafPairs;
                 leftLeafPos_I_next = apertureInfoVect(vectorIx_LI_next);
                 rightLeafPos_I_next = apertureInfoVect(vectorIx_RI_next);
@@ -287,11 +287,11 @@ for i = 1:numel(updatedInfo.beam)
         variables.rightLeafPos_I    = updatedInfo.beam(i).shape(j).rightLeafPos_I;
         variables.rightLeafPos_F    = updatedInfo.beam(i).shape(j).rightLeafPos_F;
 
-        if updatedInfo.arc.beam(i).DAOBeam
+        if updatedInfo.arc.beam(i).isDAOBeam
 
             variables.jacobiScale = updatedInfo.beam(i).shape(1).jacobiScale;
 
-            vectorIndices.DAOindex      = updatedInfo.arc.beam(i).DAOIndex;
+            vectorIndices.DAOindex      = updatedInfo.arc.beam(i).DAOBeamNumber;
             if updatedInfo.continuousAperture
                 vectorIndices.vectorIx_LI   = updatedInfo.beam(i).shape(j).vectorOffset(1) + ((1:n) - 1);
                 vectorIndices.vectorIx_LF   = updatedInfo.beam(i).shape(j).vectorOffset(2) + ((1:n) - 1);
@@ -305,14 +305,14 @@ for i = 1:numel(updatedInfo.beam)
             end
         else
 
-            variables.weight_last = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOIndex).shape(j).weight;
-            variables.weight_next = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOIndex).shape(j).weight;
+            variables.weight_last = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOBeamIx).shape(j).weight;
+            variables.weight_next = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOBeamIx).shape(j).weight;
 
-            variables.jacobiScale_last    = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOIndex).shape(1).jacobiScale;
-            variables.jacobiScale_next    = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOIndex).shape(1).jacobiScale;
+            variables.jacobiScale_last    = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOBeamIx).shape(1).jacobiScale;
+            variables.jacobiScale_next    = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOBeamIx).shape(1).jacobiScale;
 
-            variables.time_last = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOIndex).time;
-            variables.time_next = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOIndex).time;
+            variables.time_last = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOBeamIx).time;
+            variables.time_next = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOBeamIx).time;
             variables.time      = updatedInfo.beam(i).time;
 
             variables.fracFromLastOptI  = fracFromLastOptI;
@@ -322,27 +322,27 @@ for i = 1:numel(updatedInfo.beam)
             variables.fracFromLastOpt   = fracFromLastOpt;
 
             variables.doseAngleBordersDiff      = updatedInfo.arc.beam(i).doseAngleBordersDiff;
-            variables.doseAngleBordersDiff_last = updatedInfo.arc.beam(updatedInfo.arc.beam(i).lastDAOIndex).doseAngleBordersDiff;
-            variables.doseAngleBordersDiff_next = updatedInfo.arc.beam(updatedInfo.arc.beam(i).nextDAOIndex).doseAngleBordersDiff;
-            variables.timeFacCurr_last          = updatedInfo.arc.beam(updatedInfo.arc.beam(i).lastDAOIndex).timeFacCurr;
-            variables.timeFacCurr_next          = updatedInfo.arc.beam(updatedInfo.arc.beam(i).nextDAOIndex).timeFacCurr;
-            variables.fracFromLastDAO           = updatedInfo.arc.beam(i).fracFromLastDAO;
+            variables.doseAngleBordersDiff_last = updatedInfo.arc.beam(updatedInfo.arc.beam(i).lastDAOBeamIx).doseAngleBordersDiff;
+            variables.doseAngleBordersDiff_next = updatedInfo.arc.beam(updatedInfo.arc.beam(i).nextDAOBeamIx).doseAngleBordersDiff;
+            variables.timeFacCurr_last          = updatedInfo.arc.beam(updatedInfo.arc.beam(i).lastDAOBeamIx).timeFactorCurrent;
+            variables.timeFacCurr_next          = updatedInfo.arc.beam(updatedInfo.arc.beam(i).nextDAOBeamIx).timeFactorCurrent;
+            variables.fracFromLastDAO           = updatedInfo.arc.beam(i).weightFracFromLastDAO;
             variables.timeFracFromLastDAO       = updatedInfo.arc.beam(i).timeFracFromLastDAO;
             variables.timeFracFromNextDAO       = updatedInfo.arc.beam(i).timeFracFromNextDAO;
 
-            vectorIndices.DAOindex_last = updatedInfo.arc.beam(updatedInfo.arc.beam(i).lastDAOIndex).DAOIndex;
-            vectorIndices.DAOindex_next = updatedInfo.arc.beam(updatedInfo.arc.beam(i).nextDAOIndex).DAOIndex;
+            vectorIndices.DAOindex_last = updatedInfo.arc.beam(updatedInfo.arc.beam(i).lastDAOBeamIx).DAOBeamNumber;
+            vectorIndices.DAOindex_next = updatedInfo.arc.beam(updatedInfo.arc.beam(i).nextDAOBeamIx).DAOBeamNumber;
             vectorIndices.tIx_last      = tIxOffset + vectorIndices.DAOindex_last;
             vectorIndices.tIx_next      = tIxOffset + vectorIndices.DAOindex_next;
 
             if updatedInfo.continuousAperture
-                vectorIndices.vectorIx_LF_last  = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOIndex).shape(j).vectorOffset(2) + ((1:n) - 1);
-                vectorIndices.vectorIx_LI_next  = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOIndex).shape(j).vectorOffset(1) + ((1:n) - 1);
+                vectorIndices.vectorIx_LF_last  = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOBeamIx).shape(j).vectorOffset(2) + ((1:n) - 1);
+                vectorIndices.vectorIx_LI_next  = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOBeamIx).shape(j).vectorOffset(1) + ((1:n) - 1);
                 vectorIndices.vectorIx_RF_last  = vectorIndices.vectorIx_LF_last + apertureInfo.totalNumOfLeafPairs;
                 vectorIndices.vectorIx_RI_next  = vectorIndices.vectorIx_LI_next + apertureInfo.totalNumOfLeafPairs;
             else
-                vectorIndices.vectorIx_LF_last  = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOIndex).shape(j).vectorOffset + ((1:n) - 1);
-                vectorIndices.vectorIx_LI_next  = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOIndex).shape(j).vectorOffset + ((1:n) - 1);
+                vectorIndices.vectorIx_LF_last  = updatedInfo.beam(updatedInfo.arc.beam(i).lastDAOBeamIx).shape(j).vectorOffset + ((1:n) - 1);
+                vectorIndices.vectorIx_LI_next  = updatedInfo.beam(updatedInfo.arc.beam(i).nextDAOBeamIx).shape(j).vectorOffset + ((1:n) - 1);
                 vectorIndices.vectorIx_RF_last  = vectorIndices.vectorIx_LF_last + apertureInfo.totalNumOfLeafPairs;
                 vectorIndices.vectorIx_RI_next  = vectorIndices.vectorIx_LI_next + apertureInfo.totalNumOfLeafPairs;
             end

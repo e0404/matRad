@@ -46,7 +46,7 @@ apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(apertureInfo);
 doInterp = false;
 
 for i = 1:size(apertureInfo.beam, 2)
-    if apertureInfo.arc.beam(i).DAOBeam
+    if apertureInfo.arc.beam(i).isDAOBeam
 
         % all of these should be greater than 1, since DAO respects the
         % constraints

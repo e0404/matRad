@@ -43,7 +43,7 @@ dijScaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShape
 
 for i = 1:numel(apertureInfo.beam)
 
-    if ~apertureInfo.runVMAT || (apertureInfo.runVMAT && apertureInfo.arc.beam(i).DAOBeam)
+    if ~apertureInfo.runVMAT || (apertureInfo.runVMAT && apertureInfo.arc.beam(i).isDAOBeam)
         % in other words, do this for every beam if it's not VMAT, and for
         % optimized beams only if it is
 

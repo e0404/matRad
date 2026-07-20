@@ -377,7 +377,7 @@ if isfield(pln.propOpt, 'runVMAT') && pln.propOpt.runVMAT
     offset = 0;
     for i = 1:dij.numOfBeams
 
-        if ~stf(i).arc.FMOBeam
+        if ~stf(i).arc.isFMOBeam
             % This is not an FMO beam. Set wOnes for the bixels belonging
             % to this beam to 0.
             rayIndices = offset + (1:dij.numOfRaysPerBeam(i));

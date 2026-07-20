@@ -51,24 +51,24 @@ rightLeafPos = apertureInfoVec((1 + nLeafTotal + nShapes):(nShapes + nLeafTotal 
 % values of times spent in an arc surrounding the optimized angles (full
 % arc/dose influence arc)
 timeDAOBorderAngles = apertureInfoVec(((apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs * 2) + 1):end);
-timeDoseBorderAngles = timeDAOBorderAngles .* [apertureInfo.arc.beam([apertureInfo.arc.beam.DAOBeam]).timeFacCurr]';
+timeDoseBorderAngles = timeDAOBorderAngles .* [apertureInfo.arc.beam([apertureInfo.arc.beam.isDAOBeam]).timeFactorCurrent]';
 
 if apertureInfo.continuousAperture
     % Using the dynamic fluence calculation, we have the leaf positions in
     % the vector be the leaf positions at the borders of the Dij arcs (for optimized angles only).
     % Therefore we must also use the times between the borders of the Dij
     % arc (for optimized angles only).
-    timeFac = [apertureInfo.arc.beam.timeFac]';
-    deleteInd = timeFac == 0;
-    timeFac(deleteInd) = [];
+    timeFactors = [apertureInfo.arc.beam.timeFactors]';
+    deleteInd = timeFactors == 0;
+    timeFactors(deleteInd) = [];
 
-    i = [apertureInfo.arc.beam.timeFacInd]';
+    i = [apertureInfo.arc.beam.timeFactorIx]';
     i(deleteInd) = [];
 
     j = repelem(1:apertureInfo.totalNumOfShapes, 1, 3);
     j(deleteInd) = [];
 
-    timeFacMatrix = sparse(i, j, timeFac, max(i), apertureInfo.totalNumOfShapes);
+    timeFacMatrix = sparse(i, j, timeFactors, max(i), apertureInfo.totalNumOfShapes);
     timeBNOptAngles = timeFacMatrix * timeDAOBorderAngles;
 
     % prep
@@ -85,15 +85,15 @@ if apertureInfo.continuousAperture
         if ~isempty(apertureInfo.arc.beam(i).leafConstMask)
 
             % get vector indices
-            if apertureInfo.arc.beam(i).DAOBeam
+            if apertureInfo.arc.beam(i).isDAOBeam
                 % if it's a DAO beam, use own vector offset
                 vectorIx_LI = apertureInfo.beam(i).shape(1).vectorOffset(1) + ((1:n) - 1);
                 vectorIx_LF = apertureInfo.beam(i).shape(1).vectorOffset(2) + ((1:n) - 1);
             else
                 % otherwise, use vector offset of previous and next
                 % beams
-                vectorIx_LI = apertureInfo.beam(apertureInfo.arc.beam(i).lastDAOIndex).shape(1).vectorOffset(2) + ((1:n) - 1);
-                vectorIx_LF = apertureInfo.beam(apertureInfo.arc.beam(i).nextDAOIndex).shape(1).vectorOffset(1) + ((1:n) - 1);
+                vectorIx_LI = apertureInfo.beam(apertureInfo.arc.beam(i).lastDAOBeamIx).shape(1).vectorOffset(2) + ((1:n) - 1);
+                vectorIx_LF = apertureInfo.beam(apertureInfo.arc.beam(i).nextDAOBeamIx).shape(1).vectorOffset(1) + ((1:n) - 1);
             end
             vectorIx_RI = vectorIx_LI + apertureInfo.totalNumOfLeafPairs;
             vectorIx_RF = vectorIx_LF + apertureInfo.totalNumOfLeafPairs;
@@ -129,12 +129,12 @@ else
     j(1) = [];
     j(end) = [];
 
-    timeFac = [apertureInfo.arc.beam([apertureInfo.arc.beam.DAOBeam]).timeFac]';
-    timeFac(1) = [];
-    timeFac(end) = [];
-    % timeFac(timeFac == 0) = [];
+    timeFactors = [apertureInfo.arc.beam([apertureInfo.arc.beam.isDAOBeam]).timeFactors]';
+    timeFactors(1) = [];
+    timeFactors(end) = [];
+    % timeFactors(timeFactors == 0) = [];
 
-    timeFacMatrix = sparse(i, j, timeFac, apertureInfo.totalNumOfShapes - 1, apertureInfo.totalNumOfShapes);
+    timeFacMatrix = sparse(i, j, timeFactors, apertureInfo.totalNumOfShapes - 1, apertureInfo.totalNumOfShapes);
     timeBNOptAngles = timeFacMatrix * timeDAOBorderAngles;
 
     % values of average leaf speeds of optimized gantry angles

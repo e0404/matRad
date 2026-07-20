@@ -343,12 +343,12 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
             for i = 1:nBeams
 
                 %% Determine FMO parent beam
-                [~, stf(i).arc.beamParentFMOIndex] = min(abs(this.arcFMOGantryAngles - stf(i).gantryAngle));
-                stf(i).arc.beamParentGantryAngle   = this.arcFMOGantryAngles(stf(i).arc.beamParentFMOIndex);
-                [~, stf(i).arc.beamParentIndex]    = min(abs([stf.gantryAngle] - stf(i).arc.beamParentGantryAngle));
+                [~, stf(i).arc.parentFMOIx] = min(abs(this.arcFMOGantryAngles - stf(i).gantryAngle));
+                stf(i).arc.parentGantryAngle   = this.arcFMOGantryAngles(stf(i).arc.parentFMOIx);
+                [~, stf(i).arc.parentIx]    = min(abs([stf.gantryAngle] - stf(i).arc.parentGantryAngle));
 
-                stf(i).arc.FMOBeam = any(abs(this.arcFMOGantryAngles - stf(i).gantryAngle) < 1e-6);
-                stf(i).arc.DAOBeam = any(abs(this.arcDAOGantryAngles - stf(i).gantryAngle) < 1e-6);
+                stf(i).arc.isFMOBeam = any(abs(this.arcFMOGantryAngles - stf(i).gantryAngle) < 1e-6);
+                stf(i).arc.isDAOBeam = any(abs(this.arcDAOGantryAngles - stf(i).gantryAngle) < 1e-6);
 
                 %% Dose angle borders: angular range attributed to this beam
                 if i == 1
@@ -363,49 +363,51 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                                                         stf(i).arc.doseAngleBorders(2) - stf(i).gantryAngle];
                 stf(i).arc.doseAngleBordersDiff = sum(stf(i).arc.doseAngleBorderCentreDiff);
 
-                if stf(i).arc.DAOBeam
+                if stf(i).arc.isDAOBeam
                     %% DAO beam: record dose angle borders and compute DAO influence range
                     this.DAODoseAngleBorders(offset:offset + 1) = stf(i).arc.doseAngleBorders;
                     offset = offset + 2;
 
                     % Register as child of its FMO parent
-                    parent = stf(i).arc.beamParentIndex;
-                    if ~isfield(stf(parent).arc, 'beamChildrenGantryAngles') || isempty(stf(parent).arc.beamChildrenGantryAngles)
-                        stf(parent).arc.numOfBeamChildren         = 0;
-                        stf(parent).arc.beamChildrenGantryAngles  = nan(1000, 1);
-                        stf(parent).arc.beamChildrenIndex         = nan(1000, 1);
+                    parent = stf(i).arc.parentIx;
+                    if ~isfield(stf(parent).arc, 'childrenGantryAngles') || isempty(stf(parent).arc.childrenGantryAngles)
+                        stf(parent).arc.numOfChildren         = 0;
+                        stf(parent).arc.childrenGantryAngles  = nan(1000, 1);
+                        stf(parent).arc.childrenIx         = nan(1000, 1);
                     end
-                    n = stf(parent).arc.numOfBeamChildren + 1;
-                    stf(parent).arc.numOfBeamChildren             = n;
-                    stf(parent).arc.beamChildrenGantryAngles(n)   = stf(i).gantryAngle;
-                    stf(parent).arc.beamChildrenIndex(n)          = i;
+                    n = stf(parent).arc.numOfChildren + 1;
+                    stf(parent).arc.numOfChildren             = n;
+                    stf(parent).arc.childrenGantryAngles(n)   = stf(i).gantryAngle;
+                    stf(parent).arc.childrenIx(n)          = i;
 
                     % DAO influence angle borders
-                    DAOIndex = find(abs(this.arcDAOGantryAngles - stf(i).gantryAngle) < 1e-8);
+                    DAOBeamNumber = find(abs(this.arcDAOGantryAngles - stf(i).gantryAngle) < 1e-8);
 
-                    if DAOIndex == 1
+                    if DAOBeamNumber == 1
                         stf(i).arc.DAOAngleBorders = [this.arcStartAngle, ...
-                                                      (this.arcDAOGantryAngles(DAOIndex + 1) + this.arcDAOGantryAngles(DAOIndex)) / 2];
-                        lastDAOIndex = i;
-                        nextDAOIndex = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOIndex + 1)) < 1e-8);
+                                                      (this.arcDAOGantryAngles(DAOBeamNumber + 1) + this.arcDAOGantryAngles(DAOBeamNumber)) / 2];
+                        lastDAOBeamIx = i;
+                        nextDAOBeamIx = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOBeamNumber + 1)) < 1e-8);
 
-                    elseif DAOIndex == numel(this.arcDAOGantryAngles)
+                    elseif DAOBeamNumber == numel(this.arcDAOGantryAngles)
                         stf(i).arc.DAOAngleBorders = [ ...
-                                                      (this.arcDAOGantryAngles(DAOIndex - 1) + this.arcDAOGantryAngles(DAOIndex)) / 2, ...
+                                                      (this.arcDAOGantryAngles(DAOBeamNumber - 1) + this.arcDAOGantryAngles(DAOBeamNumber)) / 2, ...
                                                       this.arcFinishAngle];
-                        lastDAOIndex = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOIndex - 1)) < 1e-8);
-                        nextDAOIndex = i;
+                        lastDAOBeamIx = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOBeamNumber - 1)) < 1e-8);
+                        nextDAOBeamIx = i;
 
                     else
+                        neighbourAngles = [this.arcDAOGantryAngles(DAOBeamNumber - 1), ...
+                                           this.arcDAOGantryAngles(DAOBeamNumber + 1)];
                         stf(i).arc.DAOAngleBorders = ...
-                            ([this.arcDAOGantryAngles(DAOIndex - 1), this.arcDAOGantryAngles(DAOIndex + 1)] + this.arcDAOGantryAngles(DAOIndex)) / 2;
-                        lastDAOIndex = i;
-                        nextDAOIndex = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOIndex + 1)) < 1e-8);
+                            (neighbourAngles + this.arcDAOGantryAngles(DAOBeamNumber)) / 2;
+                        lastDAOBeamIx = i;
+                        nextDAOBeamIx = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOBeamNumber + 1)) < 1e-8);
                     end
 
-                    stf(i).arc.lastDAOIndex = lastDAOIndex;
-                    stf(i).arc.nextDAOIndex = nextDAOIndex;
-                    stf(i).arc.DAOIndex     = numDAO;
+                    stf(i).arc.lastDAOBeamIx = lastDAOBeamIx;
+                    stf(i).arc.nextDAOBeamIx = nextDAOBeamIx;
+                    stf(i).arc.DAOBeamNumber     = numDAO;
                     numDAO = numDAO + 1;
 
                     stf(i).arc.DAOAngleBorderCentreDiff = [stf(i).gantryAngle - stf(i).arc.DAOAngleBorders(1), ...
@@ -413,21 +415,21 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     stf(i).arc.DAOAngleBordersDiff = sum(stf(i).arc.DAOAngleBorderCentreDiff);
 
                     % Time factor: fraction of DAO sector time covered by this dose sector
-                    stf(i).arc.timeFacCurr = stf(i).arc.doseAngleBordersDiff / stf(i).arc.DAOAngleBordersDiff;
+                    stf(i).arc.timeFactorCurrent = stf(i).arc.doseAngleBordersDiff / stf(i).arc.DAOAngleBordersDiff;
 
                     if this.continuousAperture
-                        stf(i).arc.timeFac    = zeros(1, 3);
-                        stf(i).arc.timeFac(1) = ...
+                        stf(i).arc.timeFactors    = zeros(1, 3);
+                        stf(i).arc.timeFactors(1) = ...
                             (stf(i).arc.DAOAngleBorderCentreDiff(1) - stf(i).arc.doseAngleBorderCentreDiff(1)) / ...
                             stf(i).arc.DAOAngleBordersDiff;
-                        stf(i).arc.timeFac(2) = stf(i).arc.timeFacCurr;
-                        stf(i).arc.timeFac(3) = ...
+                        stf(i).arc.timeFactors(2) = stf(i).arc.timeFactorCurrent;
+                        stf(i).arc.timeFactors(3) = ...
                             (stf(i).arc.DAOAngleBorderCentreDiff(2) - stf(i).arc.doseAngleBorderCentreDiff(2)) / ...
                             stf(i).arc.DAOAngleBordersDiff;
 
-                        delInd                         = stf(i).arc.timeFac == 0;
-                        stf(i).arc.timeFacInd     = [timeFacIndOffset - 1, timeFacIndOffset, timeFacIndOffset + 1];
-                        stf(i).arc.timeFacInd(delInd) = 0;
+                        delInd                         = stf(i).arc.timeFactors == 0;
+                        stf(i).arc.timeFactorIx     = [timeFacIndOffset - 1, timeFacIndOffset, timeFacIndOffset + 1];
+                        stf(i).arc.timeFactorIx(delInd) = 0;
 
                         if delInd(3)
                             timeFacIndOffset = timeFacIndOffset + 1;
@@ -435,32 +437,32 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                             timeFacIndOffset = timeFacIndOffset + 2;
                         end
                     else
-                        stf(i).arc.timeFac    = zeros(1, 2);
-                        stf(i).arc.timeFac(1) = stf(i).arc.DAOAngleBorderCentreDiff(1) / stf(i).arc.DAOAngleBordersDiff;
-                        stf(i).arc.timeFac(2) = stf(i).arc.DAOAngleBorderCentreDiff(2) / stf(i).arc.DAOAngleBordersDiff;
+                        stf(i).arc.timeFactors    = zeros(1, 2);
+                        stf(i).arc.timeFactors(1) = stf(i).arc.DAOAngleBorderCentreDiff(1) / stf(i).arc.DAOAngleBordersDiff;
+                        stf(i).arc.timeFactors(2) = stf(i).arc.DAOAngleBorderCentreDiff(2) / stf(i).arc.DAOAngleBordersDiff;
                     end
 
                 else
                     %% Non-DAO beam: register as sub-child of FMO parent and record interpolation fraction
-                    parent = stf(i).arc.beamParentIndex;
-                    if ~isfield(stf(parent).arc, 'beamSubChildrenGantryAngles') || isempty(stf(parent).arc.beamSubChildrenGantryAngles)
-                        stf(parent).arc.numOfBeamSubChildren        = 0;
-                        stf(parent).arc.beamSubChildrenGantryAngles = nan(1000, 1);
-                        stf(parent).arc.beamSubChildrenIndex        = nan(1000, 1);
+                    parent = stf(i).arc.parentIx;
+                    if ~isfield(stf(parent).arc, 'subChildrenGantryAngles') || isempty(stf(parent).arc.subChildrenGantryAngles)
+                        stf(parent).arc.numOfSubChildren        = 0;
+                        stf(parent).arc.subChildrenGantryAngles = nan(1000, 1);
+                        stf(parent).arc.subChildrenIx        = nan(1000, 1);
                     end
-                    n = stf(parent).arc.numOfBeamSubChildren + 1;
-                    stf(parent).arc.numOfBeamSubChildren            = n;
-                    stf(parent).arc.beamSubChildrenGantryAngles(n)  = stf(i).gantryAngle;
-                    stf(parent).arc.beamSubChildrenIndex(n)         = i;
+                    n = stf(parent).arc.numOfSubChildren + 1;
+                    stf(parent).arc.numOfSubChildren            = n;
+                    stf(parent).arc.subChildrenGantryAngles(n)  = stf(i).gantryAngle;
+                    stf(parent).arc.subChildrenIx(n)         = i;
 
-                    stf(i).arc.fracFromLastDAO = (stf(nextDAOIndex).gantryAngle - stf(i).gantryAngle) / ...
-                                                      (stf(nextDAOIndex).gantryAngle - stf(lastDAOIndex).gantryAngle);
-                    stf(i).arc.lastDAOIndex = lastDAOIndex;
-                    stf(i).arc.nextDAOIndex = nextDAOIndex;
+                    stf(i).arc.weightFracFromLastDAO = (stf(nextDAOBeamIx).gantryAngle - stf(i).gantryAngle) / ...
+                                                      (stf(nextDAOBeamIx).gantryAngle - stf(lastDAOBeamIx).gantryAngle);
+                    stf(i).arc.lastDAOBeamIx = lastDAOBeamIx;
+                    stf(i).arc.nextDAOBeamIx = nextDAOBeamIx;
                 end
 
                 %% FMO beam: compute FMO influence angle borders
-                if stf(i).arc.FMOBeam
+                if stf(i).arc.isFMOBeam
                     FMOIndex = find(abs(this.arcFMOGantryAngles - stf(i).gantryAngle) < 1e-8);
 
                     if FMOIndex == 1
@@ -510,22 +512,22 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
             nBeams = numel(stf);
             for i = 1:nBeams
                 % Remove NaN padding from child/sub-child angle lists
-                if stf(i).arc.FMOBeam
-                    if isfield(stf(i).arc, 'beamChildrenGantryAngles')
-                        stf(i).arc.beamChildrenGantryAngles(isnan(stf(i).arc.beamChildrenGantryAngles)) = [];
-                        stf(i).arc.beamChildrenIndex(isnan(stf(i).arc.beamChildrenIndex)) = [];
+                if stf(i).arc.isFMOBeam
+                    if isfield(stf(i).arc, 'childrenGantryAngles')
+                        stf(i).arc.childrenGantryAngles(isnan(stf(i).arc.childrenGantryAngles)) = [];
+                        stf(i).arc.childrenIx(isnan(stf(i).arc.childrenIx)) = [];
                     else
-                        stf(i).arc.numOfBeamChildren = 0;
+                        stf(i).arc.numOfChildren = 0;
                     end
-                    if isfield(stf(i).arc, 'beamSubChildrenGantryAngles')
-                        stf(i).arc.beamSubChildrenGantryAngles(isnan(stf(i).arc.beamSubChildrenGantryAngles)) = [];
-                        stf(i).arc.beamSubChildrenIndex(isnan(stf(i).arc.beamSubChildrenIndex)) = [];
+                    if isfield(stf(i).arc, 'subChildrenGantryAngles')
+                        stf(i).arc.subChildrenGantryAngles(isnan(stf(i).arc.subChildrenGantryAngles)) = [];
+                        stf(i).arc.subChildrenIx(isnan(stf(i).arc.subChildrenIx)) = [];
                     else
-                        stf(i).arc.numOfBeamSubChildren = 0;
+                        stf(i).arc.numOfSubChildren = 0;
                     end
                 end
 
-                if stf(i).arc.DAOBeam && this.continuousAperture
+                if stf(i).arc.isDAOBeam && this.continuousAperture
                     stf(i).arc.doseAngleDAO = ones(1, 2);
                     if sum(this.DAODoseAngleBorders == stf(i).arc.doseAngleBorders(2)) > 1
                         % Final dose angle is shared - count it only once
@@ -533,19 +535,19 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     end
                 end
 
-                if ~stf(i).arc.FMOBeam && ~stf(i).arc.DAOBeam
+                if ~stf(i).arc.isFMOBeam && ~stf(i).arc.isDAOBeam
                     % Leaf position interpolation fractions
-                    lastBorder = stf(stf(i).arc.lastDAOIndex).arc.doseAngleBorders(2);
-                    nextBorder = stf(stf(i).arc.nextDAOIndex).arc.doseAngleBorders(1);
+                    lastBorder = stf(stf(i).arc.lastDAOBeamIx).arc.doseAngleBorders(2);
+                    nextBorder = stf(stf(i).arc.nextDAOBeamIx).arc.doseAngleBorders(1);
                     span = nextBorder - lastBorder;
 
-                    stf(i).arc.fracFromLastDAO_I = (nextBorder - stf(i).arc.doseAngleBorders(1)) / span;
-                    stf(i).arc.fracFromLastDAO_F = (nextBorder - stf(i).arc.doseAngleBorders(2)) / span;
-                    stf(i).arc.fracFromNextDAO_I = (stf(i).arc.doseAngleBorders(1) - lastBorder) / span;
-                    stf(i).arc.fracFromNextDAO_F = (stf(i).arc.doseAngleBorders(2) - lastBorder) / span;
+                    stf(i).arc.weightFracFromLastDAOInitial = (nextBorder - stf(i).arc.doseAngleBorders(1)) / span;
+                    stf(i).arc.weightFracFromLastDAOFinal = (nextBorder - stf(i).arc.doseAngleBorders(2)) / span;
+                    stf(i).arc.weightFracFromNextDAOInitial = (stf(i).arc.doseAngleBorders(1) - lastBorder) / span;
+                    stf(i).arc.weightFracFromNextDAOFinal = (stf(i).arc.doseAngleBorders(2) - lastBorder) / span;
 
                     % Time interpolation fractions (clamped to [0, 1])
-                    lastDAOBorder2 = stf(stf(i).arc.lastDAOIndex).arc.DAOAngleBorders(2);
+                    lastDAOBorder2 = stf(stf(i).arc.lastDAOBeamIx).arc.DAOAngleBorders(2);
                     stf(i).arc.timeFracFromLastDAO = min(max((lastDAOBorder2 - stf(i).arc.doseAngleBorders(1)) / ...
                                                              stf(i).arc.doseAngleBordersDiff, 0), 1);
                     stf(i).arc.timeFracFromNextDAO = min(max((stf(i).arc.doseAngleBorders(2) - lastDAOBorder2)  / ...

@@ -35,7 +35,7 @@ function apertureInfo = leafTouching(apertureInfo)
 
 % initialize
 dimZ = apertureInfo.beam(1).numOfActiveLeafPairs;
-numBeams = nnz([apertureInfo.arc.beam.DAOBeam]);
+numBeams = nnz([apertureInfo.arc.beam.isDAOBeam]);
 if ~isfield(apertureInfo.beam(1).shape(1), 'leftLeafPos_I')
     % Each non-interpolated beam should have 1 left/right leaf position
     leftLeafPoss = nan(dimZ, numBeams);
@@ -54,7 +54,7 @@ l = 1;
 m = 1;
 % collect all leaf positions
 for k = 1:numel(apertureInfo.beam)
-    if (k ~= 1 && apertureInfo.beam(k).gantryAngle == apertureInfo.beam(k - 1).gantryAngle) || ~apertureInfo.arc.beam(k).DAOBeam
+    if (k ~= 1 && apertureInfo.beam(k).gantryAngle == apertureInfo.beam(k - 1).gantryAngle) || ~apertureInfo.arc.beam(k).isDAOBeam
         continue
     end
 
@@ -80,7 +80,7 @@ for k = 1:numel(apertureInfo.beam)
 
     % Only important when cleaning up instances of opposing
     % leaves touching.
-    if apertureInfo.arc.beam(k).FMOBeam
+    if apertureInfo.arc.beam(k).isFMOBeam
         if apertureInfo.arc.beam(k).leafDir == 1
             % This means that the current arc sector is moving
             % in the normal direction (L-R).

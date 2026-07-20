@@ -38,17 +38,17 @@ if apertureInfo.continuousAperture
     % the vector be the leaf positions at the borders of the Dij arcs (for optimized angles only).
     % Therefore we must also use the times between the borders of the Dij
     % arc (for optimized angles only).
-    timeFac = [apertureInfo.arc.beam.timeFac]';
-    deleteInd = timeFac == 0;
-    timeFac(deleteInd) = [];
+    timeFactors = [apertureInfo.arc.beam.timeFactors]';
+    deleteInd = timeFactors == 0;
+    timeFactors(deleteInd) = [];
 
-    i = [apertureInfo.arc.beam.timeFacInd]';
+    i = [apertureInfo.arc.beam.timeFactorIx]';
     i(deleteInd) = [];
 
     j = repelem(1:apertureInfo.totalNumOfShapes, 1, 3);
     j(deleteInd) = [];
 
-    timeFacMatrix = sparse(i, j, timeFac, max(i), apertureInfo.totalNumOfShapes);
+    timeFacMatrix = sparse(i, j, timeFactors, max(i), apertureInfo.totalNumOfShapes);
     timeBNOptAngles = timeFacMatrix * timeDAOBorderAngles;
 
     % prep
@@ -67,15 +67,15 @@ if apertureInfo.continuousAperture
         if ~isempty(apertureInfo.arc.beam(i).leafConstMask)
 
             % get vector indices
-            if apertureInfo.arc.beam(i).DAOBeam
+            if apertureInfo.arc.beam(i).isDAOBeam
                 % if it's a DAO beam, use own vector offset
                 vectorIx_LI = apertureInfo.beam(i).shape(1).vectorOffset(1) + ((1:n) - 1);
                 vectorIx_LF = apertureInfo.beam(i).shape(1).vectorOffset(2) + ((1:n) - 1);
             else
                 % otherwise, use vector offset of previous and next
                 % beams
-                vectorIx_LI = apertureInfo.beam(apertureInfo.arc.beam(i).lastDAOIndex).shape(1).vectorOffset(2) + ((1:n) - 1);
-                vectorIx_LF = apertureInfo.beam(apertureInfo.arc.beam(i).nextDAOIndex).shape(1).vectorOffset(1) + ((1:n) - 1);
+                vectorIx_LI = apertureInfo.beam(apertureInfo.arc.beam(i).lastDAOBeamIx).shape(1).vectorOffset(2) + ((1:n) - 1);
+                vectorIx_LF = apertureInfo.beam(apertureInfo.arc.beam(i).nextDAOBeamIx).shape(1).vectorOffset(1) + ((1:n) - 1);
             end
             vectorIx_RI = vectorIx_LI + apertureInfo.totalNumOfLeafPairs;
             vectorIx_RF = vectorIx_LF + apertureInfo.totalNumOfLeafPairs;
@@ -128,11 +128,11 @@ else
     j(1) = [];
     j(end) = [];
 
-    timeFac = [apertureInfo.arc.beam.timeFac]';
-    timeFac(1) = [];
-    timeFac(end) = [];
+    timeFactors = [apertureInfo.arc.beam.timeFactors]';
+    timeFactors(1) = [];
+    timeFactors(end) = [];
 
-    timeFacMatrix = sparse(i, j, timeFac, apertureInfo.totalNumOfShapes - 1, apertureInfo.totalNumOfShapes);
+    timeFacMatrix = sparse(i, j, timeFactors, apertureInfo.totalNumOfShapes - 1, apertureInfo.totalNumOfShapes);
     timeBNOptAngles = timeFacMatrix * timeDAOBorderAngles;
 
     leftLeafSpeed = abs(diff(reshape(leftLeafPos, apertureInfo.beam(1).numOfActiveLeafPairs, []), 1, 2)) ./ ...
@@ -150,11 +150,11 @@ end
 l = 1;
 maxMaxLeafSpeed = 0;
 for i = 1:size(apertureInfo.beam, 2)
-    if apertureInfo.arc.beam(i).DAOBeam
+    if apertureInfo.arc.beam(i).isDAOBeam
         if apertureInfo.continuousAperture
             % for dynamic, we take the max leaf speed to be the actual leaf
             % speed
-            ind = apertureInfo.arc.beam(i).timeFacInd(apertureInfo.arc.beam(i).timeFac ~= 0);
+            ind = apertureInfo.arc.beam(i).timeFactorIx(apertureInfo.arc.beam(i).timeFactors ~= 0);
 
             apertureInfo.beam(i).maxLeafSpeed = max(maxLeafSpeed(ind));
             if apertureInfo.beam(i).maxLeafSpeed >= maxMaxLeafSpeed

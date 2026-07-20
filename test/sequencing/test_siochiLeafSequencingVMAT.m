@@ -61,7 +61,7 @@ sequencer = helper_getSequencer(pln);
 w = ones(sum([stf.numOfRays]), 1);
 sequence = sequencer.sequence(w, stf);
 
-fmoBeams = find(arrayfun(@(s) s.arc.FMOBeam, stf));
+fmoBeams = find(arrayfun(@(s) s.arc.isFMOBeam, stf));
 assertTrue(~isempty(fmoBeams));
 
 for i = 1:numel(stf)
@@ -84,7 +84,7 @@ assertEqual(numel(sequence.w), sum([stf.numOfRays]));
 
 % every DAO beam has exactly one shape with a single set of leaf positions
 for i = 1:numel(stf)
-    if apInfo.arc.beam(i).DAOBeam
+    if apInfo.arc.beam(i).isDAOBeam
         assertEqual(apInfo.beam(i).numOfShapes, 1);
         assertTrue(isfield(apInfo.beam(i).shape(1), 'leftLeafPos'));
         assertTrue(isfield(apInfo.beam(i).shape(1), 'MURate'));
@@ -98,11 +98,11 @@ sequencer = helper_getSequencer(pln);
 w = ones(sum([stf.numOfRays]), 1);
 sequence = sequencer.sequence(w, stf);
 
-% every FMO beam must end up with exactly numOfBeamChildren shapes
+% every FMO beam must end up with exactly numOfChildren shapes
 % distributed across its children (discardApertures caps it)
 for i = 1:numel(stf)
-    if stf(i).arc.FMOBeam
-        assertTrue(sequence.beam(i).numOfShapes <= stf(i).arc.numOfBeamChildren);
+    if stf(i).arc.isFMOBeam
+        assertTrue(sequence.beam(i).numOfShapes <= stf(i).arc.numOfChildren);
     end
 end
 

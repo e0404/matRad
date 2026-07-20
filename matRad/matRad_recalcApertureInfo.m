@@ -90,8 +90,8 @@ for i = 1:numel(apertureInfoOld.beam)
         apertureInfoNew.arc.beam(j).doseAngleBorders = stf(j).arc.doseAngleBorders;
         apertureInfoNew.arc.beam(j).doseAngleBorderCentreDiff = stf(j).arc.doseAngleBorderCentreDiff;
         apertureInfoNew.arc.beam(j).doseAngleBordersDiff = stf(j).arc.doseAngleBordersDiff;
-        apertureInfoNew.arc.beam(j).lastDAOIndex = stf(j).arc.lastDAOIndex;
-        apertureInfoNew.arc.beam(j).nextDAOIndex = stf(j).arc.nextDAOIndex;
+        apertureInfoNew.arc.beam(j).lastDAOBeamIx = stf(j).arc.lastDAOBeamIx;
+        apertureInfoNew.arc.beam(j).nextDAOBeamIx = stf(j).arc.nextDAOBeamIx;
 
         amountOfOldSpeed = (min(apertureInfoNew.arc.beam(j).doseAngleBorders(2), ...
                                 apertureInfoOld.arc.beam(i).doseAngleBorders(2)) - ...
@@ -168,11 +168,11 @@ for i = 1:numel(apertureInfoOld.beam)
         % overwritten
         % optAngleBorders becomes doseAngleBorders
         apertureInfoNew.beam(j).numOfShapes = 1;
-        apertureInfoNew.arc.beam(j).DAOBeam = true;
+        apertureInfoNew.arc.beam(j).isDAOBeam = true;
         apertureInfoNew.arc.beam(j).DAOAngleBorders = stf(j).arc.doseAngleBorders;
         apertureInfoNew.arc.beam(j).DAOAngleBorderCentreDiff = stf(j).arc.doseAngleBorderCentreDiff;
         apertureInfoNew.arc.beam(j).DAOAngleBordersDiff = stf(j).arc.doseAngleBordersDiff;
-        apertureInfoNew.arc.beam(j).timeFacCurr = ...
+        apertureInfoNew.arc.beam(j).timeFactorCurrent = ...
             apertureInfoNew.arc.beam(j).doseAngleBordersDiff ./ apertureInfoNew.arc.beam(j).DAOAngleBordersDiff; % = 1
 
         apertureInfoNew.apertureVector(shapeInd) = apertureInfoNew.beam(j).shape(1).weight;

@@ -36,7 +36,7 @@ apertureInfo = optiProb.apertureInfo;
 % get dosimetric bounds from cst by call to DAO superclass method
 [cl_dos_dao, cu_dos_dao] = matRad_getConstraintBounds@matRad_OptimizationProblemDAO(optiProb, cst);
 
-optInd = find([apertureInfo.arc.beam.DAOBeam]);
+optInd = find([apertureInfo.arc.beam.isDAOBeam]);
 
 % numOfActiveLeafPairs should be independent of the beam, due to using the
 % union of all ray positions in the stf

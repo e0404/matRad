@@ -109,7 +109,7 @@ offset = offset + apertureInfo.totalNumOfLeafPairs;
 % unique gets rid of double-counted angles (which is every interior
 % angle)
 
-optInd = [apertureInfo.arc.beam.DAOBeam];
+optInd = [apertureInfo.arc.beam.isDAOBeam];
 optAngleLengths = [apertureInfo.arc.beam(optInd).DAOAngleBordersDiff];
 optGantryRot = [apertureInfo.beam(optInd).gantryRot];
 apertureInfoVec((offset + 1):end) = optAngleLengths ./ optGantryRot; % entries are the times until the next opt gantry angle is reached

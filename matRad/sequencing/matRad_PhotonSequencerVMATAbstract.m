@@ -79,14 +79,14 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             leafDir = 1;
 
             for i = 1:numOfBeams
-                if stf(i).arc.FMOBeam
+                if stf(i).arc.isFMOBeam
 
                     % Spread apertures to each child angle
                     % according to the trajectory (mean leaf position). Assume that
                     % shapes are already order in increased (left to right) position
                     leafDir = -1 * leafDir;
 
-                    childrenIndex = stf(i).arc.beamChildrenIndex;
+                    childrenIndex = stf(i).arc.childrenIx;
                     if leafDir == -1
                         % reverse order of shapes
                         childrenIndex = flipud(childrenIndex);
@@ -127,7 +127,7 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
 
             for i = 1:numOfBeams
                 % now go through and calculate gantry rotation speed, MU rate, etc.
-                if stf(i).arc.FMOBeam
+                if stf(i).arc.isFMOBeam
                     beam(i).numOfShapes = beam(i).tempNumOfShapes;
                     beam(i).shapes = beam(i).tempShapes;
                     beam(i).shapesWeight = beam(i).tempShapesWeight;
@@ -136,21 +136,21 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
                     beam(i).tempShapes = [];
                     beam(i).tempShapesWeight = [];
 
-                    for j = 1:stf(i).arc.numOfBeamSubChildren
+                    for j = 1:stf(i).arc.numOfSubChildren
                         % Prevents the aperture-info construction from attempting
                         % to convert shape to aperturevec for subchildren
-                        beam(stf(i).arc.beamSubChildrenIndex(j)).numOfShapes = 0;
+                        beam(stf(i).arc.subChildrenIx(j)).numOfShapes = 0;
                     end
                 end
 
-                if stf(i).arc.DAOBeam
+                if stf(i).arc.isDAOBeam
                     beam(i).gantryRot = sequencing.constraints.gantryRotationSpeed(2); % gantry rotation rate until next opt angle
                     % dose rate until next opt angle
                     beam(i).MURate = this.weightToMU .* beam(i).shapesWeight .* beam(i).gantryRot ./ ...
                         stf(i).arc.DAOAngleBordersDiff;
                     % Rescale weight to represent only this control point; weight will be shared
                     % with the interpolared control points in matRad_daoVec2ApertureInfo
-                    beam(i).shapesWeight = beam(i).shapesWeight .* stf(i).arc.timeFacCurr;
+                    beam(i).shapesWeight = beam(i).shapesWeight .* stf(i).arc.timeFactorCurrent;
                 end
             end
 
@@ -270,14 +270,14 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
                 apertureInfo.beam(i).bixOffset = bixOffset;
                 bixOffset = bixOffset + apertureInfo.beam(i).numOfActiveLeafPairs;
 
-                apertureInfo.arc.beam(i).DAOBeam = stf(i).arc.DAOBeam;
-                apertureInfo.arc.beam(i).FMOBeam = stf(i).arc.FMOBeam;
+                apertureInfo.arc.beam(i).isDAOBeam = stf(i).arc.isDAOBeam;
+                apertureInfo.arc.beam(i).isFMOBeam = stf(i).arc.isFMOBeam;
                 apertureInfo.arc.beam(i).leafDir = sequence.beam(i).leafDir;
                 apertureInfo.arc.beam(i).doseAngleBorders = stf(i).arc.doseAngleBorders;
                 apertureInfo.arc.beam(i).doseAngleBorderCentreDiff = stf(i).arc.doseAngleBorderCentreDiff;
                 apertureInfo.arc.beam(i).doseAngleBordersDiff = stf(i).arc.doseAngleBordersDiff;
 
-                if apertureInfo.arc.beam(i).DAOBeam
+                if apertureInfo.arc.beam(i).isDAOBeam
 
                     totalNumOfOptBixels = totalNumOfOptBixels + stf(i).totalNumOfBixels;
                     totalNumOfLeafPairs = totalNumOfLeafPairs + apertureInfo.beam(i).numOfShapes * apertureInfo.beam(i).numOfActiveLeafPairs;
@@ -288,50 +288,50 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
                     apertureInfo.arc.beam(i).DAOAngleBorderCentreDiff = stf(i).arc.DAOAngleBorderCentreDiff;
                     apertureInfo.arc.beam(i).DAOAngleBordersDiff = stf(i).arc.DAOAngleBordersDiff;
 
-                    apertureInfo.arc.beam(i).timeFacCurr = stf(i).arc.timeFacCurr;
-                    apertureInfo.arc.beam(i).timeFac = stf(i).arc.timeFac;
+                    apertureInfo.arc.beam(i).timeFactorCurrent = stf(i).arc.timeFactorCurrent;
+                    apertureInfo.arc.beam(i).timeFactors = stf(i).arc.timeFactors;
 
-                    apertureInfo.arc.beam(i).lastDAOIndex = stf(i).arc.lastDAOIndex;
-                    apertureInfo.arc.beam(i).nextDAOIndex = stf(i).arc.nextDAOIndex;
-                    apertureInfo.arc.beam(i).DAOIndex = stf(i).arc.DAOIndex;
+                    apertureInfo.arc.beam(i).lastDAOBeamIx = stf(i).arc.lastDAOBeamIx;
+                    apertureInfo.arc.beam(i).nextDAOBeamIx = stf(i).arc.nextDAOBeamIx;
+                    apertureInfo.arc.beam(i).DAOBeamNumber = stf(i).arc.DAOBeamNumber;
 
-                    if apertureInfo.arc.beam(i).FMOBeam
+                    if apertureInfo.arc.beam(i).isFMOBeam
                         apertureInfo.arc.beam(i).FMOAngleBorders = stf(i).arc.FMOAngleBorders;
                         apertureInfo.arc.beam(i).FMOAngleBorderCentreDiff = stf(i).arc.FMOAngleBorderCentreDiff;
                         apertureInfo.arc.beam(i).FMOAngleBordersDiff = stf(i).arc.FMOAngleBordersDiff;
                     end
 
                     if this.continuousAperture
-                        apertureInfo.arc.beam(i).timeFacInd = stf(i).arc.timeFacInd;
+                        apertureInfo.arc.beam(i).timeFactorIx = stf(i).arc.timeFactorIx;
                         apertureInfo.arc.beam(i).doseAngleDAO = stf(i).arc.doseAngleDAO;
 
                         apertureInfo.arc.beam(i).leafConstMask = 1;
-                        interpGetsTransition = apertureInfo.arc.beam(i).timeFac(3) ~= 0;
+                        interpGetsTransition = apertureInfo.arc.beam(i).timeFactors(3) ~= 0;
                     end
 
-                    apertureInfo.arc.jacobT(stf(i).arc.DAOIndex, i) = stf(i).arc.timeFacCurr;
+                    apertureInfo.arc.jacobT(stf(i).arc.DAOBeamNumber, i) = stf(i).arc.timeFactorCurrent;
 
                 else
-                    apertureInfo.arc.beam(i).fracFromLastDAO = stf(i).arc.fracFromLastDAO;
+                    apertureInfo.arc.beam(i).weightFracFromLastDAO = stf(i).arc.weightFracFromLastDAO;
                     apertureInfo.arc.beam(i).timeFracFromLastDAO = stf(i).arc.timeFracFromLastDAO;
                     apertureInfo.arc.beam(i).timeFracFromNextDAO = stf(i).arc.timeFracFromNextDAO;
-                    apertureInfo.arc.beam(i).lastDAOIndex = stf(i).arc.lastDAOIndex;
-                    apertureInfo.arc.beam(i).nextDAOIndex = stf(i).arc.nextDAOIndex;
+                    apertureInfo.arc.beam(i).lastDAOBeamIx = stf(i).arc.lastDAOBeamIx;
+                    apertureInfo.arc.beam(i).nextDAOBeamIx = stf(i).arc.nextDAOBeamIx;
 
                     if this.continuousAperture
-                        apertureInfo.arc.beam(i).fracFromLastDAO_I = stf(i).arc.fracFromLastDAO_I;
-                        apertureInfo.arc.beam(i).fracFromLastDAO_F = stf(i).arc.fracFromLastDAO_F;
-                        apertureInfo.arc.beam(i).fracFromNextDAO_I = stf(i).arc.fracFromNextDAO_I;
-                        apertureInfo.arc.beam(i).fracFromNextDAO_F = stf(i).arc.fracFromNextDAO_F;
+                        apertureInfo.arc.beam(i).weightFracFromLastDAOInitial = stf(i).arc.weightFracFromLastDAOInitial;
+                        apertureInfo.arc.beam(i).weightFracFromLastDAOFinal = stf(i).arc.weightFracFromLastDAOFinal;
+                        apertureInfo.arc.beam(i).weightFracFromNextDAOInitial = stf(i).arc.weightFracFromNextDAOInitial;
+                        apertureInfo.arc.beam(i).weightFracFromNextDAOFinal = stf(i).arc.weightFracFromNextDAOFinal;
                     end
 
-                    lastDAO = stf(i).arc.lastDAOIndex;
-                    nextDAO = stf(i).arc.nextDAOIndex;
+                    lastDAO = stf(i).arc.lastDAOBeamIx;
+                    nextDAO = stf(i).arc.nextDAOBeamIx;
                     lastDoseAngleBordersDiff = stf(lastDAO).arc.doseAngleBordersDiff;
 
-                    apertureInfo.arc.jacobT(stf(lastDAO).arc.DAOIndex, i) = stf(lastDAO).arc.timeFacCurr .* ...
+                    apertureInfo.arc.jacobT(stf(lastDAO).arc.DAOBeamNumber, i) = stf(lastDAO).arc.timeFactorCurrent .* ...
                         stf(i).arc.timeFracFromLastDAO .* stf(i).arc.doseAngleBordersDiff ./ lastDoseAngleBordersDiff;
-                    apertureInfo.arc.jacobT(stf(nextDAO).arc.DAOIndex, i) = stf(nextDAO).arc.timeFacCurr .* ...
+                    apertureInfo.arc.jacobT(stf(nextDAO).arc.DAOBeamNumber, i) = stf(nextDAO).arc.timeFactorCurrent .* ...
                         stf(i).arc.timeFracFromNextDAO .* stf(i).arc.doseAngleBordersDiff ./ lastDoseAngleBordersDiff;
 
                     if interpGetsTransition
@@ -358,7 +358,7 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);
 
             if apertureInfo.continuousAperture
-                isDAOBeam = [apertureInfo.arc.beam.DAOBeam];
+                isDAOBeam = [apertureInfo.arc.beam.isDAOBeam];
                 apertureInfo.totalNumOfLeafPairs = sum(reshape([apertureInfo.arc.beam(isDAOBeam).doseAngleDAO], 2, []), 1) * ...
                     [apertureInfo.beam(isDAOBeam).numOfActiveLeafPairs]';
 
@@ -373,7 +373,7 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
 
             shapeInd = 0;
             for i = 1:numel(apertureInfo.beam)
-                if apertureInfo.arc.beam(i).DAOBeam
+                if apertureInfo.arc.beam(i).isDAOBeam
                     shapeInd = shapeInd + 1;
                     apertureInfo.arc.beam(i).timeInd = apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs * 2 + shapeInd;
                 end

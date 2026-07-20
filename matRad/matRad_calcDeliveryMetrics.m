@@ -76,33 +76,33 @@ if apertureInfo.runVMAT
     timeOptBorderAngles = apertureInfoVec((1 + nShapes + nLP * 2):end);
 
     if apertureInfo.continuousAperture
-        timeDoseBorderAngles = timeOptBorderAngles .* [apertureInfo.arc.beam([apertureInfo.arc.beam.DAOBeam]).timeFacCurr]';
+        timeDoseBorderAngles = timeOptBorderAngles .* [apertureInfo.arc.beam([apertureInfo.arc.beam.isDAOBeam]).timeFactorCurrent]';
 
         leftLeafDiff = diff(reshape(leftLeafPos, nPairs, []), 1, 2);
         rightLeafDiff = diff(reshape(rightLeafPos, nPairs, []), 1, 2);
 
-        isDAO = repmat([apertureInfo.arc.beam.DAOBeam], nPairs, 1);
+        isDAO = repmat([apertureInfo.arc.beam.isDAOBeam], nPairs, 1);
         leftLeafDiff  = reshape(leftLeafDiff(isDAO), nPairs, nShapes);
         rightLeafDiff = reshape(rightLeafDiff(isDAO), nPairs, nShapes);
 
         lfspd = reshape([leftLeafDiff rightLeafDiff] ./ ...
                         repmat(timeDoseBorderAngles', nPairs, 2), 2 * nPairs * numel(timeDoseBorderAngles), 1);
 
-        optAngles = [apertureInfo.beam([apertureInfo.arc.beam.DAOBeam]).gantryAngle];
+        optAngles = [apertureInfo.beam([apertureInfo.arc.beam.isDAOBeam]).gantryAngle];
         optAnglesMat = reshape(repmat(optAngles, nPairs, 2), 2 * nPairs * numel(timeDoseBorderAngles), 1);
     else
-        optInd = [apertureInfo.arc.beam.DAOBeam];
+        optInd = [apertureInfo.arc.beam.isDAOBeam];
 
         i = repelem(1:(nShapes - 1), 2);
         j = repelem(1:nShapes, 2);
         j(1) = [];
         j(end) = [];
 
-        timeFac = [apertureInfo.arc.beam(optInd).timeFac]';
-        timeFac(1) = [];
-        timeFac(end) = [];
+        timeFactors = [apertureInfo.arc.beam(optInd).timeFactors]';
+        timeFactors(1) = [];
+        timeFactors(end) = [];
 
-        timeFacMatrix = sparse(i, j, timeFac, nShapes - 1, nShapes);
+        timeFacMatrix = sparse(i, j, timeFactors, nShapes - 1, nShapes);
         timeBNOptAngles = timeFacMatrix * timeOptBorderAngles;
 
         lfspd = reshape([abs(diff(reshape(leftLeafPos, nPairs, nShapes), 1, 2)) ...
@@ -115,7 +115,7 @@ if apertureInfo.runVMAT
         % FMOBorders = zeros(1,2*numel(pln.propStf.FMOGantryAngles));
         counter = 1;
         for i = 1:numel(stf)
-            if stf(i).arc.FMOBeam
+            if stf(i).arc.isFMOBeam
                 FMOBorders(counter) = stf(i).arc.FMOAngleBorders(1);
                 FMOBorders(counter + 1) = stf(i).arc.FMOAngleBorders(2);
                 counter = counter + 2;

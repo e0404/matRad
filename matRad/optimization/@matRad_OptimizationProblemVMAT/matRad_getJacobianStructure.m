@@ -86,7 +86,7 @@ end
 
 if ~isempty(jacobStruct_dos_bixel)
 
-    DAOBeams = find([apertureInfo.arc.beam.DAOBeam]);
+    DAOBeams = find([apertureInfo.arc.beam.isDAOBeam]);
 
     % stride between the per-constraint blocks of the flattened sparse
     % vector; independent of the beam and leaf pair, so hoisted out
@@ -104,7 +104,7 @@ if ~isempty(jacobStruct_dos_bixel)
         % contribution of this beam's weight, shared by every branch below
         weightContrib = sum(jacobStruct_dos_bixel(:, apertureInfo.beam(i).bixelIndMap(ixWeight)), 2);
 
-        if apertureInfo.arc.beam(i).DAOBeam
+        if apertureInfo.arc.beam(i).isDAOBeam
             % DAO beam, don't worry about adding since this is just
             % struct, i.e. we are only interested if the element is
             % non-zero
@@ -137,10 +137,10 @@ if ~isempty(jacobStruct_dos_bixel)
             % first weight
 
             % give fraction of gradient to previous optimized beam
-            lastDAOInd = find(DAOBeams == apertureInfo.arc.beam(i).lastDAOIndex, 1);
+            lastDAOInd = find(DAOBeams == apertureInfo.arc.beam(i).lastDAOBeamIx, 1);
             jacobStructSparseVec(lastDAOInd == j_sparse) = jacobStructSparseVec(lastDAOInd == j_sparse) + weightContrib;
             % give the other fraction to next optimized beam
-            nextDAOInd = find(DAOBeams == apertureInfo.arc.beam(i).nextDAOIndex, 1);
+            nextDAOInd = find(DAOBeams == apertureInfo.arc.beam(i).nextDAOBeamIx, 1);
             jacobStructSparseVec(nextDAOInd == j_sparse) = jacobStructSparseVec(nextDAOInd == j_sparse) + weightContrib;
 
             % now leaf pos
@@ -151,7 +151,7 @@ if ~isempty(jacobStruct_dos_bixel)
                 indInBixVec = apertureInfo.beam(i).bixelIndMap(k, ixLeaf);
 
                 % give fraction of gradient to previous optimized beam
-                indInOptVec = apertureInfo.beam(apertureInfo.arc.beam(i).lastDAOIndex).shape(1).vectorOffset + k - 1;
+                indInOptVec = apertureInfo.beam(apertureInfo.arc.beam(i).lastDAOBeamIx).shape(1).vectorOffset + k - 1;
                 indInOptVec = repmat(indInOptVec, 1, repFactor) + leafPosStride;
                 indInSparseVec = repmat(indInOptVec, 1, numOfConstraints) + constraintStride;
 
@@ -159,7 +159,7 @@ if ~isempty(jacobStruct_dos_bixel)
                     repelem(sum(jacobStruct_dos_bixel(:, indInBixVec), 2), 2 * repFactor, 1);
 
                 % give the other fraction to next optimized beam
-                indInOptVec = apertureInfo.beam(apertureInfo.arc.beam(i).nextDAOIndex).shape(1).vectorOffset + k - 1;
+                indInOptVec = apertureInfo.beam(apertureInfo.arc.beam(i).nextDAOBeamIx).shape(1).vectorOffset + k - 1;
                 indInOptVec = repmat(indInOptVec, 1, repFactor) + leafPosStride;
                 indInSparseVec = repmat(indInOptVec, 1, numOfConstraints) + constraintStride;
 
@@ -170,11 +170,11 @@ if ~isempty(jacobStruct_dos_bixel)
             % now time
 
             % give fraction of gradient to previous optimized beam
-            lastDAOIndTime = find(DAOBeams == apertureInfo.arc.beam(i).lastDAOIndex, 1) + timeOffset;
+            lastDAOIndTime = find(DAOBeams == apertureInfo.arc.beam(i).lastDAOBeamIx, 1) + timeOffset;
             jacobStructSparseVec(lastDAOIndTime == j_sparse) = jacobStructSparseVec(lastDAOIndTime == j_sparse) + weightContrib;
 
             % give the other fraction to next optimized beam
-            nextDAOIndTime = find(DAOBeams == apertureInfo.arc.beam(i).nextDAOIndex, 1) + timeOffset;
+            nextDAOIndTime = find(DAOBeams == apertureInfo.arc.beam(i).nextDAOBeamIx, 1) + timeOffset;
             jacobStructSparseVec(nextDAOIndTime == j_sparse) = jacobStructSparseVec(nextDAOIndTime == j_sparse) + weightContrib;
         end
     end
@@ -208,15 +208,15 @@ if apertureInfo.continuousAperture
         if ~isempty(apertureInfo.arc.beam(i).leafConstMask)
 
             % get vector indices
-            if apertureInfo.arc.beam(i).DAOBeam
+            if apertureInfo.arc.beam(i).isDAOBeam
                 % if it's a DAO beam, use own vector offset
                 vectorIx_LI = apertureInfo.beam(i).shape(1).vectorOffset(1) + ((1:n) - 1);
                 vectorIx_LF = apertureInfo.beam(i).shape(1).vectorOffset(2) + ((1:n) - 1);
             else
                 % otherwise, use vector offset of previous and next
                 % beams
-                vectorIx_LI = apertureInfo.beam(apertureInfo.arc.beam(i).lastDAOIndex).shape(1).vectorOffset(2) + ((1:n) - 1);
-                vectorIx_LF = apertureInfo.beam(apertureInfo.arc.beam(i).nextDAOIndex).shape(1).vectorOffset(1) + ((1:n) - 1);
+                vectorIx_LI = apertureInfo.beam(apertureInfo.arc.beam(i).lastDAOBeamIx).shape(1).vectorOffset(2) + ((1:n) - 1);
+                vectorIx_LF = apertureInfo.beam(apertureInfo.arc.beam(i).nextDAOBeamIx).shape(1).vectorOffset(1) + ((1:n) - 1);
             end
             vectorIx_RI = vectorIx_LI + apertureInfo.totalNumOfLeafPairs;
             vectorIx_RF = vectorIx_LF + apertureInfo.totalNumOfLeafPairs;
@@ -244,7 +244,7 @@ if apertureInfo.continuousAperture
             % wrt time (left, then right)
             % how we do this depends on if it's a DAO beam or
             % not
-            if apertureInfo.arc.beam(i).DAOBeam
+            if apertureInfo.arc.beam(i).isDAOBeam
                 % if it is, then speeds only depend on its own
                 % time
                 i_sparse(indInSparseVec)    = indInConVec;
@@ -261,20 +261,20 @@ if apertureInfo.continuousAperture
 
                 % before
                 i_sparse(indInSparseVec)    = indInConVec;
-                j_sparse(indInSparseVec)    = apertureInfo.arc.beam(apertureInfo.arc.beam(i).lastDAOIndex).timeInd;
+                j_sparse(indInSparseVec)    = apertureInfo.arc.beam(apertureInfo.arc.beam(i).lastDAOBeamIx).timeInd;
                 indInSparseVec              = indInSparseVec + n;
 
                 i_sparse(indInSparseVec)    = indInConVec + apertureInfo.arc.numLeafSpeedConstraint * apertureInfo.beam(1).numOfActiveLeafPairs;
-                j_sparse(indInSparseVec)    = apertureInfo.arc.beam(apertureInfo.arc.beam(i).lastDAOIndex).timeInd;
+                j_sparse(indInSparseVec)    = apertureInfo.arc.beam(apertureInfo.arc.beam(i).lastDAOBeamIx).timeInd;
                 indInSparseVec              = indInSparseVec + n;
 
                 % after
                 i_sparse(indInSparseVec)    = indInConVec;
-                j_sparse(indInSparseVec)    = apertureInfo.arc.beam(apertureInfo.arc.beam(i).nextDAOIndex).timeInd;
+                j_sparse(indInSparseVec)    = apertureInfo.arc.beam(apertureInfo.arc.beam(i).nextDAOBeamIx).timeInd;
                 indInSparseVec              = indInSparseVec + n;
 
                 i_sparse(indInSparseVec)    = indInConVec + apertureInfo.arc.numLeafSpeedConstraint * apertureInfo.beam(1).numOfActiveLeafPairs;
-                j_sparse(indInSparseVec)    = apertureInfo.arc.beam(apertureInfo.arc.beam(i).nextDAOIndex).timeInd;
+                j_sparse(indInSparseVec)    = apertureInfo.arc.beam(apertureInfo.arc.beam(i).nextDAOBeamIx).timeInd;
                 indInSparseVec              = indInSparseVec + n;
 
             end

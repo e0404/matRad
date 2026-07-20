@@ -308,7 +308,7 @@ end
 function isDAOBeam = matRad_getDAOFlags(apertureInfo, numOfBeams)
 isDAOBeam = true(1, numOfBeams);
 if isfield(apertureInfo, 'arc') && isfield(apertureInfo.arc, 'beam')
-    isDAOBeam = logical([apertureInfo.arc.beam.DAOBeam]);
+    isDAOBeam = logical([apertureInfo.arc.beam.isDAOBeam]);
 end
 end
 

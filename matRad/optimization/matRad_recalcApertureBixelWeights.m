@@ -65,7 +65,7 @@ for i = 1:numel(updatedInfo.beam)
     mlcOptions.n = n;
     mlcOptions.numBix = size(apertureInfo.beam(i).bixelIndMap, 2);
     mlcOptions.bixelIndMap = apertureInfo.beam(i).bixelIndMap;
-    calcOptions.DAOBeam = updatedInfo.arc.beam(i).DAOBeam;
+    calcOptions.isDAOBeam = updatedInfo.arc.beam(i).isDAOBeam;
 
     shapeMap_I = zeros(size(updatedInfo.beam(i).bixelIndMap));
     shapeMap_F = zeros(size(updatedInfo.beam(i).bixelIndMap));
