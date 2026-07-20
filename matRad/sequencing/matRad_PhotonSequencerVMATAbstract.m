@@ -352,7 +352,7 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             apertureInfo.weightToMU         = this.weightToMU;
 
             % machine delivery constraints
-            apertureInfo.constraints = this.getMachineConstraints(stf);
+            apertureInfo.deliveryConstraints = this.getMachineConstraints(stf);
 
             apertureInfo.totalNumOfOptBixels = totalNumOfOptBixels;
             apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);

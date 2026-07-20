@@ -41,8 +41,8 @@ optInd = find([apertureInfo.arc.beam.isDAOBeam]);
 % numOfActiveLeafPairs should be independent of the beam, due to using the
 % union of all ray positions in the stf
 nLeafPairs = apertureInfo.beam(1).numOfActiveLeafPairs;
-leafSpeedLim = apertureInfo.constraints.leafSpeed;
-muRateLim = apertureInfo.constraints.monitorUnitRate;
+leafSpeedLim = apertureInfo.deliveryConstraints.leafSpeed;
+muRateLim = apertureInfo.deliveryConstraints.monitorUnitRate;
 
 % Convert from cm/deg when checking constraints; cannot do it at this stage
 % since gantry rotation speed is not hard-coded
