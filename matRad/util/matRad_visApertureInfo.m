@@ -96,7 +96,7 @@ end
 end
 
 function ok = matRad_requireVMAT(isVMAT, viewName)
-% The trajectory and metrics views read apertureInfo.propVMAT, which only
+% The trajectory and metrics views read apertureInfo.arc, which only
 % exists for VMAT plans.
 ok = isVMAT;
 if ~ok
@@ -307,8 +307,8 @@ end
 
 function isDAOBeam = matRad_getDAOFlags(apertureInfo, numOfBeams)
 isDAOBeam = true(1, numOfBeams);
-if isfield(apertureInfo, 'propVMAT') && isfield(apertureInfo.propVMAT, 'beam')
-    isDAOBeam = logical([apertureInfo.propVMAT.beam.DAOBeam]);
+if isfield(apertureInfo, 'arc') && isfield(apertureInfo.arc, 'beam')
+    isDAOBeam = logical([apertureInfo.arc.beam.DAOBeam]);
 end
 end
 
@@ -404,8 +404,8 @@ gantryRot = gantryRot(order);
 leafSpeed = leafSpeed(order);
 
 constraints = struct();
-if isfield(apertureInfo, 'propVMAT') && isfield(apertureInfo.propVMAT, 'constraints')
-    constraints = apertureInfo.propVMAT.constraints;
+if isfield(apertureInfo, 'arc') && isfield(apertureInfo.arc, 'constraints')
+    constraints = apertureInfo.arc.constraints;
 end
 
 figure('units', 'inches');

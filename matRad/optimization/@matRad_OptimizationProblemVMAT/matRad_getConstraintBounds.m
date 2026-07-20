@@ -36,18 +36,18 @@ apertureInfo = optiProb.apertureInfo;
 % get dosimetric bounds from cst by call to DAO superclass method
 [cl_dos_dao, cu_dos_dao] = matRad_getConstraintBounds@matRad_OptimizationProblemDAO(optiProb, cst);
 
-optInd = find([apertureInfo.propVMAT.beam.DAOBeam]);
+optInd = find([apertureInfo.arc.beam.DAOBeam]);
 
 % numOfActiveLeafPairs should be independent of the beam, due to using the
 % union of all ray positions in the stf
 nLeafPairs = apertureInfo.beam(1).numOfActiveLeafPairs;
-leafSpeedLim = apertureInfo.propVMAT.constraints.leafSpeed;
-muRateLim = apertureInfo.propVMAT.constraints.monitorUnitRate;
+leafSpeedLim = apertureInfo.arc.constraints.leafSpeed;
+muRateLim = apertureInfo.arc.constraints.monitorUnitRate;
 
 % Convert from cm/deg when checking constraints; cannot do it at this stage
 % since gantry rotation speed is not hard-coded
 if apertureInfo.continuousAperture
-    nLeafSpeed = 2 * apertureInfo.propVMAT.numLeafSpeedConstraint * nLeafPairs;
+    nLeafSpeed = 2 * apertureInfo.arc.numLeafSpeedConstraint * nLeafPairs;
 else
     nLeafSpeed = 2 * (numel(optInd) - 1) * nLeafPairs;
 end

@@ -46,15 +46,15 @@ apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(apertureInfo);
 doInterp = false;
 
 for i = 1:size(apertureInfo.beam, 2)
-    if apertureInfo.propVMAT.beam(i).DAOBeam
+    if apertureInfo.arc.beam(i).DAOBeam
 
         % all of these should be greater than 1, since DAO respects the
         % constraints
 
         % if one of them is less than 1, then a constraint is violated
-        factorMURate    = apertureInfo.propVMAT.constraints.monitorUnitRate(2) / apertureInfo.beam(i).shape(1).MURate;
-        factorLeafSpeed = apertureInfo.propVMAT.constraints.leafSpeed(2) / apertureInfo.beam(i).maxLeafSpeed;
-        factorGantryRot = apertureInfo.propVMAT.constraints.gantryRotationSpeed(2) / apertureInfo.beam(i).gantryRot;
+        factorMURate    = apertureInfo.arc.constraints.monitorUnitRate(2) / apertureInfo.beam(i).shape(1).MURate;
+        factorLeafSpeed = apertureInfo.arc.constraints.leafSpeed(2) / apertureInfo.beam(i).maxLeafSpeed;
+        factorGantryRot = apertureInfo.arc.constraints.gantryRotationSpeed(2) / apertureInfo.beam(i).gantryRot;
 
         % The constraint that is limiting the speed the most is the one
         % whose factor is closest to 1
@@ -73,7 +73,7 @@ for i = 1:size(apertureInfo.beam, 2)
         apertureInfo.beam(i).gantryRot = factor * apertureInfo.beam(i).gantryRot;
         apertureInfo.beam(i).time = apertureInfo.beam(i).time / factor;
 
-        factorMURate = apertureInfo.propVMAT.constraints.monitorUnitRate(1) / apertureInfo.beam(i).shape(1).MURate;
+        factorMURate = apertureInfo.arc.constraints.monitorUnitRate(1) / apertureInfo.beam(i).shape(1).MURate;
 
         if factorMURate > 1
             apertureInfo.beam(i).shape(1).MURate = factorMURate * apertureInfo.beam(i).shape(1).MURate;

@@ -314,12 +314,12 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
             masterRayPosBEV      = unique([x, y, z], 'rows');
             masterTargetPointBEV = [2 * masterRayPosBEV(:, 1), SAD * ones(size(masterRayPosBEV, 1), 1), 2 * masterRayPosBEV(:, 3)];
 
-            %% VMAT post-processing pass 1: assign propVMAT fields per beam
+            %% VMAT post-processing pass 1: assign arc fields per beam
             matRad_cfg.dispInfo('VMAT stf beam type and geometry setup... ');
             stf = this.prepareArcs(stf, masterRayPosBEV,  masterTargetPointBEV);
 
             %% VMAT post-processing pass 2: derived quantities that require
-            %  the complete propVMAT data from pass 1
+            %  the complete arc data from pass 1
             matRad_cfg.dispInfo('VMAT stf cleanup... ');
 
             stf = this.finalizeArcs(stf);
@@ -343,91 +343,91 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
             for i = 1:nBeams
 
                 %% Determine FMO parent beam
-                [~, stf(i).propVMAT.beamParentFMOIndex] = min(abs(this.arcFMOGantryAngles - stf(i).gantryAngle));
-                stf(i).propVMAT.beamParentGantryAngle   = this.arcFMOGantryAngles(stf(i).propVMAT.beamParentFMOIndex);
-                [~, stf(i).propVMAT.beamParentIndex]    = min(abs([stf.gantryAngle] - stf(i).propVMAT.beamParentGantryAngle));
+                [~, stf(i).arc.beamParentFMOIndex] = min(abs(this.arcFMOGantryAngles - stf(i).gantryAngle));
+                stf(i).arc.beamParentGantryAngle   = this.arcFMOGantryAngles(stf(i).arc.beamParentFMOIndex);
+                [~, stf(i).arc.beamParentIndex]    = min(abs([stf.gantryAngle] - stf(i).arc.beamParentGantryAngle));
 
-                stf(i).propVMAT.FMOBeam = any(abs(this.arcFMOGantryAngles - stf(i).gantryAngle) < 1e-6);
-                stf(i).propVMAT.DAOBeam = any(abs(this.arcDAOGantryAngles - stf(i).gantryAngle) < 1e-6);
+                stf(i).arc.FMOBeam = any(abs(this.arcFMOGantryAngles - stf(i).gantryAngle) < 1e-6);
+                stf(i).arc.DAOBeam = any(abs(this.arcDAOGantryAngles - stf(i).gantryAngle) < 1e-6);
 
                 %% Dose angle borders: angular range attributed to this beam
                 if i == 1
-                    stf(i).propVMAT.doseAngleBorders = [this.arcStartAngle, (stf(2).gantryAngle + stf(i).gantryAngle) / 2];
+                    stf(i).arc.doseAngleBorders = [this.arcStartAngle, (stf(2).gantryAngle + stf(i).gantryAngle) / 2];
                 elseif i == nBeams
-                    stf(i).propVMAT.doseAngleBorders = [(stf(i - 1).gantryAngle + stf(i).gantryAngle) / 2, this.arcFinishAngle];
+                    stf(i).arc.doseAngleBorders = [(stf(i - 1).gantryAngle + stf(i).gantryAngle) / 2, this.arcFinishAngle];
                 else
-                    stf(i).propVMAT.doseAngleBorders = ([stf(i - 1).gantryAngle, stf(i + 1).gantryAngle] + stf(i).gantryAngle) / 2;
+                    stf(i).arc.doseAngleBorders = ([stf(i - 1).gantryAngle, stf(i + 1).gantryAngle] + stf(i).gantryAngle) / 2;
                 end
 
-                stf(i).propVMAT.doseAngleBorderCentreDiff = [stf(i).gantryAngle - stf(i).propVMAT.doseAngleBorders(1), ...
-                                                             stf(i).propVMAT.doseAngleBorders(2) - stf(i).gantryAngle];
-                stf(i).propVMAT.doseAngleBordersDiff = sum(stf(i).propVMAT.doseAngleBorderCentreDiff);
+                stf(i).arc.doseAngleBorderCentreDiff = [stf(i).gantryAngle - stf(i).arc.doseAngleBorders(1), ...
+                                                        stf(i).arc.doseAngleBorders(2) - stf(i).gantryAngle];
+                stf(i).arc.doseAngleBordersDiff = sum(stf(i).arc.doseAngleBorderCentreDiff);
 
-                if stf(i).propVMAT.DAOBeam
+                if stf(i).arc.DAOBeam
                     %% DAO beam: record dose angle borders and compute DAO influence range
-                    this.DAODoseAngleBorders(offset:offset + 1) = stf(i).propVMAT.doseAngleBorders;
+                    this.DAODoseAngleBorders(offset:offset + 1) = stf(i).arc.doseAngleBorders;
                     offset = offset + 2;
 
                     % Register as child of its FMO parent
-                    parent = stf(i).propVMAT.beamParentIndex;
-                    if ~isfield(stf(parent).propVMAT, 'beamChildrenGantryAngles') || isempty(stf(parent).propVMAT.beamChildrenGantryAngles)
-                        stf(parent).propVMAT.numOfBeamChildren         = 0;
-                        stf(parent).propVMAT.beamChildrenGantryAngles  = nan(1000, 1);
-                        stf(parent).propVMAT.beamChildrenIndex         = nan(1000, 1);
+                    parent = stf(i).arc.beamParentIndex;
+                    if ~isfield(stf(parent).arc, 'beamChildrenGantryAngles') || isempty(stf(parent).arc.beamChildrenGantryAngles)
+                        stf(parent).arc.numOfBeamChildren         = 0;
+                        stf(parent).arc.beamChildrenGantryAngles  = nan(1000, 1);
+                        stf(parent).arc.beamChildrenIndex         = nan(1000, 1);
                     end
-                    n = stf(parent).propVMAT.numOfBeamChildren + 1;
-                    stf(parent).propVMAT.numOfBeamChildren             = n;
-                    stf(parent).propVMAT.beamChildrenGantryAngles(n)   = stf(i).gantryAngle;
-                    stf(parent).propVMAT.beamChildrenIndex(n)          = i;
+                    n = stf(parent).arc.numOfBeamChildren + 1;
+                    stf(parent).arc.numOfBeamChildren             = n;
+                    stf(parent).arc.beamChildrenGantryAngles(n)   = stf(i).gantryAngle;
+                    stf(parent).arc.beamChildrenIndex(n)          = i;
 
                     % DAO influence angle borders
                     DAOIndex = find(abs(this.arcDAOGantryAngles - stf(i).gantryAngle) < 1e-8);
 
                     if DAOIndex == 1
-                        stf(i).propVMAT.DAOAngleBorders = [this.arcStartAngle, ...
-                                                           (this.arcDAOGantryAngles(DAOIndex + 1) + this.arcDAOGantryAngles(DAOIndex)) / 2];
+                        stf(i).arc.DAOAngleBorders = [this.arcStartAngle, ...
+                                                      (this.arcDAOGantryAngles(DAOIndex + 1) + this.arcDAOGantryAngles(DAOIndex)) / 2];
                         lastDAOIndex = i;
                         nextDAOIndex = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOIndex + 1)) < 1e-8);
 
                     elseif DAOIndex == numel(this.arcDAOGantryAngles)
-                        stf(i).propVMAT.DAOAngleBorders = [ ...
-                                                           (this.arcDAOGantryAngles(DAOIndex - 1) + this.arcDAOGantryAngles(DAOIndex)) / 2, ...
-                                                           this.arcFinishAngle];
+                        stf(i).arc.DAOAngleBorders = [ ...
+                                                      (this.arcDAOGantryAngles(DAOIndex - 1) + this.arcDAOGantryAngles(DAOIndex)) / 2, ...
+                                                      this.arcFinishAngle];
                         lastDAOIndex = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOIndex - 1)) < 1e-8);
                         nextDAOIndex = i;
 
                     else
-                        stf(i).propVMAT.DAOAngleBorders = ...
+                        stf(i).arc.DAOAngleBorders = ...
                             ([this.arcDAOGantryAngles(DAOIndex - 1), this.arcDAOGantryAngles(DAOIndex + 1)] + this.arcDAOGantryAngles(DAOIndex)) / 2;
                         lastDAOIndex = i;
                         nextDAOIndex = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOIndex + 1)) < 1e-8);
                     end
 
-                    stf(i).propVMAT.lastDAOIndex = lastDAOIndex;
-                    stf(i).propVMAT.nextDAOIndex = nextDAOIndex;
-                    stf(i).propVMAT.DAOIndex     = numDAO;
+                    stf(i).arc.lastDAOIndex = lastDAOIndex;
+                    stf(i).arc.nextDAOIndex = nextDAOIndex;
+                    stf(i).arc.DAOIndex     = numDAO;
                     numDAO = numDAO + 1;
 
-                    stf(i).propVMAT.DAOAngleBorderCentreDiff = [stf(i).gantryAngle - stf(i).propVMAT.DAOAngleBorders(1), ...
-                                                                stf(i).propVMAT.DAOAngleBorders(2) - stf(i).gantryAngle];
-                    stf(i).propVMAT.DAOAngleBordersDiff = sum(stf(i).propVMAT.DAOAngleBorderCentreDiff);
+                    stf(i).arc.DAOAngleBorderCentreDiff = [stf(i).gantryAngle - stf(i).arc.DAOAngleBorders(1), ...
+                                                           stf(i).arc.DAOAngleBorders(2) - stf(i).gantryAngle];
+                    stf(i).arc.DAOAngleBordersDiff = sum(stf(i).arc.DAOAngleBorderCentreDiff);
 
                     % Time factor: fraction of DAO sector time covered by this dose sector
-                    stf(i).propVMAT.timeFacCurr = stf(i).propVMAT.doseAngleBordersDiff / stf(i).propVMAT.DAOAngleBordersDiff;
+                    stf(i).arc.timeFacCurr = stf(i).arc.doseAngleBordersDiff / stf(i).arc.DAOAngleBordersDiff;
 
                     if this.continuousAperture
-                        stf(i).propVMAT.timeFac    = zeros(1, 3);
-                        stf(i).propVMAT.timeFac(1) = ...
-                            (stf(i).propVMAT.DAOAngleBorderCentreDiff(1) - stf(i).propVMAT.doseAngleBorderCentreDiff(1)) / ...
-                            stf(i).propVMAT.DAOAngleBordersDiff;
-                        stf(i).propVMAT.timeFac(2) = stf(i).propVMAT.timeFacCurr;
-                        stf(i).propVMAT.timeFac(3) = ...
-                            (stf(i).propVMAT.DAOAngleBorderCentreDiff(2) - stf(i).propVMAT.doseAngleBorderCentreDiff(2)) / ...
-                            stf(i).propVMAT.DAOAngleBordersDiff;
+                        stf(i).arc.timeFac    = zeros(1, 3);
+                        stf(i).arc.timeFac(1) = ...
+                            (stf(i).arc.DAOAngleBorderCentreDiff(1) - stf(i).arc.doseAngleBorderCentreDiff(1)) / ...
+                            stf(i).arc.DAOAngleBordersDiff;
+                        stf(i).arc.timeFac(2) = stf(i).arc.timeFacCurr;
+                        stf(i).arc.timeFac(3) = ...
+                            (stf(i).arc.DAOAngleBorderCentreDiff(2) - stf(i).arc.doseAngleBorderCentreDiff(2)) / ...
+                            stf(i).arc.DAOAngleBordersDiff;
 
-                        delInd                         = stf(i).propVMAT.timeFac == 0;
-                        stf(i).propVMAT.timeFacInd     = [timeFacIndOffset - 1, timeFacIndOffset, timeFacIndOffset + 1];
-                        stf(i).propVMAT.timeFacInd(delInd) = 0;
+                        delInd                         = stf(i).arc.timeFac == 0;
+                        stf(i).arc.timeFacInd     = [timeFacIndOffset - 1, timeFacIndOffset, timeFacIndOffset + 1];
+                        stf(i).arc.timeFacInd(delInd) = 0;
 
                         if delInd(3)
                             timeFacIndOffset = timeFacIndOffset + 1;
@@ -435,48 +435,48 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                             timeFacIndOffset = timeFacIndOffset + 2;
                         end
                     else
-                        stf(i).propVMAT.timeFac    = zeros(1, 2);
-                        stf(i).propVMAT.timeFac(1) = stf(i).propVMAT.DAOAngleBorderCentreDiff(1) / stf(i).propVMAT.DAOAngleBordersDiff;
-                        stf(i).propVMAT.timeFac(2) = stf(i).propVMAT.DAOAngleBorderCentreDiff(2) / stf(i).propVMAT.DAOAngleBordersDiff;
+                        stf(i).arc.timeFac    = zeros(1, 2);
+                        stf(i).arc.timeFac(1) = stf(i).arc.DAOAngleBorderCentreDiff(1) / stf(i).arc.DAOAngleBordersDiff;
+                        stf(i).arc.timeFac(2) = stf(i).arc.DAOAngleBorderCentreDiff(2) / stf(i).arc.DAOAngleBordersDiff;
                     end
 
                 else
                     %% Non-DAO beam: register as sub-child of FMO parent and record interpolation fraction
-                    parent = stf(i).propVMAT.beamParentIndex;
-                    if ~isfield(stf(parent).propVMAT, 'beamSubChildrenGantryAngles') || isempty(stf(parent).propVMAT.beamSubChildrenGantryAngles)
-                        stf(parent).propVMAT.numOfBeamSubChildren        = 0;
-                        stf(parent).propVMAT.beamSubChildrenGantryAngles = nan(1000, 1);
-                        stf(parent).propVMAT.beamSubChildrenIndex        = nan(1000, 1);
+                    parent = stf(i).arc.beamParentIndex;
+                    if ~isfield(stf(parent).arc, 'beamSubChildrenGantryAngles') || isempty(stf(parent).arc.beamSubChildrenGantryAngles)
+                        stf(parent).arc.numOfBeamSubChildren        = 0;
+                        stf(parent).arc.beamSubChildrenGantryAngles = nan(1000, 1);
+                        stf(parent).arc.beamSubChildrenIndex        = nan(1000, 1);
                     end
-                    n = stf(parent).propVMAT.numOfBeamSubChildren + 1;
-                    stf(parent).propVMAT.numOfBeamSubChildren            = n;
-                    stf(parent).propVMAT.beamSubChildrenGantryAngles(n)  = stf(i).gantryAngle;
-                    stf(parent).propVMAT.beamSubChildrenIndex(n)         = i;
+                    n = stf(parent).arc.numOfBeamSubChildren + 1;
+                    stf(parent).arc.numOfBeamSubChildren            = n;
+                    stf(parent).arc.beamSubChildrenGantryAngles(n)  = stf(i).gantryAngle;
+                    stf(parent).arc.beamSubChildrenIndex(n)         = i;
 
-                    stf(i).propVMAT.fracFromLastDAO = (stf(nextDAOIndex).gantryAngle - stf(i).gantryAngle) / ...
+                    stf(i).arc.fracFromLastDAO = (stf(nextDAOIndex).gantryAngle - stf(i).gantryAngle) / ...
                                                       (stf(nextDAOIndex).gantryAngle - stf(lastDAOIndex).gantryAngle);
-                    stf(i).propVMAT.lastDAOIndex = lastDAOIndex;
-                    stf(i).propVMAT.nextDAOIndex = nextDAOIndex;
+                    stf(i).arc.lastDAOIndex = lastDAOIndex;
+                    stf(i).arc.nextDAOIndex = nextDAOIndex;
                 end
 
                 %% FMO beam: compute FMO influence angle borders
-                if stf(i).propVMAT.FMOBeam
+                if stf(i).arc.FMOBeam
                     FMOIndex = find(abs(this.arcFMOGantryAngles - stf(i).gantryAngle) < 1e-8);
 
                     if FMOIndex == 1
-                        stf(i).propVMAT.FMOAngleBorders = [this.arcStartAngle, ...
-                                                           (this.arcFMOGantryAngles(FMOIndex + 1) + this.arcFMOGantryAngles(FMOIndex)) / 2];
+                        stf(i).arc.FMOAngleBorders = [this.arcStartAngle, ...
+                                                      (this.arcFMOGantryAngles(FMOIndex + 1) + this.arcFMOGantryAngles(FMOIndex)) / 2];
                     elseif FMOIndex == numel(this.arcFMOGantryAngles)
-                        stf(i).propVMAT.FMOAngleBorders = [ ...
-                                                           (this.arcFMOGantryAngles(FMOIndex - 1) + this.arcFMOGantryAngles(FMOIndex)) / 2, ...
-                                                           this.arcFinishAngle];
+                        stf(i).arc.FMOAngleBorders = [ ...
+                                                      (this.arcFMOGantryAngles(FMOIndex - 1) + this.arcFMOGantryAngles(FMOIndex)) / 2, ...
+                                                      this.arcFinishAngle];
                     else
-                        stf(i).propVMAT.FMOAngleBorders = ...
+                        stf(i).arc.FMOAngleBorders = ...
                             ([this.arcFMOGantryAngles(FMOIndex - 1), this.arcFMOGantryAngles(FMOIndex + 1)] + this.arcFMOGantryAngles(FMOIndex)) / 2;
                     end
-                    stf(i).propVMAT.FMOAngleBorderCentreDiff = [stf(i).gantryAngle - stf(i).propVMAT.FMOAngleBorders(1), ...
-                                                                stf(i).propVMAT.FMOAngleBorders(2) - stf(i).gantryAngle];
-                    stf(i).propVMAT.FMOAngleBordersDiff = sum(stf(i).propVMAT.FMOAngleBorderCentreDiff);
+                    stf(i).arc.FMOAngleBorderCentreDiff = [stf(i).gantryAngle - stf(i).arc.FMOAngleBorders(1), ...
+                                                           stf(i).arc.FMOAngleBorders(2) - stf(i).gantryAngle];
+                    stf(i).arc.FMOAngleBordersDiff = sum(stf(i).arc.FMOAngleBorderCentreDiff);
                 end
 
                 %% Assign union ray set to this beam and apply rotation
@@ -510,46 +510,46 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
             nBeams = numel(stf);
             for i = 1:nBeams
                 % Remove NaN padding from child/sub-child angle lists
-                if stf(i).propVMAT.FMOBeam
-                    if isfield(stf(i).propVMAT, 'beamChildrenGantryAngles')
-                        stf(i).propVMAT.beamChildrenGantryAngles(isnan(stf(i).propVMAT.beamChildrenGantryAngles)) = [];
-                        stf(i).propVMAT.beamChildrenIndex(isnan(stf(i).propVMAT.beamChildrenIndex)) = [];
+                if stf(i).arc.FMOBeam
+                    if isfield(stf(i).arc, 'beamChildrenGantryAngles')
+                        stf(i).arc.beamChildrenGantryAngles(isnan(stf(i).arc.beamChildrenGantryAngles)) = [];
+                        stf(i).arc.beamChildrenIndex(isnan(stf(i).arc.beamChildrenIndex)) = [];
                     else
-                        stf(i).propVMAT.numOfBeamChildren = 0;
+                        stf(i).arc.numOfBeamChildren = 0;
                     end
-                    if isfield(stf(i).propVMAT, 'beamSubChildrenGantryAngles')
-                        stf(i).propVMAT.beamSubChildrenGantryAngles(isnan(stf(i).propVMAT.beamSubChildrenGantryAngles)) = [];
-                        stf(i).propVMAT.beamSubChildrenIndex(isnan(stf(i).propVMAT.beamSubChildrenIndex)) = [];
+                    if isfield(stf(i).arc, 'beamSubChildrenGantryAngles')
+                        stf(i).arc.beamSubChildrenGantryAngles(isnan(stf(i).arc.beamSubChildrenGantryAngles)) = [];
+                        stf(i).arc.beamSubChildrenIndex(isnan(stf(i).arc.beamSubChildrenIndex)) = [];
                     else
-                        stf(i).propVMAT.numOfBeamSubChildren = 0;
+                        stf(i).arc.numOfBeamSubChildren = 0;
                     end
                 end
 
-                if stf(i).propVMAT.DAOBeam && this.continuousAperture
-                    stf(i).propVMAT.doseAngleDAO = ones(1, 2);
-                    if sum(this.DAODoseAngleBorders == stf(i).propVMAT.doseAngleBorders(2)) > 1
+                if stf(i).arc.DAOBeam && this.continuousAperture
+                    stf(i).arc.doseAngleDAO = ones(1, 2);
+                    if sum(this.DAODoseAngleBorders == stf(i).arc.doseAngleBorders(2)) > 1
                         % Final dose angle is shared - count it only once
-                        stf(i).propVMAT.doseAngleDAO(2) = 0;
+                        stf(i).arc.doseAngleDAO(2) = 0;
                     end
                 end
 
-                if ~stf(i).propVMAT.FMOBeam && ~stf(i).propVMAT.DAOBeam
+                if ~stf(i).arc.FMOBeam && ~stf(i).arc.DAOBeam
                     % Leaf position interpolation fractions
-                    lastBorder = stf(stf(i).propVMAT.lastDAOIndex).propVMAT.doseAngleBorders(2);
-                    nextBorder = stf(stf(i).propVMAT.nextDAOIndex).propVMAT.doseAngleBorders(1);
+                    lastBorder = stf(stf(i).arc.lastDAOIndex).arc.doseAngleBorders(2);
+                    nextBorder = stf(stf(i).arc.nextDAOIndex).arc.doseAngleBorders(1);
                     span = nextBorder - lastBorder;
 
-                    stf(i).propVMAT.fracFromLastDAO_I = (nextBorder - stf(i).propVMAT.doseAngleBorders(1)) / span;
-                    stf(i).propVMAT.fracFromLastDAO_F = (nextBorder - stf(i).propVMAT.doseAngleBorders(2)) / span;
-                    stf(i).propVMAT.fracFromNextDAO_I = (stf(i).propVMAT.doseAngleBorders(1) - lastBorder) / span;
-                    stf(i).propVMAT.fracFromNextDAO_F = (stf(i).propVMAT.doseAngleBorders(2) - lastBorder) / span;
+                    stf(i).arc.fracFromLastDAO_I = (nextBorder - stf(i).arc.doseAngleBorders(1)) / span;
+                    stf(i).arc.fracFromLastDAO_F = (nextBorder - stf(i).arc.doseAngleBorders(2)) / span;
+                    stf(i).arc.fracFromNextDAO_I = (stf(i).arc.doseAngleBorders(1) - lastBorder) / span;
+                    stf(i).arc.fracFromNextDAO_F = (stf(i).arc.doseAngleBorders(2) - lastBorder) / span;
 
                     % Time interpolation fractions (clamped to [0, 1])
-                    lastDAOBorder2 = stf(stf(i).propVMAT.lastDAOIndex).propVMAT.DAOAngleBorders(2);
-                    stf(i).propVMAT.timeFracFromLastDAO = min(max((lastDAOBorder2 - stf(i).propVMAT.doseAngleBorders(1)) / ...
-                                                                  stf(i).propVMAT.doseAngleBordersDiff, 0), 1);
-                    stf(i).propVMAT.timeFracFromNextDAO = min(max((stf(i).propVMAT.doseAngleBorders(2) - lastDAOBorder2)  / ...
-                                                                  stf(i).propVMAT.doseAngleBordersDiff, 0), 1);
+                    lastDAOBorder2 = stf(stf(i).arc.lastDAOIndex).arc.DAOAngleBorders(2);
+                    stf(i).arc.timeFracFromLastDAO = min(max((lastDAOBorder2 - stf(i).arc.doseAngleBorders(1)) / ...
+                                                             stf(i).arc.doseAngleBordersDiff, 0), 1);
+                    stf(i).arc.timeFracFromNextDAO = min(max((stf(i).arc.doseAngleBorders(2) - lastDAOBorder2)  / ...
+                                                             stf(i).arc.doseAngleBordersDiff, 0), 1);
                 end
 
                 matRad_progress(i, nBeams);

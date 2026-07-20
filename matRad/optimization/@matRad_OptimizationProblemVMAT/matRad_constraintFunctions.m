@@ -51,18 +51,18 @@ rightLeafPos = apertureInfoVec((1 + nLeafTotal + nShapes):(nShapes + nLeafTotal 
 % values of times spent in an arc surrounding the optimized angles (full
 % arc/dose influence arc)
 timeDAOBorderAngles = apertureInfoVec(((apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs * 2) + 1):end);
-timeDoseBorderAngles = timeDAOBorderAngles .* [apertureInfo.propVMAT.beam([apertureInfo.propVMAT.beam.DAOBeam]).timeFacCurr]';
+timeDoseBorderAngles = timeDAOBorderAngles .* [apertureInfo.arc.beam([apertureInfo.arc.beam.DAOBeam]).timeFacCurr]';
 
 if apertureInfo.continuousAperture
     % Using the dynamic fluence calculation, we have the leaf positions in
     % the vector be the leaf positions at the borders of the Dij arcs (for optimized angles only).
     % Therefore we must also use the times between the borders of the Dij
     % arc (for optimized angles only).
-    timeFac = [apertureInfo.propVMAT.beam.timeFac]';
+    timeFac = [apertureInfo.arc.beam.timeFac]';
     deleteInd = timeFac == 0;
     timeFac(deleteInd) = [];
 
-    i = [apertureInfo.propVMAT.beam.timeFacInd]';
+    i = [apertureInfo.arc.beam.timeFacInd]';
     i(deleteInd) = [];
 
     j = repelem(1:apertureInfo.totalNumOfShapes, 1, 3);
@@ -72,8 +72,8 @@ if apertureInfo.continuousAperture
     timeBNOptAngles = timeFacMatrix * timeDAOBorderAngles;
 
     % prep
-    leftLeafSpeed   = zeros(apertureInfo.propVMAT.numLeafSpeedConstraint * apertureInfo.beam(1).numOfActiveLeafPairs, 1);
-    rightLeafSpeed  = zeros(apertureInfo.propVMAT.numLeafSpeedConstraint * apertureInfo.beam(1).numOfActiveLeafPairs, 1);
+    leftLeafSpeed   = zeros(apertureInfo.arc.numLeafSpeedConstraint * apertureInfo.beam(1).numOfActiveLeafPairs, 1);
+    rightLeafSpeed  = zeros(apertureInfo.arc.numLeafSpeedConstraint * apertureInfo.beam(1).numOfActiveLeafPairs, 1);
 
     offset      = 0;
     shapeInd    = 1;
@@ -82,18 +82,18 @@ if apertureInfo.continuousAperture
         % loop over beams
         n = apertureInfo.beam(i).numOfActiveLeafPairs;
 
-        if ~isempty(apertureInfo.propVMAT.beam(i).leafConstMask)
+        if ~isempty(apertureInfo.arc.beam(i).leafConstMask)
 
             % get vector indices
-            if apertureInfo.propVMAT.beam(i).DAOBeam
+            if apertureInfo.arc.beam(i).DAOBeam
                 % if it's a DAO beam, use own vector offset
                 vectorIx_LI = apertureInfo.beam(i).shape(1).vectorOffset(1) + ((1:n) - 1);
                 vectorIx_LF = apertureInfo.beam(i).shape(1).vectorOffset(2) + ((1:n) - 1);
             else
                 % otherwise, use vector offset of previous and next
                 % beams
-                vectorIx_LI = apertureInfo.beam(apertureInfo.propVMAT.beam(i).lastDAOIndex).shape(1).vectorOffset(2) + ((1:n) - 1);
-                vectorIx_LF = apertureInfo.beam(apertureInfo.propVMAT.beam(i).nextDAOIndex).shape(1).vectorOffset(1) + ((1:n) - 1);
+                vectorIx_LI = apertureInfo.beam(apertureInfo.arc.beam(i).lastDAOIndex).shape(1).vectorOffset(2) + ((1:n) - 1);
+                vectorIx_LF = apertureInfo.beam(apertureInfo.arc.beam(i).nextDAOIndex).shape(1).vectorOffset(1) + ((1:n) - 1);
             end
             vectorIx_RI = vectorIx_LI + apertureInfo.totalNumOfLeafPairs;
             vectorIx_RF = vectorIx_LF + apertureInfo.totalNumOfLeafPairs;
@@ -129,7 +129,7 @@ else
     j(1) = [];
     j(end) = [];
 
-    timeFac = [apertureInfo.propVMAT.beam([apertureInfo.propVMAT.beam.DAOBeam]).timeFac]';
+    timeFac = [apertureInfo.arc.beam([apertureInfo.arc.beam.DAOBeam]).timeFac]';
     timeFac(1) = [];
     timeFac(end) = [];
     % timeFac(timeFac == 0) = [];

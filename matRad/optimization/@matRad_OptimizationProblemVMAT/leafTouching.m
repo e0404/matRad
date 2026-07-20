@@ -35,7 +35,7 @@ function apertureInfo = leafTouching(apertureInfo)
 
 % initialize
 dimZ = apertureInfo.beam(1).numOfActiveLeafPairs;
-numBeams = nnz([apertureInfo.propVMAT.beam.DAOBeam]);
+numBeams = nnz([apertureInfo.arc.beam.DAOBeam]);
 if ~isfield(apertureInfo.beam(1).shape(1), 'leftLeafPos_I')
     % Each non-interpolated beam should have 1 left/right leaf position
     leftLeafPoss = nan(dimZ, numBeams);
@@ -47,14 +47,14 @@ else
     rightLeafPoss = nan(dimZ, 2 * numBeams);
     gantryAngles = zeros(1, 2 * numBeams);
 end
-initBorderGantryAngles = unique([apertureInfo.propVMAT.beam.FMOAngleBorders]);
+initBorderGantryAngles = unique([apertureInfo.arc.beam.FMOAngleBorders]);
 initBorderLeftLeafPoss = nan(dimZ, numel(initBorderGantryAngles));
 
 l = 1;
 m = 1;
 % collect all leaf positions
 for k = 1:numel(apertureInfo.beam)
-    if (k ~= 1 && apertureInfo.beam(k).gantryAngle == apertureInfo.beam(k - 1).gantryAngle) || ~apertureInfo.propVMAT.beam(k).DAOBeam
+    if (k ~= 1 && apertureInfo.beam(k).gantryAngle == apertureInfo.beam(k - 1).gantryAngle) || ~apertureInfo.arc.beam(k).DAOBeam
         continue
     end
 
@@ -80,13 +80,13 @@ for k = 1:numel(apertureInfo.beam)
 
     % Only important when cleaning up instances of opposing
     % leaves touching.
-    if apertureInfo.propVMAT.beam(k).FMOBeam
-        if apertureInfo.propVMAT.beam(k).leafDir == 1
+    if apertureInfo.arc.beam(k).FMOBeam
+        if apertureInfo.arc.beam(k).leafDir == 1
             % This means that the current arc sector is moving
             % in the normal direction (L-R).
             initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).lim_l;
 
-        elseif apertureInfo.propVMAT.beam(k).leafDir == -1
+        elseif apertureInfo.arc.beam(k).leafDir == -1
             % This means that the current arc sector is moving
             % in the reverse direction (R-L).
             initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).lim_r;
@@ -96,12 +96,12 @@ for k = 1:numel(apertureInfo.beam)
         % end of last sector
         if m == numel(initBorderGantryAngles)
             % This gives ending angle of the current sector.
-            if apertureInfo.propVMAT.beam(k).leafDir == 1
+            if apertureInfo.arc.beam(k).leafDir == 1
                 % This means that the current arc sector is moving
                 % in the normal direction (L-R), so the next arc
                 % sector is moving opposite
                 initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).lim_r;
-            elseif apertureInfo.propVMAT.beam(k).leafDir == -1
+            elseif apertureInfo.arc.beam(k).leafDir == -1
                 % This means that the current arc sector is moving
                 % in the reverse direction (R-L), so the next
                 % arc sector is moving opposite
@@ -165,8 +165,8 @@ for i = 1:numel(apertureInfo.beam)
     % angles at which the leaf positions are sampled: beam centre and the
     % initial/final borders of the beam's dose angle sector
     angleC = apertureInfo.beam(i).gantryAngle;
-    angleI = apertureInfo.propVMAT.beam(i).doseAngleBorders(1);
-    angleF = apertureInfo.propVMAT.beam(i).doseAngleBorders(2);
+    angleI = apertureInfo.arc.beam(i).doseAngleBorders(1);
+    angleF = apertureInfo.arc.beam(i).doseAngleBorders(2);
     limL = apertureInfo.beam(i).lim_l;
     limR = apertureInfo.beam(i).lim_r;
 

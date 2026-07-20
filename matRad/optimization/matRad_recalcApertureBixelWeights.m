@@ -65,7 +65,7 @@ for i = 1:numel(updatedInfo.beam)
     mlcOptions.n = n;
     mlcOptions.numBix = size(apertureInfo.beam(i).bixelIndMap, 2);
     mlcOptions.bixelIndMap = apertureInfo.beam(i).bixelIndMap;
-    calcOptions.DAOBeam = updatedInfo.propVMAT.beam(i).DAOBeam;
+    calcOptions.DAOBeam = updatedInfo.arc.beam(i).DAOBeam;
 
     shapeMap_I = zeros(size(updatedInfo.beam(i).bixelIndMap));
     shapeMap_F = zeros(size(updatedInfo.beam(i).bixelIndMap));
@@ -78,8 +78,8 @@ for i = 1:numel(updatedInfo.beam)
         weight_F = updatedInfo.beam(i).shape(1).weight_F;
     else
         % only happens at original angular resolution
-        weight_I = weight .* updatedInfo.propVMAT.beam(i).doseAngleBorderCentreDiff(1) ./ updatedInfo.propVMAT.beam(i).doseAngleBordersDiff;
-        weight_F = weight .* updatedInfo.propVMAT.beam(i).doseAngleBorderCentreDiff(2) ./ updatedInfo.propVMAT.beam(i).doseAngleBordersDiff;
+        weight_I = weight .* updatedInfo.arc.beam(i).doseAngleBorderCentreDiff(1) ./ updatedInfo.arc.beam(i).doseAngleBordersDiff;
+        weight_F = weight .* updatedInfo.arc.beam(i).doseAngleBorderCentreDiff(2) ./ updatedInfo.arc.beam(i).doseAngleBordersDiff;
     end
 
     if weight_I + weight_F ~= weight
