@@ -32,6 +32,9 @@ function recalc = matRad_recalcApertureInfo(recalc, apertureInfoOld)
 
 stf = recalc.stf;
 
+% accept aperture info saved by an older matRad version
+apertureInfoOld = matRad_upgradeApertureInfo(apertureInfoOld);
+
 apertureInfoNew = apertureInfoOld;
 apertureInfoNew = rmfield(apertureInfoNew, 'beam');
 
@@ -74,8 +77,8 @@ for i = 1:numel(apertureInfoOld.beam)
         apertureInfoNew.beam(j).leafPairPos = geometry.leafPairPos;
         apertureInfoNew.beam(j).isActiveLeafPair = geometry.isActiveLeafPair;
         apertureInfoNew.beam(j).centralLeafPair = geometry.centralLeafPair;
-        apertureInfoNew.beam(j).lim_l = geometry.lim_l;
-        apertureInfoNew.beam(j).lim_r = geometry.lim_r;
+        apertureInfoNew.beam(j).limLeft = geometry.limLeft;
+        apertureInfoNew.beam(j).limRight = geometry.limRight;
         apertureInfoNew.beam(j).bixelIndMap = geometry.bixelIndMap;
         apertureInfoNew.beam(j).posOfCornerBixel = geometry.posOfCornerBixel;
         apertureInfoNew.beam(j).MLCWindow = geometry.MLCWindow;
@@ -150,14 +153,14 @@ for i = 1:numel(apertureInfoOld.beam)
             apertureInfoNew.beam(j).shape(1).rightLeafPos = ...
                 (interp1(oldGantryAngles', oldRightLeafPoss', apertureInfoNew.beam(j).gantryAngle))';
 
-            apertureInfoNew.beam(j).shape(1).leftLeafPos_I = ...
+            apertureInfoNew.beam(j).shape(1).leftLeafPosInitial = ...
                 (interp1(oldGantryAngles', oldLeftLeafPoss', apertureInfoNew.arc.beam(j).doseAngleBorders(1)))';
-            apertureInfoNew.beam(j).shape(1).rightLeafPos_I = ...
+            apertureInfoNew.beam(j).shape(1).rightLeafPosInitial = ...
                 (interp1(oldGantryAngles', oldRightLeafPoss', apertureInfoNew.arc.beam(j).doseAngleBorders(1)))';
 
-            apertureInfoNew.beam(j).shape(1).leftLeafPos_F = ...
+            apertureInfoNew.beam(j).shape(1).leftLeafPosFinal = ...
                 (interp1(oldGantryAngles', oldLeftLeafPoss', apertureInfoNew.arc.beam(j).doseAngleBorders(2)))';
-            apertureInfoNew.beam(j).shape(1).rightLeafPos_F = ...
+            apertureInfoNew.beam(j).shape(1).rightLeafPosFinal = ...
                 (interp1(oldGantryAngles', oldRightLeafPoss', apertureInfoNew.arc.beam(j).doseAngleBorders(2)))';
         else
             apertureInfoNew.beam(j).shape(1).leftLeafPos = apertureInfoOld.beam(i).shape(1).leftLeafPos;

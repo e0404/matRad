@@ -219,18 +219,18 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
                             rightLeafPosInd = find(shapeMap(l, :), 1, 'last');
 
                             if isempty(leftLeafPosInd) && isempty(rightLeafPosInd)
-                                leftLeafPos(l) = (geometry.lim_l(l) + geometry.lim_r(l)) / 2;
+                                leftLeafPos(l) = (geometry.limLeft(l) + geometry.limRight(l)) / 2;
                                 rightLeafPos(l) = leftLeafPos(l);
                             else
                                 leftLeafPos(l) = (leftLeafPosInd - 1) * bixelWidth + minX - 1 / 2 * bixelWidth;
                                 rightLeafPos(l) = (rightLeafPosInd - 1) * bixelWidth + minX + 1 / 2 * bixelWidth;
 
                                 % can happen in some cases in SW trajectory sampling
-                                if leftLeafPos(l) < geometry.lim_l(l)
-                                    leftLeafPos(l) = geometry.lim_l(l);
+                                if leftLeafPos(l) < geometry.limLeft(l)
+                                    leftLeafPos(l) = geometry.limLeft(l);
                                 end
-                                if rightLeafPos(l) > geometry.lim_r(l)
-                                    rightLeafPos(l) = geometry.lim_r(l);
+                                if rightLeafPos(l) > geometry.limRight(l)
+                                    rightLeafPos(l) = geometry.limRight(l);
                                 end
                             end
                         end
@@ -260,8 +260,8 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
                 apertureInfo.beam(i).leafPairPos = geometry.leafPairPos;
                 apertureInfo.beam(i).isActiveLeafPair = geometry.isActiveLeafPair;
                 apertureInfo.beam(i).centralLeafPair = geometry.centralLeafPair;
-                apertureInfo.beam(i).lim_l = geometry.lim_l;
-                apertureInfo.beam(i).lim_r = geometry.lim_r;
+                apertureInfo.beam(i).limLeft = geometry.limLeft;
+                apertureInfo.beam(i).limRight = geometry.limRight;
                 apertureInfo.beam(i).bixelIndMap = geometry.bixelIndMap;
                 apertureInfo.beam(i).posOfCornerBixel = geometry.posOfCornerBixel;
                 apertureInfo.beam(i).MLCWindow = geometry.MLCWindow;

@@ -81,23 +81,23 @@ if apertureInfo.continuousAperture
             vectorIx_RF = vectorIx_LF + apertureInfo.totalNumOfLeafPairs;
 
             % extract leaf positions, time
-            leftLeafPos_I   = apertureInfoVec(vectorIx_LI);
-            rightLeafPos_I  = apertureInfoVec(vectorIx_RI);
-            leftLeafPos_F   = apertureInfoVec(vectorIx_LF);
-            rightLeafPos_F  = apertureInfoVec(vectorIx_RF);
+            leftLeafPosInitial   = apertureInfoVec(vectorIx_LI);
+            rightLeafPosInitial  = apertureInfoVec(vectorIx_RI);
+            leftLeafPosFinal   = apertureInfoVec(vectorIx_LF);
+            rightLeafPosFinal  = apertureInfoVec(vectorIx_RF);
             t               = timeBNOptAngles(shapeInd);
 
             % determine indices
             indInDiffVec = offset + (1:n);
 
             % insert differences, time
-            leftLeafDiff(indInDiffVec)  = abs(leftLeafPos_F - leftLeafPos_I);
-            rightLeafDiff(indInDiffVec) = abs(rightLeafPos_F - rightLeafPos_I);
+            leftLeafDiff(indInDiffVec)  = abs(leftLeafPosFinal - leftLeafPosInitial);
+            rightLeafDiff(indInDiffVec) = abs(rightLeafPosFinal - rightLeafPosInitial);
             tVec(indInDiffVec)          = t;
 
             % get max speed
-            leftLeafSpeed = abs(leftLeafPos_F - leftLeafPos_I) ./ t;
-            rightLeafSpeed = abs(leftLeafPos_F - leftLeafPos_I) ./ t;
+            leftLeafSpeed = abs(leftLeafPosFinal - leftLeafPosInitial) ./ t;
+            rightLeafSpeed = abs(leftLeafPosFinal - leftLeafPosInitial) ./ t;
             maxLeafSpeed_temp = max([leftLeafSpeed; rightLeafSpeed]);
 
             % update max speed

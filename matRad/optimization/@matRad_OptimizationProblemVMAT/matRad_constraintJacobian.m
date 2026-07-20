@@ -88,15 +88,15 @@ if apertureInfo.continuousAperture
             vectorIx_RF = vectorIx_LF + apertureInfo.totalNumOfLeafPairs;
 
             % extract leaf positions, time
-            leftLeafPos_I   = apertureInfoVec(vectorIx_LI);
-            rightLeafPos_I  = apertureInfoVec(vectorIx_RI);
-            leftLeafPos_F   = apertureInfoVec(vectorIx_LF);
-            rightLeafPos_F  = apertureInfoVec(vectorIx_RF);
+            leftLeafPosInitial   = apertureInfoVec(vectorIx_LI);
+            rightLeafPosInitial  = apertureInfoVec(vectorIx_RI);
+            leftLeafPosFinal   = apertureInfoVec(vectorIx_LF);
+            rightLeafPosFinal  = apertureInfoVec(vectorIx_RF);
             t               = timeBNOptAngles(shapeInd);
 
             % calc diffs
-            leftLeafDiff    = leftLeafPos_F - leftLeafPos_I;
-            rightLeafDiff   = rightLeafPos_F - rightLeafPos_I;
+            leftLeafDiff    = leftLeafPosFinal - leftLeafPosInitial;
+            rightLeafDiff   = rightLeafPosFinal - rightLeafPosInitial;
 
             % calc jacobs
 

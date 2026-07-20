@@ -102,8 +102,8 @@ if nargout > 1
                 mappingMx(counter, 3) = j; % store local shape number
                 mappingMx(counter, 4) = k; % store local leaf number
 
-                limMx(counter, 1)     = apertureInfo.beam(i).lim_l(k);
-                limMx(counter, 2)     = apertureInfo.beam(i).lim_r(k);
+                limMx(counter, 1)     = apertureInfo.beam(i).limLeft(k);
+                limMx(counter, 2)     = apertureInfo.beam(i).limRight(k);
                 counter = counter + 1;
             end
         end

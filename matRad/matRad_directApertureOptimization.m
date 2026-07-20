@@ -36,11 +36,16 @@ function [resultGUI, optimizer] = matRad_directApertureOptimization(dij, cst, ap
 
 matRad_cfg = MatRad_Config.instance();
 
+% accept aperture info saved by an older matRad version
+apertureInfo = matRad_upgradeApertureInfo(apertureInfo);
+
 % promote an empty/incomplete resultGUI and seed its apertureInfo from the
 % (always present) apertureInfo argument, so callers don't have to prime
 % resultGUI.apertureInfo themselves before the first DAO call
 if ~isfield(resultGUI, 'apertureInfo')
     resultGUI.apertureInfo = apertureInfo;
+else
+    resultGUI.apertureInfo = matRad_upgradeApertureInfo(resultGUI.apertureInfo);
 end
 
 % adjust overlap priorities

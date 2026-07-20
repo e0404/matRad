@@ -86,15 +86,15 @@ for i = 1:size(apertureInfo.beam, 2)
         else
 
             if apertureInfo.arc.beam(i).doseAngleDAO(1)
-                apertureInfoVec(offset + leafPairIx) = apertureInfo.beam(i).shape(j).leftLeafPos_I;
-                apertureInfoVec(offset + leafPairIx + apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_I;
+                apertureInfoVec(offset + leafPairIx) = apertureInfo.beam(i).shape(j).leftLeafPosInitial;
+                apertureInfoVec(offset + leafPairIx + apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPosInitial;
 
                 offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
             end
 
             if apertureInfo.arc.beam(i).doseAngleDAO(2)
-                apertureInfoVec(offset + leafPairIx) = apertureInfo.beam(i).shape(j).leftLeafPos_F;
-                apertureInfoVec(offset + leafPairIx + apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPos_F;
+                apertureInfoVec(offset + leafPairIx) = apertureInfo.beam(i).shape(j).leftLeafPosFinal;
+                apertureInfoVec(offset + leafPairIx + apertureInfo.totalNumOfLeafPairs) = apertureInfo.beam(i).shape(j).rightLeafPosFinal;
 
                 offset = offset + apertureInfo.beam(i).numOfActiveLeafPairs;
             end
@@ -148,8 +148,8 @@ if nargout > 1
                 mappingMx(counter, 3) = j; % store local shape number
                 mappingMx(counter, 4) = k; % store local leaf number
 
-                limMx(counter, 1)     = apertureInfo.beam(i).lim_l(k);
-                limMx(counter, 2)     = apertureInfo.beam(i).lim_r(k);
+                limMx(counter, 1)     = apertureInfo.beam(i).limLeft(k);
+                limMx(counter, 2)     = apertureInfo.beam(i).limRight(k);
                 counter = counter + 1;
 
                 if apertureInfo.continuousAperture && nnz(apertureInfo.arc.beam(i).doseAngleDAO) == 2
@@ -162,8 +162,8 @@ if nargout > 1
                     mappingMx(counter, 3) = j; % store local shape number
                     mappingMx(counter, 4) = k; % store local leaf number
 
-                    limMx(counter, 1)     = apertureInfo.beam(i).lim_l(k);
-                    limMx(counter, 2)     = apertureInfo.beam(i).lim_r(k);
+                    limMx(counter, 1)     = apertureInfo.beam(i).limLeft(k);
+                    limMx(counter, 2)     = apertureInfo.beam(i).limRight(k);
                     counter = counter + 1;
                 end
             end

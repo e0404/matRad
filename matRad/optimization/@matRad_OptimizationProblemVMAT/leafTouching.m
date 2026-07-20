@@ -36,7 +36,7 @@ function apertureInfo = leafTouching(apertureInfo)
 % initialize
 dimZ = apertureInfo.beam(1).numOfActiveLeafPairs;
 numBeams = nnz([apertureInfo.arc.beam.isDAOBeam]);
-if ~isfield(apertureInfo.beam(1).shape(1), 'leftLeafPos_I')
+if ~isfield(apertureInfo.beam(1).shape(1), 'leftLeafPosInitial')
     % Each non-interpolated beam should have 1 left/right leaf position
     leftLeafPoss = nan(dimZ, numBeams);
     rightLeafPoss = nan(dimZ, numBeams);
@@ -58,21 +58,21 @@ for k = 1:numel(apertureInfo.beam)
         continue
     end
 
-    if ~isfield(apertureInfo.beam(1).shape(1), 'leftLeafPos_I')
+    if ~isfield(apertureInfo.beam(1).shape(1), 'leftLeafPosInitial')
         leftLeafPoss(:, l) = apertureInfo.beam(k).shape(1).leftLeafPos;
         rightLeafPoss(:, l) = apertureInfo.beam(k).shape(1).rightLeafPos;
         gantryAngles(l) = apertureInfo.beam(k).gantryAngle;
 
         l = l + 1;
     else
-        leftLeafPoss(:, l) = apertureInfo.beam(k).shape(1).leftLeafPos_I;
-        rightLeafPoss(:, l) = apertureInfo.beam(k).shape(1).rightLeafPos_I;
+        leftLeafPoss(:, l) = apertureInfo.beam(k).shape(1).leftLeafPosInitial;
+        rightLeafPoss(:, l) = apertureInfo.beam(k).shape(1).rightLeafPosInitial;
         gantryAngles(l) = apertureInfo.beam(k).doseAngleBorders(1);
 
         l = l + 1;
 
-        leftLeafPoss(:, l) = apertureInfo.beam(k).shape(1).leftLeafPos_F;
-        rightLeafPoss(:, l) = apertureInfo.beam(k).shape(1).rightLeafPos_F;
+        leftLeafPoss(:, l) = apertureInfo.beam(k).shape(1).leftLeafPosFinal;
+        rightLeafPoss(:, l) = apertureInfo.beam(k).shape(1).rightLeafPosFinal;
         gantryAngles(l) = apertureInfo.beam(k).doseAngleBorders(2);
 
         l = l + 1;
@@ -84,12 +84,12 @@ for k = 1:numel(apertureInfo.beam)
         if apertureInfo.arc.beam(k).leafDir == 1
             % This means that the current arc sector is moving
             % in the normal direction (L-R).
-            initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).lim_l;
+            initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).limLeft;
 
         elseif apertureInfo.arc.beam(k).leafDir == -1
             % This means that the current arc sector is moving
             % in the reverse direction (R-L).
-            initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).lim_r;
+            initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).limRight;
         end
         m = m + 1;
 
@@ -100,12 +100,12 @@ for k = 1:numel(apertureInfo.beam)
                 % This means that the current arc sector is moving
                 % in the normal direction (L-R), so the next arc
                 % sector is moving opposite
-                initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).lim_r;
+                initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).limRight;
             elseif apertureInfo.arc.beam(k).leafDir == -1
                 % This means that the current arc sector is moving
                 % in the reverse direction (R-L), so the next
                 % arc sector is moving opposite
-                initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).lim_l;
+                initBorderLeftLeafPoss(:, m) = apertureInfo.beam(k).limLeft;
             end
         end
     end
@@ -167,17 +167,17 @@ for i = 1:numel(apertureInfo.beam)
     angleC = apertureInfo.beam(i).gantryAngle;
     angleI = apertureInfo.arc.beam(i).doseAngleBorders(1);
     angleF = apertureInfo.arc.beam(i).doseAngleBorders(2);
-    limL = apertureInfo.beam(i).lim_l;
-    limR = apertureInfo.beam(i).lim_r;
+    limL = apertureInfo.beam(i).limLeft;
+    limR = apertureInfo.beam(i).limRight;
 
     apertureInfo.beam(i).shape(1).leftLeafPos = max((interp1(gantryAngles', leftLeafPoss', angleC))', limL);
     apertureInfo.beam(i).shape(1).rightLeafPos = min((interp1(gantryAngles', rightLeafPoss', angleC))', limR);
 
-    apertureInfo.beam(i).shape(1).leftLeafPos_I = max((interp1(gantryAngles', leftLeafPoss', angleI))', limL);
-    apertureInfo.beam(i).shape(1).rightLeafPos_I = min((interp1(gantryAngles', rightLeafPoss', angleI))', limR);
+    apertureInfo.beam(i).shape(1).leftLeafPosInitial = max((interp1(gantryAngles', leftLeafPoss', angleI))', limL);
+    apertureInfo.beam(i).shape(1).rightLeafPosInitial = min((interp1(gantryAngles', rightLeafPoss', angleI))', limR);
 
-    apertureInfo.beam(i).shape(1).leftLeafPos_F = max((interp1(gantryAngles', leftLeafPoss', angleF))', limL);
-    apertureInfo.beam(i).shape(1).rightLeafPos_F = min((interp1(gantryAngles', rightLeafPoss', angleF))', limR);
+    apertureInfo.beam(i).shape(1).leftLeafPosFinal = max((interp1(gantryAngles', leftLeafPoss', angleF))', limL);
+    apertureInfo.beam(i).shape(1).rightLeafPosFinal = min((interp1(gantryAngles', rightLeafPoss', angleF))', limR);
 end
 
 end

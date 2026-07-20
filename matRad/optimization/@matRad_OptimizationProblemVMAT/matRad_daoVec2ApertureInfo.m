@@ -133,8 +133,8 @@ for i = 1:numel(updatedInfo.beam)
     numOfShapes = 1;
     calcOptions.DAOBeam = updatedInfo.arc.beam(i).isDAOBeam;
 
-    mlcOptions.lim_l = apertureInfo.beam(i).lim_l;
-    mlcOptions.lim_r = apertureInfo.beam(i).lim_r;
+    mlcOptions.lim_l = apertureInfo.beam(i).limLeft;
+    mlcOptions.lim_r = apertureInfo.beam(i).limRight;
     mlcOptions.edges_l = edges_l;
     mlcOptions.edges_r = edges_r;
     mlcOptions.centres = (edges_l + edges_r) / 2;
@@ -167,29 +167,29 @@ for i = 1:numel(updatedInfo.beam)
 
                 % update information in shape structure
                 updatedInfo.beam(i).shape(j).leftLeafPos  = leftLeafPos;
-                updatedInfo.beam(i).shape(j).leftLeafPos_I = leftLeafPos;
-                updatedInfo.beam(i).shape(j).leftLeafPos_F = leftLeafPos;
+                updatedInfo.beam(i).shape(j).leftLeafPosInitial = leftLeafPos;
+                updatedInfo.beam(i).shape(j).leftLeafPosFinal = leftLeafPos;
                 updatedInfo.beam(i).shape(j).rightLeafPos = rightLeafPos;
-                updatedInfo.beam(i).shape(j).rightLeafPos_I = rightLeafPos;
-                updatedInfo.beam(i).shape(j).rightLeafPos_F = rightLeafPos;
+                updatedInfo.beam(i).shape(j).rightLeafPosInitial = rightLeafPos;
+                updatedInfo.beam(i).shape(j).rightLeafPosFinal = rightLeafPos;
             else
                 % extract left and right leaf positions from shape vector
                 vectorIx_LI = updatedInfo.beam(i).shape(j).vectorOffset(1) + ((1:n) - 1);
                 vectorIx_RI = vectorIx_LI + apertureInfo.totalNumOfLeafPairs;
-                leftLeafPos_I = apertureInfoVect(vectorIx_LI);
-                rightLeafPos_I = apertureInfoVect(vectorIx_RI);
+                leftLeafPosInitial = apertureInfoVect(vectorIx_LI);
+                rightLeafPosInitial = apertureInfoVect(vectorIx_RI);
 
                 vectorIx_LF = updatedInfo.beam(i).shape(j).vectorOffset(2) + ((1:n) - 1);
                 vectorIx_RF = vectorIx_LF + apertureInfo.totalNumOfLeafPairs;
-                leftLeafPos_F = apertureInfoVect(vectorIx_LF);
-                rightLeafPos_F = apertureInfoVect(vectorIx_RF);
+                leftLeafPosFinal = apertureInfoVect(vectorIx_LF);
+                rightLeafPosFinal = apertureInfoVect(vectorIx_RF);
 
                 % update information in shape structure
-                updatedInfo.beam(i).shape(j).leftLeafPos_I  = leftLeafPos_I;
-                updatedInfo.beam(i).shape(j).rightLeafPos_I = rightLeafPos_I;
+                updatedInfo.beam(i).shape(j).leftLeafPosInitial  = leftLeafPosInitial;
+                updatedInfo.beam(i).shape(j).rightLeafPosInitial = rightLeafPosInitial;
 
-                updatedInfo.beam(i).shape(j).leftLeafPos_F  = leftLeafPos_F;
-                updatedInfo.beam(i).shape(j).rightLeafPos_F = rightLeafPos_F;
+                updatedInfo.beam(i).shape(j).leftLeafPosFinal  = leftLeafPosFinal;
+                updatedInfo.beam(i).shape(j).rightLeafPosFinal = rightLeafPosFinal;
             end
 
         else
@@ -235,11 +235,11 @@ for i = 1:numel(updatedInfo.beam)
 
                 % update information in shape structure
                 updatedInfo.beam(i).shape(j).leftLeafPos  = leftLeafPos;
-                updatedInfo.beam(i).shape(j).leftLeafPos_I = leftLeafPos;
-                updatedInfo.beam(i).shape(j).leftLeafPos_F = leftLeafPos;
+                updatedInfo.beam(i).shape(j).leftLeafPosInitial = leftLeafPos;
+                updatedInfo.beam(i).shape(j).leftLeafPosFinal = leftLeafPos;
                 updatedInfo.beam(i).shape(j).rightLeafPos = rightLeafPos;
-                updatedInfo.beam(i).shape(j).rightLeafPos_I = rightLeafPos;
-                updatedInfo.beam(i).shape(j).rightLeafPos_F = rightLeafPos;
+                updatedInfo.beam(i).shape(j).rightLeafPosInitial = rightLeafPos;
+                updatedInfo.beam(i).shape(j).rightLeafPosFinal = rightLeafPos;
             else
 
                 fracFromLastOpt = updatedInfo.arc.beam(i).weightFracFromLastDAO;
@@ -261,11 +261,11 @@ for i = 1:numel(updatedInfo.beam)
                 rightLeafPos_I_next = apertureInfoVect(vectorIx_RI_next);
 
                 % interpolate leaf positions
-                updatedInfo.beam(i).shape(j).leftLeafPos_I = fracFromLastOptI .* leftLeafPos_F_last + fracFromNextOptI .* leftLeafPos_I_next;
-                updatedInfo.beam(i).shape(j).rightLeafPos_I = fracFromLastOptI .* rightLeafPos_F_last + fracFromNextOptI .* rightLeafPos_I_next;
+                updatedInfo.beam(i).shape(j).leftLeafPosInitial = fracFromLastOptI .* leftLeafPos_F_last + fracFromNextOptI .* leftLeafPos_I_next;
+                updatedInfo.beam(i).shape(j).rightLeafPosInitial = fracFromLastOptI .* rightLeafPos_F_last + fracFromNextOptI .* rightLeafPos_I_next;
 
-                updatedInfo.beam(i).shape(j).leftLeafPos_F = fracFromLastOptF .* leftLeafPos_F_last + fracFromNextOptF .* leftLeafPos_I_next;
-                updatedInfo.beam(i).shape(j).rightLeafPos_F = fracFromLastOptF .* rightLeafPos_F_last + fracFromNextOptF .* rightLeafPos_I_next;
+                updatedInfo.beam(i).shape(j).leftLeafPosFinal = fracFromLastOptF .* leftLeafPos_F_last + fracFromNextOptF .* leftLeafPos_I_next;
+                updatedInfo.beam(i).shape(j).rightLeafPosFinal = fracFromLastOptF .* rightLeafPos_F_last + fracFromNextOptF .* rightLeafPos_I_next;
             end
         end
 
@@ -282,10 +282,10 @@ for i = 1:numel(updatedInfo.beam)
         vectorIndices.tIx_Vec       = (apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs * 2) + (1:apertureInfo.totalNumOfShapes);
 
         variables.weight            = updatedInfo.beam(i).shape(j).weight;
-        variables.leftLeafPos_I     = updatedInfo.beam(i).shape(j).leftLeafPos_I;
-        variables.leftLeafPos_F     = updatedInfo.beam(i).shape(j).leftLeafPos_F;
-        variables.rightLeafPos_I    = updatedInfo.beam(i).shape(j).rightLeafPos_I;
-        variables.rightLeafPos_F    = updatedInfo.beam(i).shape(j).rightLeafPos_F;
+        variables.leftLeafPos_I     = updatedInfo.beam(i).shape(j).leftLeafPosInitial;
+        variables.leftLeafPos_F     = updatedInfo.beam(i).shape(j).leftLeafPosFinal;
+        variables.rightLeafPos_I    = updatedInfo.beam(i).shape(j).rightLeafPosInitial;
+        variables.rightLeafPos_F    = updatedInfo.beam(i).shape(j).rightLeafPosFinal;
 
         if updatedInfo.arc.beam(i).isDAOBeam
 

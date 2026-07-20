@@ -99,18 +99,18 @@ if apertureInfo.continuousAperture
             vectorIx_RF = vectorIx_LF + apertureInfo.totalNumOfLeafPairs;
 
             % extract leaf positions, time
-            leftLeafPos_I   = apertureInfoVec(vectorIx_LI);
-            rightLeafPos_I  = apertureInfoVec(vectorIx_RI);
-            leftLeafPos_F   = apertureInfoVec(vectorIx_LF);
-            rightLeafPos_F  = apertureInfoVec(vectorIx_RF);
+            leftLeafPosInitial   = apertureInfoVec(vectorIx_LI);
+            rightLeafPosInitial  = apertureInfoVec(vectorIx_RI);
+            leftLeafPosFinal   = apertureInfoVec(vectorIx_LF);
+            rightLeafPosFinal  = apertureInfoVec(vectorIx_RF);
             t               = timeBNOptAngles(shapeInd);
 
             % determine indices
             indInConVec = offset + (1:n);
 
             % calc speeds
-            leftLeafSpeed(indInConVec)      = abs(leftLeafPos_F - leftLeafPos_I) ./ t;
-            rightLeafSpeed(indInConVec)     = abs(rightLeafPos_F - rightLeafPos_I) ./ t;
+            leftLeafSpeed(indInConVec)      = abs(leftLeafPosFinal - leftLeafPosInitial) ./ t;
+            rightLeafSpeed(indInConVec)     = abs(rightLeafPosFinal - rightLeafPosInitial) ./ t;
 
             % update offset
             offset = offset + n;

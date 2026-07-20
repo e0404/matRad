@@ -52,6 +52,9 @@ if nargin < 3 || isempty(viewType)
     viewType = 'auto';
 end
 
+% accept aperture info saved by an older matRad version
+apertureInfo = matRad_upgradeApertureInfo(apertureInfo);
+
 isVMAT = isfield(apertureInfo, 'runVMAT') && apertureInfo.runVMAT;
 
 % resolve 'auto': the per-beam layout tiles the shapes of a single beam,

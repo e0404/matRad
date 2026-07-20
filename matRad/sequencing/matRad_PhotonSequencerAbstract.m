@@ -108,7 +108,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                         rightLeafPosInd = find(shapeMap(l, :), 1, 'last');
 
                         if isempty(leftLeafPosInd) && isempty(rightLeafPosInd) % if no bixel is open, use limits from Ray positions
-                            leftLeafPos(l) = (geometry.lim_l(l) + geometry.lim_r(l)) / 2;
+                            leftLeafPos(l) = (geometry.limLeft(l) + geometry.limRight(l)) / 2;
                             rightLeafPos(l) = leftLeafPos(l);
                         else
                             % the physical position [mm] can be calculated from the indices
@@ -141,8 +141,8 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                 sequence.apertureInfo.beam(i).leafPairPos = geometry.leafPairPos;
                 sequence.apertureInfo.beam(i).isActiveLeafPair = geometry.isActiveLeafPair;
                 sequence.apertureInfo.beam(i).centralLeafPair = geometry.centralLeafPair;
-                sequence.apertureInfo.beam(i).lim_l = geometry.lim_l;
-                sequence.apertureInfo.beam(i).lim_r = geometry.lim_r;
+                sequence.apertureInfo.beam(i).limLeft = geometry.limLeft;
+                sequence.apertureInfo.beam(i).limRight = geometry.limRight;
                 sequence.apertureInfo.beam(i).bixelIndMap = geometry.bixelIndMap;
                 sequence.apertureInfo.beam(i).posOfCornerBixel = geometry.posOfCornerBixel;
                 sequence.apertureInfo.beam(i).MLCWindow = geometry.MLCWindow;
@@ -382,7 +382,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             % output:
             %   geometry:        struct with fields numOfActiveLeafPairs,
             %                    leafPairPos, isActiveLeafPair, centralLeafPair,
-            %                    lim_l, lim_r, bixelIndMap, posOfCornerBixel,
+            %                    limLeft, limRight, bixelIndMap, posOfCornerBixel,
             %                    MLCWindow
             %   bixelIndOffset:  updated offset (input + stfBeam.numOfRays)
 
@@ -425,14 +425,14 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             bixelIndOffset = bixelIndOffset + stfBeam.numOfRays;
 
             % get leaf limits from the leaf map
-            lim_l = NaN * ones(dimZ, 1);
-            lim_r = NaN * ones(dimZ, 1);
+            limLeft = NaN * ones(dimZ, 1);
+            limRight = NaN * ones(dimZ, 1);
             for l = 1:dimZ
                 lim_lInd = find(rayMap(l, :), 1, 'first');
                 lim_rInd = find(rayMap(l, :), 1, 'last');
                 % the physical position [mm] can be calculated from the indices
-                lim_l(l) = (lim_lInd - 1) * bixelWidth + minX - 1 / 2 * bixelWidth;
-                lim_r(l) = (lim_rInd - 1) * bixelWidth + minX + 1 / 2 * bixelWidth;
+                limLeft(l) = (lim_lInd - 1) * bixelWidth + minX - 1 / 2 * bixelWidth;
+                limRight(l) = (lim_rInd - 1) * bixelWidth + minX + 1 / 2 * bixelWidth;
             end
 
             % find upmost and downmost leaf pair
@@ -452,8 +452,8 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             geometry.leafPairPos          = unique(Z);
             geometry.isActiveLeafPair     = isActiveLeafPair;
             geometry.centralLeafPair      = centralLeafPair;
-            geometry.lim_l                = lim_l;
-            geometry.lim_r                = lim_r;
+            geometry.limLeft                = limLeft;
+            geometry.limRight                = limRight;
             geometry.bixelIndMap          = bixelIndMap;
             geometry.posOfCornerBixel     = [minX 0 minZ];
             geometry.MLCWindow            = MLCWindow;

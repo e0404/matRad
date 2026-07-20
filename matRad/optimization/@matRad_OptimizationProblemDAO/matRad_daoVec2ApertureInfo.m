@@ -98,29 +98,29 @@ for i = 1:numel(updatedInfo.beam)
         rightLeafPos = round2(rightLeafPos, 10);
 
         % check overshoot of leaf positions
-        leftLeafPos(leftLeafPos <= apertureInfo.beam(i).lim_l) = apertureInfo.beam(i).lim_l(leftLeafPos <= apertureInfo.beam(i).lim_l);
-        rightLeafPos(rightLeafPos <= apertureInfo.beam(i).lim_l) = apertureInfo.beam(i).lim_l(rightLeafPos <= apertureInfo.beam(i).lim_l);
-        leftLeafPos(leftLeafPos >= apertureInfo.beam(i).lim_r) = apertureInfo.beam(i).lim_r(leftLeafPos >= apertureInfo.beam(i).lim_r);
-        rightLeafPos(rightLeafPos >= apertureInfo.beam(i).lim_r) = apertureInfo.beam(i).lim_r(rightLeafPos >= apertureInfo.beam(i).lim_r);
+        leftLeafPos(leftLeafPos <= apertureInfo.beam(i).limLeft) = apertureInfo.beam(i).limLeft(leftLeafPos <= apertureInfo.beam(i).limLeft);
+        rightLeafPos(rightLeafPos <= apertureInfo.beam(i).limLeft) = apertureInfo.beam(i).limLeft(rightLeafPos <= apertureInfo.beam(i).limLeft);
+        leftLeafPos(leftLeafPos >= apertureInfo.beam(i).limRight) = apertureInfo.beam(i).limRight(leftLeafPos >= apertureInfo.beam(i).limRight);
+        rightLeafPos(rightLeafPos >= apertureInfo.beam(i).limRight) = apertureInfo.beam(i).limRight(rightLeafPos >= apertureInfo.beam(i).limRight);
 
         %
         xPosIndLeftLeaf  = round((leftLeafPos - apertureInfo.beam(i).posOfCornerBixel(1)) / apertureInfo.bixelWidth + 1);
         xPosIndRightLeaf = round((rightLeafPos - apertureInfo.beam(i).posOfCornerBixel(1)) / apertureInfo.bixelWidth + 1);
 
         %
-        xPosIndLeftLeaf_lim  = floor((apertureInfo.beam(i).lim_l - apertureInfo.beam(i).posOfCornerBixel(1)) / apertureInfo.bixelWidth + 1);
-        xPosIndRightLeaf_lim = ceil((apertureInfo.beam(i).lim_r - apertureInfo.beam(i).posOfCornerBixel(1)) / apertureInfo.bixelWidth + 1);
+        xPosIndLeftLeaf_lim  = floor((apertureInfo.beam(i).limLeft - apertureInfo.beam(i).posOfCornerBixel(1)) / apertureInfo.bixelWidth + 1);
+        xPosIndRightLeaf_lim = ceil((apertureInfo.beam(i).limRight - apertureInfo.beam(i).posOfCornerBixel(1)) / apertureInfo.bixelWidth + 1);
 
         xPosIndLeftLeaf(xPosIndLeftLeaf <= xPosIndLeftLeaf_lim) = xPosIndLeftLeaf_lim(xPosIndLeftLeaf <= xPosIndLeftLeaf_lim) + 1;
         xPosIndRightLeaf(xPosIndRightLeaf >= xPosIndRightLeaf_lim) = xPosIndRightLeaf_lim(xPosIndRightLeaf >= xPosIndRightLeaf_lim) - 1;
 
         % check limits because of rounding off issues at maximum, i.e.,
         % enforce round(X.5) -> X
-        % LeafPos can occasionally go slightly beyond lim_r, so changed
+        % LeafPos can occasionally go slightly beyond limRight, so changed
         % == check to >=
         cornerX = apertureInfo.beam(i).posOfCornerBixel(1);
-        overshootL = leftLeafPos >= apertureInfo.beam(i).lim_r;
-        overshootR = rightLeafPos >= apertureInfo.beam(i).lim_r;
+        overshootL = leftLeafPos >= apertureInfo.beam(i).limRight;
+        overshootR = rightLeafPos >= apertureInfo.beam(i).limRight;
         xPosIndLeftLeaf(overshootL)  = round(.5 + (leftLeafPos(overshootL) - cornerX) / apertureInfo.bixelWidth);
         xPosIndRightLeaf(overshootR) = round(.5 + (rightLeafPos(overshootR) - cornerX) / apertureInfo.bixelWidth);
 

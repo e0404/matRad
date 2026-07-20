@@ -56,8 +56,8 @@ for i = 1:numel(updatedInfo.beam)
 
     n = apertureInfo.beam(i).numOfActiveLeafPairs;
 
-    mlcOptions.lim_l = apertureInfo.beam(i).lim_l;
-    mlcOptions.lim_r = apertureInfo.beam(i).lim_r;
+    mlcOptions.lim_l = apertureInfo.beam(i).limLeft;
+    mlcOptions.lim_r = apertureInfo.beam(i).limRight;
     mlcOptions.edges_l = edges_l;
     mlcOptions.edges_r = edges_r;
     mlcOptions.centres = (edges_l + edges_r) / 2;
@@ -92,9 +92,9 @@ for i = 1:numel(updatedInfo.beam)
     % position with the initial half-sector weight
     variables.weight = weight_I;
     if updatedInfo.continuousAperture
-        variables.leftLeafPos_I     = updatedInfo.beam(i).shape(1).leftLeafPos_I;
+        variables.leftLeafPos_I     = updatedInfo.beam(i).shape(1).leftLeafPosInitial;
         variables.leftLeafPos_F     = updatedInfo.beam(i).shape(1).leftLeafPos;
-        variables.rightLeafPos_I    = updatedInfo.beam(i).shape(1).rightLeafPos_I;
+        variables.rightLeafPos_I    = updatedInfo.beam(i).shape(1).rightLeafPosInitial;
         variables.rightLeafPos_F    = updatedInfo.beam(i).shape(1).rightLeafPos;
     else
         variables.leftLeafPos_I     = updatedInfo.beam(i).shape(1).leftLeafPos;
@@ -112,9 +112,9 @@ for i = 1:numel(updatedInfo.beam)
     variables.weight = weight_F;
     if updatedInfo.continuousAperture
         variables.leftLeafPos_I     = updatedInfo.beam(i).shape(1).leftLeafPos;
-        variables.leftLeafPos_F     = updatedInfo.beam(i).shape(1).leftLeafPos_F;
+        variables.leftLeafPos_F     = updatedInfo.beam(i).shape(1).leftLeafPosFinal;
         variables.rightLeafPos_I    = updatedInfo.beam(i).shape(1).rightLeafPos;
-        variables.rightLeafPos_F    = updatedInfo.beam(i).shape(1).rightLeafPos_F;
+        variables.rightLeafPos_F    = updatedInfo.beam(i).shape(1).rightLeafPosFinal;
     end
 
     [w, ~, ~, ~, ~, shapeMap_F, counters] = ...
