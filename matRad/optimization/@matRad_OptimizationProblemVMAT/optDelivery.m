@@ -52,9 +52,9 @@ for i = 1:size(apertureInfo.beam, 2)
         % constraints
 
         % if one of them is less than 1, then a constraint is violated
-        factorMURate    = apertureInfo.arc.constraints.monitorUnitRate(2) / apertureInfo.beam(i).shape(1).MURate;
-        factorLeafSpeed = apertureInfo.arc.constraints.leafSpeed(2) / apertureInfo.beam(i).maxLeafSpeed;
-        factorGantryRot = apertureInfo.arc.constraints.gantryRotationSpeed(2) / apertureInfo.beam(i).gantryRot;
+        factorMURate    = apertureInfo.constraints.monitorUnitRate(2) / apertureInfo.beam(i).shape(1).MURate;
+        factorLeafSpeed = apertureInfo.constraints.leafSpeed(2) / apertureInfo.beam(i).maxLeafSpeed;
+        factorGantryRot = apertureInfo.constraints.gantryRotationSpeed(2) / apertureInfo.beam(i).gantryRot;
 
         % The constraint that is limiting the speed the most is the one
         % whose factor is closest to 1
@@ -73,7 +73,7 @@ for i = 1:size(apertureInfo.beam, 2)
         apertureInfo.beam(i).gantryRot = factor * apertureInfo.beam(i).gantryRot;
         apertureInfo.beam(i).time = apertureInfo.beam(i).time / factor;
 
-        factorMURate = apertureInfo.arc.constraints.monitorUnitRate(1) / apertureInfo.beam(i).shape(1).MURate;
+        factorMURate = apertureInfo.constraints.monitorUnitRate(1) / apertureInfo.beam(i).shape(1).MURate;
 
         if factorMURate > 1
             apertureInfo.beam(i).shape(1).MURate = factorMURate * apertureInfo.beam(i).shape(1).MURate;

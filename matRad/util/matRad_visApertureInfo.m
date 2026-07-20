@@ -404,8 +404,8 @@ gantryRot = gantryRot(order);
 leafSpeed = leafSpeed(order);
 
 constraints = struct();
-if isfield(apertureInfo, 'arc') && isfield(apertureInfo.arc, 'constraints')
-    constraints = apertureInfo.arc.constraints;
+if isfield(apertureInfo, 'constraints')
+    constraints = apertureInfo.constraints;
 end
 
 figure('units', 'inches');
