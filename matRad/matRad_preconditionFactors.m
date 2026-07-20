@@ -39,16 +39,16 @@ function apertureInfo = matRad_preconditionFactors(apertureInfo)
 % TODO: could probably integrate dijScaleFactor into jacobiScale. These
 % were originally separated for research purposes. It would greatly
 % simplify the code to have them all together.
-dijScaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes)./apertureInfo.jacobiScale)/(apertureInfo.bixelWidth);
+dijScaleFactor = mean(apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) ./ apertureInfo.jacobiScale) / (apertureInfo.bixelWidth);
 
 for i = 1:numel(apertureInfo.beam)
-    
+
     if ~apertureInfo.runVMAT || (apertureInfo.runVMAT && apertureInfo.propVMAT.beam(i).DAOBeam)
         % in other words, do this for every beam if it's not VMAT, and for
         % optimized beams only if it is
-        
+
         for j = 1:apertureInfo.beam(i).numOfShapes
-            
+
             % To get the jacobi scaling factor, first factor the
             % current aperture's weight out of the dijScaling factor.  Also
             % remove the bixel width.  Now we have the mean weight relative
@@ -57,19 +57,21 @@ for i = 1:numel(apertureInfo.beam)
             % open bixels (slight modification to Esther Wild's formula).
             % The variables corresponding to the aperture weights will be
             % multiplied by this number, which will decrease the gradients.
-            
+
+            shape = apertureInfo.beam(i).shape(j);
             if apertureInfo.runVMAT
-                apertureInfo.beam(i).shape(j).jacobiScale = (dijScaleFactor./apertureInfo.beam(i).shape(j).weight).*sqrt(sum(apertureInfo.beam(i).shape(j).shapeMap(:).^2)./apertureInfo.beam(i).shape(j).sumGradSq);
+                jacobiScale = (dijScaleFactor ./ shape.weight) .* ...
+                    sqrt(sum(shape.shapeMap(:).^2) ./ shape.sumGradSq);
             else
-                apertureInfo.beam(i).shape(j).jacobiScale = (dijScaleFactor.*apertureInfo.bixelWidth./apertureInfo.beam(i).shape(j).weight).*sqrt(sum(apertureInfo.beam(i).shape(j).shapeMap(:).^2));
+                jacobiScale = (dijScaleFactor .* apertureInfo.bixelWidth ./ shape.weight) .* ...
+                    sqrt(sum(shape.shapeMap(:).^2));
             end
-            apertureInfo.jacobiScale(apertureInfo.beam(i).shape(j).weightOffset) = apertureInfo.beam(i).shape(j).jacobiScale;
-            
-            apertureInfo.apertureVector(apertureInfo.beam(i).shape(j).weightOffset) = apertureInfo.beam(i).shape(j).jacobiScale*apertureInfo.beam(i).shape(j).weight;
+            apertureInfo.beam(i).shape(j).jacobiScale = jacobiScale;
+            apertureInfo.jacobiScale(shape.weightOffset) = jacobiScale;
+
+            apertureInfo.apertureVector(shape.weightOffset) = jacobiScale * shape.weight;
         end
     end
 end
 
 end
-
-
