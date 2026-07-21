@@ -48,10 +48,10 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
         function sequence = applyArcSequencing(this, sequence, stf)
             % Spreads the shapes generated at each FMO-anchor beam across its
             % DAO-angle children and computes gantry rotation speed / MU rate.
-            % arcSequencing needs sequence.constraints to be set.
+            % arcSequencing needs sequence.deliveryConstraints to be set.
 
-            if ~isfield(sequence, 'constraints')
-                sequence.constraints = this.getMachineConstraints(stf);
+            if ~isfield(sequence, 'deliveryConstraints')
+                sequence.deliveryConstraints = this.getMachineConstraints(stf);
             end
             sequence.beam = this.arcSequencing(sequence, stf);
         end
@@ -65,7 +65,7 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             %
             % input:
             %   sequencing:  shape sequencing structure (needs .beam and
-            %                .constraints)
+            %                .deliveryConstraints)
             %   stf:         matRad steering struct (beam geometry etc.)
             %
             % output:
@@ -144,7 +144,7 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
                 end
 
                 if stf(i).arc.isDAOBeam
-                    beam(i).gantryRot = sequencing.constraints.gantryRotationSpeed(2); % gantry rotation rate until next opt angle
+                    beam(i).gantryRot = sequencing.deliveryConstraints.gantryRotationSpeed(2); % gantry rotation rate until next opt angle
                     % dose rate until next opt angle
                     beam(i).MURate = this.weightToMU .* beam(i).shapesWeight .* beam(i).gantryRot ./ ...
                         stf(i).arc.DAOAngleBordersDiff;
@@ -170,7 +170,7 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
                 matRad_cfg.dispError('Mixed sequencing currently not supported for VMAT sequencing');
             end
 
-            machine = load([radiationMode{1} '_' machineName{1}]);
+            machine = matRad_loadMachine(struct('radiationMode', radiationMode{1}, 'machine', machineName{1}));
             if ~isfield(machine, 'constraints')
                 constraints = struct( ...
                                      'gantryRotationSpeed', [0 6], ... %degree/s
@@ -363,8 +363,13 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             apertureInfo.totalNumOfShapes   = sum([apertureInfo.beam.numOfShapes]);
             apertureInfo.weightToMU         = this.weightToMU;
 
-            % machine delivery constraints
-            apertureInfo.deliveryConstraints = this.getMachineConstraints(stf);
+            % machine delivery constraints (reuse the ones already loaded
+            % during arc sequencing when available)
+            if isfield(sequence, 'deliveryConstraints')
+                apertureInfo.deliveryConstraints = sequence.deliveryConstraints;
+            else
+                apertureInfo.deliveryConstraints = this.getMachineConstraints(stf);
+            end
 
             apertureInfo.totalNumOfOptBixels = totalNumOfOptBixels;
             apertureInfo.doseTotalNumOfLeafPairs = sum([apertureInfo.beam(:).numOfActiveLeafPairs]);
