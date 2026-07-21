@@ -73,7 +73,7 @@ classdef matRad_SpotRemovalDij < handle
                 obj.calcNewSpots();
             end
 
-            resultGUI = matRad_fluenceOptimization(obj.getDij, obj.cst, obj.pln, [], obj.newWeights);
+            resultGUI = matRad_fluenceOptimization(obj.getDij, obj.cst, obj.pln, obj.newWeights);
 
         end
 

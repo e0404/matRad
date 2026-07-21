@@ -1,17 +1,15 @@
-function [resultGUI, optimizer] = matRad_fluenceOptimization(dij, cst, pln, stf, wInit)
+function [resultGUI, optimizer] = matRad_fluenceOptimization(dij, cst, pln, wInit, wInitLegacy)
 % matRad inverse planning wrapper function
 %
 % call:
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
-%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,stf)
-%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,stf,wInit)
+%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
 %
 % input:
-%   dij:        matRad dij struct
+%   dij:        matRad dij struct. For VMAT plans the dij carries the FMO
+%               beam bookkeeping (dij.isFMOBeam) set by the dose calculation
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
-%   stf:        (optional) matRad steering struct; required when
-%               pln.propOpt.runVMAT is enabled, may be empty otherwise
 %   wInit:      (optional) custom weights to initialize problems
 %
 % output:
@@ -41,21 +39,20 @@ function [resultGUI, optimizer] = matRad_fluenceOptimization(dij, cst, pln, stf,
 
 matRad_cfg = MatRad_Config.instance();
 
-% the 4th argument used to hold wInit; it now holds the (optional) stf,
-% with wInit moved to 5th place. A non-struct, non-empty 4th argument is
-% treated as a legacy wInit call ([] is accepted as an stf placeholder).
-if nargin >= 4 && ~isstruct(stf) && ~isempty(stf)
-    matRad_cfg.dispDeprecationWarning(['The argument order of matRad_fluenceOptimization changed to ' ...
-                                       'matRad_fluenceOptimization(dij, cst, pln, stf, wInit). Please update your call.']);
-    tmp = stf;
-    if nargin >= 5
-        % swapped 5-argument call: the 5th argument holds the stf
-        stf = wInit;
-    else
-        stf = [];
+% transitional shim: the VMAT development line temporarily took the stf in
+% 4th position (with wInit in 5th). The FMO beam bookkeeping now travels
+% inside dij, so an stf (or empty placeholder) in 4th position is dropped
+% with a deprecation warning and wInit is taken from the 5th argument.
+if nargin >= 4 && (isstruct(wInit) || isempty(wInit))
+    if isstruct(wInit)
+        matRad_cfg.dispDeprecationWarning(['matRad_fluenceOptimization does not take the stf anymore - the FMO beam ' ...
+                                           'bookkeeping is read from dij. Please call matRad_fluenceOptimization(dij, cst, pln, wInit).']);
     end
-    wInit = tmp;
-    clear tmp;
+    if nargin >= 5
+        wInit = wInitLegacy;
+    else
+        clear wInit;
+    end
 end
 
 if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'enableGPU')
@@ -369,9 +366,10 @@ else
 end
 
 if isfield(pln.propOpt, 'runVMAT') && pln.propOpt.runVMAT
-    if ~exist('stf', 'var') || ~isstruct(stf)
-        matRad_cfg.dispError(['VMAT fluence optimization requires the steering information to identify ' ...
-                              'the FMO beams: call matRad_fluenceOptimization(dij, cst, pln, stf).']);
+    if ~isfield(dij, 'isFMOBeam')
+        matRad_cfg.dispError(['VMAT fluence optimization requires the FMO beam bookkeeping in the dij ' ...
+                              '(dij.isFMOBeam), which the dose calculation copies from VMAT steering information. ' ...
+                              'Recompute the dose influence matrix from a VMAT stf.']);
     end
 
     % Only the bixels belonging to FMO gantry angles should have their
@@ -388,7 +386,7 @@ if isfield(pln.propOpt, 'runVMAT') && pln.propOpt.runVMAT
     offset = 0;
     for i = 1:dij.numOfBeams
 
-        if ~stf(i).arc.isFMOBeam
+        if ~dij.isFMOBeam(i)
             % This is not an FMO beam. Set wOnes for the bixels belonging
             % to this beam to 0.
             rayIndices = offset + (1:dij.numOfRaysPerBeam(i));

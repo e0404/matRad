@@ -96,10 +96,11 @@ dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
 % The goal of the fluence optimization is to find a set of beamlet weights
 % which yield the best possible dose distribution according to the
 % predefined clinical objectives and constraints underlying the radiation
-% treatment. In VMAT, FMO is done only at the angles in the
-% FMOGantryAngles set. Once the optimization has finished, trigger once the GUI to
-% visualize the optimized dose cubes.
-resultGUI = matRad_fluenceOptimization(dij, cst, pln, stf);
+% treatment. In VMAT, FMO is done only at the FMO angle subset of the arc;
+% the dose influence matrix carries this bookkeeping (dij.isFMOBeam) from
+% the steering information. Once the optimization has finished, trigger
+% once the GUI to visualize the optimized dose cubes.
+resultGUI = matRad_fluenceOptimization(dij, cst, pln);
 matRadGUI;
 
 %% Sequencing
