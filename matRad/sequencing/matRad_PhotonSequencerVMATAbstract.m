@@ -187,6 +187,18 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             % apertureInfo.arc.*, then converts it to the DAO vector
             % representation via matRad_OptimizationProblemVMAT.
 
+            % continuous aperture delivery needs the doseAngleDAO
+            % bookkeeping, which the stf generator only creates when
+            % pln.propSeq.continuousAperture was set before stf generation
+            if this.continuousAperture
+                firstDAOBeam = find(arrayfun(@(s) s.arc.isDAOBeam, stf), 1);
+                if ~isempty(firstDAOBeam) && ~isfield(stf(firstDAOBeam).arc, 'doseAngleDAO')
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError(['The stf was not generated for continuous aperture delivery. ' ...
+                                          'Set pln.propSeq.continuousAperture = true before matRad_generateStf.']);
+                end
+            end
+
             bixelWidth = stf(1).bixelWidth; % [mm]
 
             bixelIndOffset = 0;

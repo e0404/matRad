@@ -134,8 +134,9 @@ matRad_visApertureInfo(resultGUI.apertureInfo);
 resultGUI = matRad_planAnalysis(resultGUI, ct, cst, stf, pln);
 
 %% Calculate delivery metrics
-
-resultGUI = matRad_calcDeliveryMetrics(resultGUI, pln, stf);
+% Total MU and delivery time of the plan plus per-control-point MU rate,
+% gantry speed and leaf speeds are collected in resultGUI.deliveryMetrics.
+resultGUI = matRad_calcDeliveryMetrics(resultGUI, stf);
 
 %% Dose recalculation on a finer arc
 % The plan was optimized at the (coarse) DAO control points. To check the

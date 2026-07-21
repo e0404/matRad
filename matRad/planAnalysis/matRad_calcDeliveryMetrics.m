@@ -1,186 +1,193 @@
-function result = matRad_calcDeliveryMetrics(result, pln, stf)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad delivery metric calculation
+function resultGUI = matRad_calcDeliveryMetrics(resultGUI, stf)
+% matRad delivery metric calculation for aperture-based (VMAT) plans
 %
 % call
-%   matRad_calcDeliveryMetrics(result,pln)
+%   resultGUI = matRad_calcDeliveryMetrics(resultGUI, stf)
 %
 % input
-%   result:             result struct from fluence optimization/sequencing
-%   pln:                matRad plan meta information struct
+%   resultGUI:  result struct carrying resultGUI.apertureInfo from
+%               sequencing / direct aperture optimization
+%   stf:        matRad steering struct (provides the FMO arc sectors used
+%               for the leaf-travel direction statistics of continuous
+%               aperture plans)
 %
 % output
-%   All plans: total MU
-%   VMAT plans: total time, leaf speed, MU rate, and gantry rotation speed
-%   distributions
+%   resultGUI:  input struct with resultGUI.deliveryMetrics added:
+%               .planMU               total monitor units of the plan
+%               .planTime             total delivery time [s]
+%               .gantryAngle          gantry angle per DAO control point [deg]
+%               .time                 delivery time per DAO control point [s]
+%               .MURate               MU rate per DAO control point [MU/s]
+%               .gantryRotationSpeed  gantry speed per DAO control point [deg/s]
+%               .maxLeafSpeed         max leaf speed per DAO control point [mm/s]
+%               .leafSpeed            individual leaf speeds between control
+%                                     points [mm/s] (signed for continuous
+%                                     aperture delivery, absolute otherwise)
+%               .frac*                time fractions spent at the delivery
+%                                     constraint limits
+%               Continuous-aperture plans additionally get the leaf sweep
+%               direction statistics .fracForward/.fracBackward per FMO
+%               sector and their plan totals.
 %
+% References
+%   [1] http://dx.doi.org/10.1118/1.4914863
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2016 the matRad development team.
+% Copyright 2016-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
-% distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
 % of the matRad project, including this file, may be copied, modified,
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-apertureInfo = result.apertureInfo;
+matRad_cfg = MatRad_Config.instance();
 
-l = 0;
-if apertureInfo.runVMAT
+if ~isfield(resultGUI, 'apertureInfo')
+    matRad_cfg.dispError('Delivery metrics require resultGUI.apertureInfo from sequencing / direct aperture optimization!');
+end
+apertureInfo = resultGUI.apertureInfo;
 
-    machine = matRad_loadMachine(pln);
-
-    apertureInfo.planMU     = 0;
-    apertureInfo.planTime   = 0;
-
-    % All of these are vectors
-    % Each entry corresponds to a beam angle
-    % Later, we will convert these to histograms, find max, mean, min, etc.
-    gantryRot = zeros(1, result.apertureInfo.totalNumOfShapes);
-    MURate = gantryRot;
-    times = gantryRot;
-    angles = gantryRot;
-    maxLeafSpeed = gantryRot;
-
-    for i = 1:size(apertureInfo.beam, 2)
-
-        apertureInfo.planMU     = apertureInfo.planMU + apertureInfo.beam(i).shape(1).MU;
-        apertureInfo.planTime   = apertureInfo.planTime + apertureInfo.beam(i).time; % time until next optimized beam
-
-        if apertureInfo.beam(i).numOfShapes % only optimized beams have their time in the data struct
-            l = l + 1;
-            gantryRot(l) = apertureInfo.beam(i).gantryRot;
-            MURate(l) = apertureInfo.beam(i).shape(1).MURate * 60;
-            times(l) = apertureInfo.beam(i).time;
-            maxLeafSpeed(l) = apertureInfo.beam(i).maxLeafSpeed / 10;
-            angles(l) = apertureInfo.beam(i).gantryAngle;
-        end
-    end
-
-    apertureInfoVec = apertureInfo.apertureVector;
-
-    % shorthand aliases
-    nShapes = apertureInfo.totalNumOfShapes;
-    nPairs  = apertureInfo.beam(1).numOfActiveLeafPairs;
-    nLP     = apertureInfo.totalNumOfLeafPairs;
-
-    leftLeafPos  = apertureInfoVec((1:nLP) + nShapes);
-    rightLeafPos = apertureInfoVec(1 + nLP + nShapes:nShapes + nLP * 2);
-    timeOptBorderAngles = apertureInfoVec((1 + nShapes + nLP * 2):end);
-
-    if apertureInfo.continuousAperture
-        timeDoseBorderAngles = timeOptBorderAngles .* [apertureInfo.arc.beam([apertureInfo.arc.beam.isDAOBeam]).timeFactorCurrent]';
-
-        leftLeafDiff = diff(reshape(leftLeafPos, nPairs, []), 1, 2);
-        rightLeafDiff = diff(reshape(rightLeafPos, nPairs, []), 1, 2);
-
-        isDAO = repmat([apertureInfo.arc.beam.isDAOBeam], nPairs, 1);
-        leftLeafDiff  = reshape(leftLeafDiff(isDAO), nPairs, nShapes);
-        rightLeafDiff = reshape(rightLeafDiff(isDAO), nPairs, nShapes);
-
-        lfspd = reshape([leftLeafDiff rightLeafDiff] ./ ...
-                        repmat(timeDoseBorderAngles', nPairs, 2), 2 * nPairs * numel(timeDoseBorderAngles), 1);
-
-        optAngles = [apertureInfo.beam([apertureInfo.arc.beam.isDAOBeam]).gantryAngle];
-        optAnglesMat = reshape(repmat(optAngles, nPairs, 2), 2 * nPairs * numel(timeDoseBorderAngles), 1);
-    else
-        optInd = [apertureInfo.arc.beam.isDAOBeam];
-
-        i = repelem(1:(nShapes - 1), 2);
-        j = repelem(1:nShapes, 2);
-        j(1) = [];
-        j(end) = [];
-
-        timeFactors = [apertureInfo.arc.beam(optInd).timeFactors]';
-        timeFactors(1) = [];
-        timeFactors(end) = [];
-
-        timeFacMatrix = sparse(i, j, timeFactors, nShapes - 1, nShapes);
-        timeBNOptAngles = timeFacMatrix * timeOptBorderAngles;
-
-        lfspd = reshape([abs(diff(reshape(leftLeafPos, nPairs, nShapes), 1, 2)) ...
-                         abs(diff(reshape(rightLeafPos, nPairs, nShapes), 1, 2))] ./ ...
-                        repmat(timeBNOptAngles', nPairs, 2), 2 * nPairs * numel(timeBNOptAngles), 1);
-    end
-
-    if apertureInfo.continuousAperture
-
-        % FMOBorders = zeros(1,2*numel(pln.propStf.FMOGantryAngles));
-        counter = 1;
-        for i = 1:numel(stf)
-            if stf(i).arc.isFMOBeam
-                FMOBorders(counter) = stf(i).arc.FMOAngleBorders(1);
-                FMOBorders(counter + 1) = stf(i).arc.FMOAngleBorders(2);
-                counter = counter + 2;
-            else
-                continue
-            end
-        end
-        FMOBorders = unique(FMOBorders);
-        forwardDir = 1 - 2 * mod(1:(numel(FMOBorders) - 1), 2);
-        numForward = zeros(numel(forwardDir), 1);
-        numBackward = zeros(numel(forwardDir), 1);
-        timeInInit = zeros(numel(forwardDir), 1);
-
-        plot(optAnglesMat, lfspd, '.');
-        hold on;
-        counter = 1;
-        for border = FMOBorders
-            plot([border border], [-machine.constraints.leafSpeed(2) machine.constraints.leafSpeed(2)], 'r-');
-
-            if border < FMOBorders(end)
-                curr_lfspd = lfspd(FMOBorders(counter) <= optAnglesMat & optAnglesMat <= FMOBorders(counter + 1));
-
-                numForward(counter) = nnz(curr_lfspd * forwardDir(counter) >= 0);
-                numBackward(counter) = nnz(curr_lfspd * forwardDir(counter) < 0);
-                timeInInit(counter) = sum(times(FMOBorders(counter) <= angles & angles <= FMOBorders(counter + 1)));
-
-                counter = counter + 1;
-            end
-        end
-
-        figure;
-        plot([min(FMOBorders) - 5 max(FMOBorders) + 5], [0 0], 'k--');
-        xlim([min(FMOBorders) - 5 max(FMOBorders) + 5]);
-        ylim([-machine.constraints.leafSpeed(2) - 5 machine.constraints.leafSpeed(2) + 5]);
-        xlabel('gantry angle (^\circ)');
-        ylabel('leaf speed (cm/s)');
-
-        figure;
-        plot(optAngles, gantryRot, '.');
-        xlim([min(FMOBorders) - 5 max(FMOBorders) + 5]);
-        ylim([0 machine.constraints.gantryRotationSpeed(2) + 1]);
-        xlabel('gantry angle (^\circ)');
-        ylabel('gantry rotation speed (^\circ/s)');
-
-        figure;
-        plot(optAngles, MURate, '.');
-        xlim([min(FMOBorders) - 5 max(FMOBorders) + 5]);
-        ylim([0 60 * machine.constraints.monitorUnitRate(2) + 5]);
-        xlabel('gantry angle (^\circ)');
-        ylabel('MU rate (MU/min)');
-
-        apertureInfo.fracMaxMURate = sum(times(MURate > 60 * machine.constraints.monitorUnitRate(2) * (1 - 1e-5))) ./ sum(times);
-        apertureInfo.fracMinMURate = sum(times(MURate < 60 * machine.constraints.monitorUnitRate(1) * (1 + 1e-5))) ./ sum(times);
-        apertureInfo.fracMaxGantryRot = sum(times(gantryRot > machine.constraints.gantryRotationSpeed(2) * (1 - 1e-5))) ./ sum(times);
-        apertureInfo.fracMaxLeafSpeed = sum(times(maxLeafSpeed > machine.constraints.leafSpeed(2) / 10 * (1 - 1e-5))) ./ sum(times);
-        apertureInfo.fracHalfMaxLeafSpeed = sum(times(maxLeafSpeed > machine.constraints.leafSpeed(2) / 10 * (1 - 1e-5) / 2)) ./ sum(times);
-
-        apertureInfo.fracForward = numForward ./ (numForward + numBackward);
-        apertureInfo.fracBackward = 1 - apertureInfo.fracForward;
-        apertureInfo.totalFracForward = mean(apertureInfo.fracForward);
-        % apertureInfo.totalFracForward = sum(apertureInfo.fracForward.*timeInInit)./sum(timeInInit);
-        apertureInfo.totalFracBackward = 1 - apertureInfo.totalFracForward;
-    end
-    %}
-
+if ~apertureInfo.runVMAT
+    matRad_cfg.dispWarning('Delivery metrics are currently only computed for VMAT plans.');
+    return
 end
 
-result.apertureInfo = apertureInfo;
+if ~isfield(apertureInfo, 'deliveryConstraints')
+    matRad_cfg.dispError('apertureInfo carries no delivery constraints - run the VMAT sequencing first!');
+end
+constraints = apertureInfo.deliveryConstraints;
+
+metrics = struct();
+metrics.planMU   = 0;
+metrics.planTime = 0;
+
+% per-DAO-control-point quantities
+numOfDAOBeams       = apertureInfo.totalNumOfShapes;
+gantryAngle         = zeros(1, numOfDAOBeams);
+time                = zeros(1, numOfDAOBeams);
+MURate              = zeros(1, numOfDAOBeams);
+gantryRotationSpeed = zeros(1, numOfDAOBeams);
+maxLeafSpeed        = zeros(1, numOfDAOBeams);
+
+l = 0;
+for i = 1:numel(apertureInfo.beam)
+
+    metrics.planMU   = metrics.planMU + apertureInfo.beam(i).shape(1).MU;
+    metrics.planTime = metrics.planTime + apertureInfo.beam(i).time; % time until the next DAO control point
+
+    if apertureInfo.beam(i).numOfShapes % only DAO control points carry their own delivery data
+        l = l + 1;
+        gantryAngle(l)         = apertureInfo.beam(i).gantryAngle;
+        time(l)                = apertureInfo.beam(i).time;
+        MURate(l)              = apertureInfo.beam(i).shape(1).MURate;
+        gantryRotationSpeed(l) = apertureInfo.beam(i).gantryRot;
+        maxLeafSpeed(l)        = apertureInfo.beam(i).maxLeafSpeed;
+    end
+end
+
+metrics.gantryAngle         = gantryAngle;
+metrics.time                = time;
+metrics.MURate              = MURate;
+metrics.gantryRotationSpeed = gantryRotationSpeed;
+metrics.maxLeafSpeed        = maxLeafSpeed;
+
+% individual leaf speeds between neighboring DAO control points, derived
+% from the aperture vector
+apertureInfoVec = apertureInfo.apertureVector;
+
+% shorthand aliases
+nShapes = apertureInfo.totalNumOfShapes;
+nPairs  = apertureInfo.beam(1).numOfActiveLeafPairs;
+nLP     = apertureInfo.totalNumOfLeafPairs;
+
+leftLeafPos  = apertureInfoVec((1:nLP) + nShapes);
+rightLeafPos = apertureInfoVec(1 + nLP + nShapes:nShapes + nLP * 2);
+timeOptBorderAngles = apertureInfoVec((1 + nShapes + nLP * 2):end);
+
+if apertureInfo.continuousAperture
+    timeDoseBorderAngles = timeOptBorderAngles .* [apertureInfo.arc.beam([apertureInfo.arc.beam.isDAOBeam]).timeFactorCurrent]';
+
+    leftLeafDiff = diff(reshape(leftLeafPos, nPairs, []), 1, 2);
+    rightLeafDiff = diff(reshape(rightLeafPos, nPairs, []), 1, 2);
+
+    isDAO = repmat([apertureInfo.arc.beam.isDAOBeam], nPairs, 1);
+    leftLeafDiff  = reshape(leftLeafDiff(isDAO), nPairs, nShapes);
+    rightLeafDiff = reshape(rightLeafDiff(isDAO), nPairs, nShapes);
+
+    % signed leaf speeds: the sign encodes the travel direction
+    metrics.leafSpeed = reshape([leftLeafDiff rightLeafDiff] ./ ...
+                                repmat(timeDoseBorderAngles', nPairs, 2), 2 * nPairs * numel(timeDoseBorderAngles), 1);
+
+    optAngles = [apertureInfo.beam([apertureInfo.arc.beam.isDAOBeam]).gantryAngle];
+    metrics.leafSpeedGantryAngle = reshape(repmat(optAngles, nPairs, 2), 2 * nPairs * numel(timeDoseBorderAngles), 1);
+else
+    optInd = [apertureInfo.arc.beam.isDAOBeam];
+
+    i = repelem(1:(nShapes - 1), 2);
+    j = repelem(1:nShapes, 2);
+    j(1) = [];
+    j(end) = [];
+
+    timeFactors = [apertureInfo.arc.beam(optInd).timeFactors]';
+    timeFactors(1) = [];
+    timeFactors(end) = [];
+
+    timeFacMatrix = sparse(i, j, timeFactors, nShapes - 1, nShapes);
+    timeBNOptAngles = timeFacMatrix * timeOptBorderAngles;
+
+    metrics.leafSpeed = reshape([abs(diff(reshape(leftLeafPos, nPairs, nShapes), 1, 2)) ...
+                                 abs(diff(reshape(rightLeafPos, nPairs, nShapes), 1, 2))] ./ ...
+                                repmat(timeBNOptAngles', nPairs, 2), 2 * nPairs * numel(timeBNOptAngles), 1);
+end
+
+% time fractions spent at the delivery constraint limits (small relative
+% tolerance against floating point comparison exactly at the limit)
+tol = 1e-5;
+totalTime = sum(time);
+metrics.fracMaxMURate        = sum(time(MURate > constraints.monitorUnitRate(2) * (1 - tol))) ./ totalTime;
+metrics.fracMinMURate        = sum(time(MURate < constraints.monitorUnitRate(1) * (1 + tol))) ./ totalTime;
+metrics.fracMaxGantryRot     = sum(time(gantryRotationSpeed > constraints.gantryRotationSpeed(2) * (1 - tol))) ./ totalTime;
+metrics.fracMaxLeafSpeed     = sum(time(maxLeafSpeed > constraints.leafSpeed(2) * (1 - tol))) ./ totalTime;
+metrics.fracHalfMaxLeafSpeed = sum(time(maxLeafSpeed > constraints.leafSpeed(2) * (1 - tol) / 2)) ./ totalTime;
+
+if apertureInfo.continuousAperture
+    % leaf sweep direction statistics per FMO sector: the sweep direction
+    % alternates between neighboring sectors
+    if nargin < 2 || isempty(stf)
+        matRad_cfg.dispError('The leaf sweep statistics of a continuous aperture plan require the stf!');
+    end
+
+    FMOBorders = [];
+    for i = 1:numel(stf)
+        if stf(i).arc.isFMOBeam
+            FMOBorders = [FMOBorders, stf(i).arc.FMOAngleBorders(:)']; %#ok<AGROW>
+        end
+    end
+    FMOBorders = unique(FMOBorders);
+
+    forwardDir  = 1 - 2 * mod(1:(numel(FMOBorders) - 1), 2);
+    numForward  = zeros(numel(forwardDir), 1);
+    numBackward = zeros(numel(forwardDir), 1);
+    for sector = 1:(numel(FMOBorders) - 1)
+        inSector = FMOBorders(sector) <= metrics.leafSpeedGantryAngle & ...
+                   metrics.leafSpeedGantryAngle <= FMOBorders(sector + 1);
+        sectorSpeeds = metrics.leafSpeed(inSector);
+
+        numForward(sector)  = nnz(sectorSpeeds * forwardDir(sector) >= 0);
+        numBackward(sector) = nnz(sectorSpeeds * forwardDir(sector) < 0);
+    end
+
+    metrics.fracForward  = numForward ./ (numForward + numBackward);
+    metrics.fracBackward = 1 - metrics.fracForward;
+    metrics.totalFracForward  = mean(metrics.fracForward);
+    metrics.totalFracBackward = 1 - metrics.totalFracForward;
+end
+
+resultGUI.deliveryMetrics = metrics;
+
+end

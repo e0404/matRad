@@ -12,7 +12,10 @@ test_functions = localfunctions();
 % Test Case, and add them to the test-runner
 initTestSuite;
 
-function [stf, pln] = helper_getVmatStf()
+function [stf, pln] = helper_getVmatStf(continuousAperture)
+if nargin < 1
+    continuousAperture = false;
+end
 p = load('photons_testData.mat', 'ct', 'cst', 'pln');
 pln = p.pln;
 
@@ -24,7 +27,7 @@ pln.propStf.maxDAOGantryAngleSpacing = 30;
 pln.propStf.maxFMOGantryAngleSpacing = 45;
 pln.propStf.isoCenter                = matRad_getIsoCenter(p.cst, p.ct, 0);
 
-pln.propSeq.continuousAperture = false;
+pln.propSeq.continuousAperture = continuousAperture;
 pln.propOpt.runVMAT = true;
 
 stf = matRad_generateStf(p.ct, p.cst, pln);
@@ -124,10 +127,35 @@ w = ones(sum([stf.numOfRays]), 1);
 sequence = sequencer.sequence(w, stf);
 
 result.apertureInfo = sequence.apertureInfo;
-result = matRad_calcDeliveryMetrics(result, pln, stf);
+result = matRad_calcDeliveryMetrics(result, stf);
 
-assertTrue(isfinite(result.apertureInfo.planMU) && result.apertureInfo.planMU > 0);
-assertTrue(isfinite(result.apertureInfo.planTime) && result.apertureInfo.planTime > 0);
+metrics = result.deliveryMetrics;
+assertTrue(isfinite(metrics.planMU) && metrics.planMU > 0);
+assertTrue(isfinite(metrics.planTime) && metrics.planTime > 0);
+assertTrue(all(isfinite(metrics.leafSpeed)) && all(metrics.leafSpeed >= 0));
+assertEqual(numel(metrics.MURate), result.apertureInfo.totalNumOfShapes);
+assertTrue(all(metrics.fracMaxLeafSpeed <= 1) && all(metrics.fracMaxLeafSpeed >= 0));
+
+function test_vmatDeliveryMetricsContinuousAperture
+% continuous aperture must be requested via pln BEFORE stf generation so
+% that the stf carries the doseAngleDAO bookkeeping; the sequencer then
+% picks the flag up from pln.propSeq automatically
+[stf, pln] = helper_getVmatStf(true);
+sequencer = helper_getSequencer(pln);
+assertTrue(sequencer.continuousAperture);
+
+w = ones(sum([stf.numOfRays]), 1);
+sequence = sequencer.sequence(w, stf);
+
+result.apertureInfo = sequence.apertureInfo;
+result = matRad_calcDeliveryMetrics(result, stf);
+
+metrics = result.deliveryMetrics;
+assertTrue(isfinite(metrics.planMU) && metrics.planMU > 0);
+assertTrue(all(isfinite(metrics.leafSpeed)));
+assertEqual(numel(metrics.leafSpeedGantryAngle), numel(metrics.leafSpeed));
+assertTrue(all(metrics.fracForward >= 0 & metrics.fracForward <= 1));
+assertElementsAlmostEqual(metrics.totalFracForward + metrics.totalFracBackward, 1);
 
 function test_vmatRecalcApertureChain
 % fine-angle aperture recalculation: interpolate the sequenced apertures
