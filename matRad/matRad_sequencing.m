@@ -49,9 +49,7 @@ end
 sequencer = matRad_SequencerBase.getSequencerFromPln(pln);
 
 % Handle optional inputs
-if nargin < 5 || isempty(visMode)
-    visMode = false;
-else
+if nargin >= 5 && ~isempty(visMode)
     sequencer.visMode = visMode;
 end
 if nargin < 4 || isempty(dij)

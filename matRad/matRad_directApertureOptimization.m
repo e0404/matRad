@@ -145,7 +145,6 @@ else
     optiProb = matRad_OptimizationProblemDAO(backProjection, apertureInfo);
 end
 apertureInfo = optiProb.matRad_daoVec2ApertureInfo(apertureInfo, apertureInfo.apertureVector);
-apertureInfo.newIteration = true; % do we need this?
 optiProb.apertureInfo = apertureInfo;
 
 if ~isfield(pln.propOpt, 'optimizer')
@@ -180,8 +179,7 @@ end
 newApertureInfo = optiProb.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo, optApertureInfoVec);
 
 % override also bixel weight vector in optResult struct
-w    = newApertureInfo.bixelWeights;
-wDao = newApertureInfo.bixelWeights;
+w = newApertureInfo.bixelWeights;
 
 dij.scaleFactor = 1;
 
@@ -195,7 +193,7 @@ matRad_cfg.dispInfo('Calculating final cubes...\n');
 % that pre-existing fields such as resultGUI.sequencing are preserved
 resultGUI = matRad_mergeDoseCubes(resultGUI, matRad_calcCubes(w, dij));
 resultGUI.w    = w;
-resultGUI.wDAO = wDao;
+resultGUI.wDAO = w;
 resultGUI.apertureInfo = newApertureInfo;
 if isfield(resultGUI, 'sequencing') && isstruct(resultGUI.sequencing)
     resultGUI.sequencing.apertureInfo = newApertureInfo;
@@ -241,12 +239,10 @@ if matRad_getFieldOrDefault(pln.propOpt, 'scaleToPrescription', false)
     resultGUI = matRad_mergeDoseCubes(resultGUI, matRad_calcCubes(resultGUI.w, dij));
 end
 
-% update apertureInfoStruct with the maximum leaf speeds per segment
 if pln.propOpt.runVMAT
-    resultGUI.apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(resultGUI.apertureInfo);
-
-    % optimize delivery
-    resultGUI.apertureInfo = matRad_OptimizationProblemVMAT.optDelivery(resultGUI.apertureInfo, 1);
+    % optimize the delivery for the fastest plan permitted by the machine
+    % constraints; this also updates the per-segment maximum leaf speeds
+    resultGUI.apertureInfo = matRad_OptimizationProblemVMAT.optDelivery(resultGUI.apertureInfo);
 end
 
 end
