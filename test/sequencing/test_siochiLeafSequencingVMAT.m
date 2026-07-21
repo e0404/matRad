@@ -35,7 +35,7 @@ stf = matRad_generateStf(p.ct, p.cst, pln);
 function sequencer = helper_getSequencer(pln)
 sequencer = matRad_SequencingPhotonsSiochiLeaf(pln);
 sequencer.runVMAT = true;
-sequencer.sequencingLevel = 5;
+sequencer.numLevels = 5;
 sequencer.weightToMU = 100;
 
 function test_siochiVMATIsVMATCapable

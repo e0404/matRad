@@ -60,7 +60,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
 
                     sequence.beam(i).numOfShapes  = k;
                     sequence.beam(i).shapes       = shapes(:, :, 1:k);
-                    sequence.beam(i).shapesWeight = shapesWeight(1:k) / this.sequencingLevel * calFac;
+                    sequence.beam(i).shapesWeight = shapesWeight(1:k) / this.numLevels * calFac;
                     sequence.beam(i).bixelIx      = 1 + offset:size(stf(i).ray, 2) + offset;
                     sequence.beam(i).fluence      = D_0;
                     sequence.beam(i).sum          = zeros(size(D_0));
@@ -91,7 +91,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
         function sequence = sequenceDynamic(this, w, stf)
             % VMAT (dynamic/arc) sequencing: gates to FMO-anchor beams,
             % smooths the fluence before decomposition, keeps re-decomposing
-            % at increasing sequencingLevel until enough shapes exist for
+            % at increasing numLevels until enough shapes exist for
             % this beam's DAO-angle children, then spreads the result across
             % those children and builds the VMAT apertureInfo. Ported from
             % the former matRad_siochiLeafSequencing.m functional
@@ -139,7 +139,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
                 % IMRT fluence reproduction otherwise)
                 fluenceMx = this.smoothFluenceForArc(fluenceMx);
 
-                numOfLevels = this.sequencingLevel;
+                numOfLevels = this.numLevels;
                 notFinished = true;
 
                 if sum(wOfCurrBeams) > 0

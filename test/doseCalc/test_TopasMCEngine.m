@@ -48,7 +48,7 @@ for i = 1:numel(radModes)
         resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels, 1), dij);
         resultGUI.wUnsequenced = ones(dij.totalNumOfBixels, 1);
         pln.propSeq.sequencer = 'siochi';
-        pln.propSeq.sequencingLevel = 5;
+        pln.propSeq.numLevels = 5;
         sequencer = matRad_SequencerBase.getSequencerFromPln(pln);
         resultGUI = matRad_sequencing(resultGUI, stf, pln);
         [pln, stf] = sequencer.aperture2collimation(pln, stf, resultGUI.sequencing);
@@ -94,7 +94,7 @@ for i = 1:numel(radModes)
     switch radModes{i}
         case  'protons'
             RBEmodel = {'mcn', 'wed'};
-        case {'helium', 'carbon','oxygen'}
+        case {'helium', 'carbon', 'oxygen'}
             RBEmodel = {'libamtrack', 'lem'};
         otherwise
             continue
@@ -144,7 +144,7 @@ for i = 1:numel(radModes)
         resultGUI = matRad_calcCubes(ones(dij.totalNumOfBixels, 1), dij);
         resultGUI.wUnsequenced = ones(dij.totalNumOfBixels, 1);
         pln.propSeq.sequencer = 'siochi';
-        pln.propSeq.sequencingLevel = 5;
+        pln.propSeq.numLevels = 5;
         sequencer = matRad_SequencerBase.getSequencerFromPln(pln);
         resultGUI = matRad_sequencing(resultGUI, stf, pln);
         [pln, stf] = sequencer.aperture2collimation(pln, stf, resultGUI.sequencing);
@@ -225,7 +225,7 @@ for i = 1:numel(radModes)
     switch radModes{i}
         case  'protons'
             RBEmodel = {'mcn', 'wed'};
-        case {'helium', 'carbon','oxygen'}
+        case {'helium', 'carbon', 'oxygen'}
             RBEmodel = {'libamtrack', 'lem'};
         otherwise
             continue

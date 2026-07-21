@@ -46,10 +46,10 @@ classdef  matRad_SequencingPhotonsXiaLeaf < matRad_PhotonSequencerAbstract
 
                 [D_0, D_k, shapes, calFac, indInMx] = this.initBeam(stf(i), w(1 + offset:stf(i).numOfRays + offset));
 
-                % Save the maximun intensity (Equation 5)
+                % Save the maximum intensity (Equation 5)
                 L_k = max(D_k(:));
 
-                % Save the maximun initial intensity matrix value in L_0.
+                % Save the maximum initial intensity matrix value in L_0.
                 L_0 = L_k;
 
                 % Set k=0, this variable is used for residuals intensity matrices D_k.
@@ -121,7 +121,7 @@ classdef  matRad_SequencingPhotonsXiaLeaf < matRad_PhotonSequencerAbstract
 
                     sequence.beam(i).numOfShapes  = k;
                     sequence.beam(i).shapes       = shapes(:, :, 1:k);
-                    sequence.beam(i).shapesWeight = shapesWeight(1:k) / this.sequencingLevel * calFac;
+                    sequence.beam(i).shapesWeight = shapesWeight(1:k) / this.numLevels * calFac;
                     sequence.beam(i).bixelIx      = 1 + offset:size(stf(i).ray, 2) + offset;
                     sequence.beam(i).fluence      = D_0;
 
@@ -133,9 +133,9 @@ classdef  matRad_SequencingPhotonsXiaLeaf < matRad_PhotonSequencerAbstract
                     sequence.beam(i).fluence      = zeros(size(D_0));
                 end
                 if stf(i).numOfRays > 1
-                    sequence.w(1 + offset:stf(i).numOfRays + offset, 1) = D_0(indInMx) / this.sequencingLevel * calFac;
+                    sequence.w(1 + offset:stf(i).numOfRays + offset, 1) = D_0(indInMx) / this.numLevels * calFac;
                 else
-                    sequence.w(1 + offset:stf(i).numOfRays + offset, 1) = D_0(indInMx(1)) / this.sequencingLevel * calFac;
+                    sequence.w(1 + offset:stf(i).numOfRays + offset, 1) = D_0(indInMx(1)) / this.numLevels * calFac;
                 end
                 offset = offset + stf(i).numOfRays;
             end
@@ -170,7 +170,8 @@ classdef  matRad_SequencingPhotonsXiaLeaf < matRad_PhotonSequencerAbstract
                 checkBasic = isfield(machine, 'meta') && isfield(machine, 'data');
 
                 % check modality
-                checkModality = any(strcmp(matRad_SequencingPhotonsXiaLeaf.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_SequencingPhotonsXiaLeaf.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_SequencingPhotonsXiaLeaf.possibleRadiationModes, machine.meta.radiationMode)) && ...
+                                any(strcmp(matRad_SequencingPhotonsXiaLeaf.possibleRadiationModes, pln.radiationMode));
 
                 % Sanity check compatibility
                 if checkModality

@@ -1,7 +1,7 @@
 classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
 
     % multileaf collimator leaf sequencing algorithm
-    % for intensity modulated beams with multiple static segments accroding
+    % for intensity modulated beams with multiple static segments according
     % to Engel et al. 2005 Discrete Applied Mathematics
     %
     % References
@@ -36,6 +36,8 @@ classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
         end
 
         function sequence = sequence(this, w, stf)
+            %| pragma Justify(metric, "cnest",
+            %|   "grandfathered: pre-existing nesting depth of the ported Engel algorithm");
             matRad_cfg = MatRad_Config.instance();
             numOfBeams = numel(stf);
             offset = 0;
@@ -67,7 +69,7 @@ classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
 
                         % determine essential intervals
                         data(j).left(1) = 0; % left interval limit, actual for an empty interval
-                        data(j).right(1) = 0; % right interal limit, actual for an empty interval
+                        data(j).right(1) = 0; % right interval limit, actual for an empty interval
                         data(j).v(1) = g(j);  % greatest number such that the inequalities (6) resp. (7) is satisfied with u=v
                         data(j).w(1) = inf; % smallest number in the interval
                         data(j).u(1) = data(j).v(1); % min(v,w)
@@ -222,7 +224,7 @@ classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
                     % save the calculated MU
                     shapesWeight(k) = d_k;
 
-                    % calculate  new matrix, the  diference matrix and complexities
+                    % calculate  new matrix, the  difference matrix and complexities
                     D_k = D_k - d_k * shape_k;
 
                     % delete variables
@@ -236,7 +238,7 @@ classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
                 if sum(w(1 + offset:stf(i).numOfRays + offset)) > 0
                     sequence.beam(i).numOfShapes  = k;
                     sequence.beam(i).shapes       = shapes(:, :, 1:k);
-                    sequence.beam(i).shapesWeight = shapesWeight(1:k) / this.sequencingLevel * calFac;
+                    sequence.beam(i).shapesWeight = shapesWeight(1:k) / this.numLevels * calFac;
                     sequence.beam(i).bixelIx      = 1 + offset:size(stf(i).ray, 2) + offset;
                     sequence.beam(i).fluence      = D_0;
                 else
@@ -247,9 +249,9 @@ classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
                     sequence.beam(i).fluence      = zeros(size(D_0));
                 end
                 if stf(i).numOfRays > 1
-                    sequence.w(1 + offset:stf(i).numOfRays + offset, 1) = D_0(indInMx) / this.sequencingLevel * calFac;
+                    sequence.w(1 + offset:stf(i).numOfRays + offset, 1) = D_0(indInMx) / this.numLevels * calFac;
                 else
-                    sequence.w(1 + offset:stf(i).numOfRays + offset, 1) = D_0(indInMx(1)) / this.sequencingLevel * calFac;
+                    sequence.w(1 + offset:stf(i).numOfRays + offset, 1) = D_0(indInMx(1)) / this.numLevels * calFac;
                 end
                 offset = offset + stf(i).numOfRays;
 
@@ -285,7 +287,8 @@ classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
                 checkBasic = isfield(machine, 'meta') && isfield(machine, 'data');
 
                 % check modality
-                checkModality = any(strcmp(matRad_SequencingPhotonsEngelLeaf.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_SequencingPhotonsEngelLeaf.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_SequencingPhotonsEngelLeaf.possibleRadiationModes, machine.meta.radiationMode)) && ...
+                                any(strcmp(matRad_SequencingPhotonsEngelLeaf.possibleRadiationModes, pln.radiationMode));
 
                 % Sanity check compatibility
                 if checkModality

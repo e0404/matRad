@@ -248,15 +248,7 @@ classdef MatRad_Config < handle
 
             % Sequencing Options
             obj.defaults.propSeq.sequencer = {'siochi', 'IMPT'};
-            % sequencingLevel is the field name that actually matches
-            % matRad_PhotonSequencerAbstract.sequencingLevel, so it's the one
-            % matRad_SequencerBase.setDefaults() picks up and applies to a
-            % sequencer object. numLevels is kept alongside it for backward
-            % compatibility with anything reading matRad_cfg.defaults.propSeq
-            % directly and as the user-facing name matRad_sequencing.m reads
-            % from pln.propSeq.
             obj.defaults.propSeq.numLevels = 5;
-            obj.defaults.propSeq.sequencingLevel = 5;
 
             obj.disableGUI = false;
 

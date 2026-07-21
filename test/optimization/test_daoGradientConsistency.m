@@ -69,7 +69,7 @@ stf = matRad_generateStf(p.ct, p.cst, pln);
 
 sequencer = matRad_SequencingPhotonsSiochiLeaf(pln);
 sequencer.runVMAT = true;
-sequencer.sequencingLevel = 5;
+sequencer.numLevels = 5;
 sequencer.weightToMU = 100;
 
 w = ones(sum([stf.numOfRays]), 1);

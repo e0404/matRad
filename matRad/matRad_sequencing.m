@@ -60,6 +60,10 @@ end
 
 if strcmp(pln.radiationMode, 'photons')
     % Photon (MLC leaf) sequencing goes through the class-based sequencers.
+    % The canonical sequencer configuration lives under pln.propSeq and was
+    % already auto-mapped onto the sequencer during its construction; here
+    % only the deprecated pln.propOpt locations are bridged (honored for one
+    % release) plus the settings that genuinely live outside propSeq.
 
     if ~isfield(pln, 'propSeq')
         pln.propSeq = struct();
@@ -68,31 +72,9 @@ if strcmp(pln.radiationMode, 'photons')
         pln.propOpt = struct();
     end
 
-    pln.propSeq.sequencer = matRad_getFieldOrDefault(pln.propSeq, 'sequencer', 'siochi', ...
-                                                     'pln.propSeq.sequencer not specified. Using siochi leaf sequencing (default).');
-
-    if isfield(pln.propSeq, 'sequencingLevel') && ~isfield(pln.propSeq, 'numLevels')
-        matRad_cfg.dispDeprecationWarning('The pln.propSeq.sequencingLevel property is deprecated. Use pln.propSeq.numLevels instead!');
-        pln.propSeq.numLevels = pln.propSeq.sequencingLevel;
-    end
-    numLevels = matRad_getFieldOrDefault(pln.propSeq, 'numLevels', 5, ...
-                                         'pln.propSeq.numLevels not specified. Using 5 sequencing levels (default).');
-
-    % Sequencer configuration canonically lives under pln.propSeq (from
-    % where assignPropertiesFromPln auto-maps it onto the sequencer); the
-    % old pln.propOpt locations are still honored with a deprecation
-    % warning for one release.
-    if isfield(pln.propSeq, 'preconditioner')
-        preconditioner = pln.propSeq.preconditioner;
-    else
-        deprMsg = 'pln.propOpt.preconditioner is deprecated. Use pln.propSeq.preconditioner instead!';
-        preconditioner = matRad_getFieldOrDefault(pln.propOpt, 'preconditioner', false, deprMsg, true);
-    end
-    if isfield(pln.propSeq, 'continuousAperture')
-        continuousAperture = pln.propSeq.continuousAperture;
-    else
-        deprMsg = 'pln.propOpt.continuousAperture is deprecated. Use pln.propSeq.continuousAperture instead!';
-        continuousAperture = matRad_getFieldOrDefault(pln.propOpt, 'continuousAperture', false, deprMsg, true);
+    if ~isfield(pln.propSeq, 'preconditioner') && isfield(pln.propOpt, 'preconditioner')
+        matRad_cfg.dispDeprecationWarning('pln.propOpt.preconditioner is deprecated. Use pln.propSeq.preconditioner instead!');
+        sequencer.preconditioner = pln.propOpt.preconditioner;
     end
 
     % pln.propOpt.runVMAT deliberately remains the canonical mode flag
@@ -100,11 +82,12 @@ if strcmp(pln.radiationMode, 'photons')
     % class, so it is bridged here rather than moved to propSeq.
     dynamic = matRad_getFieldOrDefault(pln.propOpt, 'runVMAT', false);
 
-    sequencer.sequencingLevel = numLevels;
-    sequencer.preconditioner = preconditioner;
     if isa(sequencer, 'matRad_PhotonSequencerVMATAbstract')
         sequencer.runVMAT = dynamic;
-        sequencer.continuousAperture = continuousAperture;
+        if ~isfield(pln.propSeq, 'continuousAperture') && isfield(pln.propOpt, 'continuousAperture')
+            matRad_cfg.dispDeprecationWarning('pln.propOpt.continuousAperture is deprecated. Use pln.propSeq.continuousAperture instead!');
+            sequencer.continuousAperture = pln.propOpt.continuousAperture;
+        end
         if ~isempty(dij) && isfield(dij, 'weightToMU')
             sequencer.weightToMU = dij.weightToMU;
         end

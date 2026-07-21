@@ -1061,7 +1061,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             contents   = get(handles.popUpMenuSequencer, 'String');
             pln.propSeq.sequencer = contents{get(handles.popUpMenuSequencer, 'Value')};
-            pln.propSeq.sequencingLevel = this.parseStringAsNum(get(handles.editSequencingLevel, 'String'), false);
+            pln.propSeq.numLevels = this.parseStringAsNum(get(handles.editSequencingLevel, 'String'), false);
             pln.propOpt.conf3D = logical(get(handles.radiobutton3Dconf, 'Value'));
 
             if evalin('base', 'exist(''cst'')')

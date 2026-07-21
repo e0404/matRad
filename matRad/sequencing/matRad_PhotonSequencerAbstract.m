@@ -6,8 +6,13 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
     %   concrete subclasses implement the specific leaf sequencing algorithm.
     properties
         numOfMLCLeafPairs = 80
-        sequencingLevel = 5
+        numLevels = 5 % number of stratification levels for leaf sequencing
         preconditioner = false % apply matRad_preconditionFactors to the resulting apertureInfo
+    end
+
+    % Deprecated properties referencing a newer one
+    properties (Dependent)
+        sequencingLevel % deprecated alias for numLevels
     end
 
     methods
@@ -20,6 +25,16 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                 pln = [];
             end
             this = this@matRad_SequencerBase(pln);
+        end
+
+        function set.sequencingLevel(this, value)
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('The sequencer property sequencingLevel is deprecated. Use numLevels instead!');
+            this.numLevels = value;
+        end
+
+        function value = get.sequencingLevel(this)
+            value = this.numLevels;
         end
 
         function sequence = sequence(this, w, stf)
@@ -63,7 +78,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
             % Stratification
             calFac = max(fluenceMx(:));
-            dCurrent = round(fluenceMx / calFac * this.sequencingLevel);
+            dCurrent = round(fluenceMx / calFac * this.numLevels);
 
             % Save the stratification in the initial intensity matrix d0.
             d0 = dCurrent;
@@ -183,7 +198,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
                 seqSubPlots(1) = subplot(2, 2, 1, 'parent', seqFig);
                 imagesc(sequencing.beam(i).fluence, 'parent', seqSubPlots(1));
-                set(seqSubPlots(1), 'CLim', [0 this.sequencingLevel], 'YDir', 'normal');
+                set(seqSubPlots(1), 'CLim', [0 this.numLevels], 'YDir', 'normal');
                 title(seqSubPlots(1), ['Beam # ' num2str(i) ': max(D_0) = ' num2str(max(D_0(:))) ...
                                        ' - ' num2str(numel(unique(D_0))) ' intensity levels']);
                 xlabel(seqSubPlots(1), 'x - direction parallel to leaf motion ');
@@ -228,7 +243,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                     D_k = D_k - shape_k; % residual intensity matrix for visualization
                     seqSubPlots(2) = subplot(2, 2, 2, 'parent', seqFig);
                     imagesc(D_k, 'parent', seqSubPlots(2));
-                    set(seqSubPlots(2), 'CLim', [0 this.sequencingLevel], 'YDir', 'normal');
+                    set(seqSubPlots(2), 'CLim', [0 this.numLevels], 'YDir', 'normal');
                     title(seqSubPlots(2), ['k = ' num2str(k)]);
                     colorbar;
                     drawnow;
