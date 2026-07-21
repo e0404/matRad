@@ -77,6 +77,12 @@ pln.propOpt.optimizer           = 'IPOPT';          % We can also utilize 'fminc
 pln.propOpt.runDAO              = true;             % 1/true: run DAO, 0/false: don't / will be ignored for particles
 pln.propOpt.runVMAT             = true;
 
+% optionally, the final plan can be scaled such that the target D95 matches
+% the prescription:
+% pln.propOpt.scaleToPrescription  = true;
+% pln.propOpt.prescribedDose       = 60; % [Gy] over all fractions
+% pln.propOpt.prescriptionStructIx = find(strcmp(cst(:, 3), 'TARGET'));
+
 %% Generate Beam Geometry STF
 stf = matRad_generateStf(ct, cst, pln);
 

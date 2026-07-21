@@ -11,7 +11,19 @@ function [resultGUI, optimizer] = matRad_directApertureOptimization(dij, cst, ap
 %   optResult:      resultGUI struct to which the output data will be added, if
 %                   this field is empty optResult struct will be created
 %
-%   pln:            matRad pln struct
+%   pln:            matRad pln struct. Relevant optional settings:
+%                   pln.propOpt.runVMAT              optimize a VMAT arc instead
+%                                                    of static apertures
+%                   pln.propOpt.scaleToPrescription  scale the optimized plan
+%                                                    such that the target D95
+%                                                    reaches the prescription
+%                   pln.propOpt.prescribedDose       total prescribed dose over
+%                                                    all fractions [Gy]
+%                   pln.propOpt.prescriptionStructIx cst row indices of the
+%                                                    target structure(s) the
+%                                                    prescription refers to (the
+%                                                    worst D95 among them is
+%                                                    scaled to the prescription)
 %
 % output:
 %   optResult:  struct containing optimized fluence vector, dose, and
@@ -93,11 +105,11 @@ options.quantityOpt  = pln.propOpt.quantityOpt;
 options.model        = pln.bioModel.model;
 
 % update aperture info vector
-if isfield(apertureInfo, 'scaleFacRx')
-    % weights were scaled to achieve 95% PTV coverage
+if isfield(apertureInfo, 'prescriptionScaleFactor')
+    % weights were scaled to reach the prescribed target coverage
     % scale back to "optimal" weights
     apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = ...
-        apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) / apertureInfo.scaleFacRx;
+        apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) / apertureInfo.prescriptionScaleFactor;
 end
 
 if ~isfield(pln.propOpt, 'runVMAT')
@@ -181,11 +193,7 @@ matRad_cfg.dispInfo('Calculating final cubes...\n');
 % merge the computed dose cubes into the passed-in resultGUI struct (an
 % empty input is promoted to a fresh struct) instead of overwriting it, so
 % that pre-existing fields such as resultGUI.sequencing are preserved
-doseCubes = matRad_calcCubes(w, dij);
-fNames = fieldnames(doseCubes);
-for f = 1:numel(fNames)
-    resultGUI.(fNames{f}) = doseCubes.(fNames{f});
-end
+resultGUI = matRad_mergeDoseCubes(resultGUI, matRad_calcCubes(w, dij));
 resultGUI.w    = w;
 resultGUI.wDAO = wDao;
 resultGUI.apertureInfo = newApertureInfo;
@@ -193,22 +201,44 @@ if isfield(resultGUI, 'sequencing') && isstruct(resultGUI.sequencing)
     resultGUI.sequencing.apertureInfo = newApertureInfo;
 end
 
-if isfield(pln, 'scaleDRx') && pln.scaleDRx
-    % Scale D95 in target to RXDose
-    resultGUI.QI = matRad_calcQualityIndicators(cst, pln, resultGUI.physicalDose);
+% honor the pre-release top-level location of the prescription scaling
+% settings for one release
+if isfield(pln, 'scaleDRx')
+    matRad_cfg.dispDeprecationWarning(['pln.scaleDRx/DRx/RxStruct are deprecated. Use pln.propOpt.scaleToPrescription/' ...
+                                       'prescribedDose/prescriptionStructIx instead!']);
+    pln.propOpt.scaleToPrescription  = pln.scaleDRx;
+    pln.propOpt.prescribedDose       = matRad_getFieldOrDefault(pln, 'DRx', []);
+    pln.propOpt.prescriptionStructIx = matRad_getFieldOrDefault(pln, 'RxStruct', []);
+end
 
-    resultGUI.apertureInfo.scaleFacRx = max((pln.DRx / pln.numOfFractions) ./ [resultGUI.QI(pln.RxStruct).D_95]');
+if matRad_getFieldOrDefault(pln.propOpt, 'scaleToPrescription', false)
+    % scale the plan so that the worst target D95 matches the prescribed
+    % dose per fraction
+    if ~isfield(pln.propOpt, 'prescribedDose') || isempty(pln.propOpt.prescribedDose) || ...
+       ~isfield(pln.propOpt, 'prescriptionStructIx') || isempty(pln.propOpt.prescriptionStructIx)
+        matRad_cfg.dispError(['pln.propOpt.scaleToPrescription requires pln.propOpt.prescribedDose ' ...
+                              'and pln.propOpt.prescriptionStructIx to be set!']);
+    end
+
+    % quality indicators of the unscaled plan (only used to derive the
+    % scaling factor - the final QI are computed in matRad_planAnalysis)
+    qi = matRad_calcQualityIndicators(cst, pln, resultGUI.physicalDose);
+
+    prescriptionScaleFactor = max((pln.propOpt.prescribedDose / pln.numOfFractions) ./ ...
+                                  [qi(pln.propOpt.prescriptionStructIx).D_95]');
+    resultGUI.apertureInfo.prescriptionScaleFactor = prescriptionScaleFactor;
     resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes) = ...
-        resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes) * resultGUI.apertureInfo.scaleFacRx;
+        resultGUI.apertureInfo.apertureVector(1:resultGUI.apertureInfo.totalNumOfShapes) * prescriptionScaleFactor;
 
-    % update the apertureInfoStruct and calculate bixel weights
+    % update the apertureInfo struct and recompute the bixel weights
     resultGUI.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(resultGUI.apertureInfo, resultGUI.apertureInfo.apertureVector);
 
-    % override also bixel weight vector in optResult struct
     resultGUI.w    = resultGUI.apertureInfo.bixelWeights;
-    resultGUI.wDao = resultGUI.apertureInfo.bixelWeights;
+    resultGUI.wDAO = resultGUI.apertureInfo.bixelWeights;
 
-    resultGUI.physicalDose = resultGUI.physicalDose .* resultGUI.apertureInfo.scaleFacRx;
+    % recompute all dose cubes from the scaled weights so that every
+    % result quantity stays consistent with the scaled plan
+    resultGUI = matRad_mergeDoseCubes(resultGUI, matRad_calcCubes(resultGUI.w, dij));
 end
 
 % update apertureInfoStruct with the maximum leaf speeds per segment
@@ -217,4 +247,15 @@ if pln.propOpt.runVMAT
 
     % optimize delivery
     resultGUI.apertureInfo = matRad_OptimizationProblemVMAT.optDelivery(resultGUI.apertureInfo, 1);
+end
+
+end
+
+function resultGUI = matRad_mergeDoseCubes(resultGUI, doseCubes)
+% copy the dose cubes field-by-field into resultGUI, preserving any fields
+% (e.g. resultGUI.sequencing) that matRad_calcCubes does not produce
+fNames = fieldnames(doseCubes);
+for f = 1:numel(fNames)
+    resultGUI.(fNames{f}) = doseCubes.(fNames{f});
+end
 end
