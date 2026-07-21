@@ -3,12 +3,15 @@ function [resultGUI, optimizer] = matRad_fluenceOptimization(dij, cst, pln, stf,
 %
 % call:
 %   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln)
-%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,wInit)
+%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,stf)
+%   [resultGUI,optimizer] = matRad_fluenceOptimization(dij,cst,pln,stf,wInit)
 %
 % input:
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct
 %   pln:        matRad pln struct
+%   stf:        (optional) matRad steering struct; required when
+%               pln.propOpt.runVMAT is enabled, may be empty otherwise
 %   wInit:      (optional) custom weights to initialize problems
 %
 % output:
@@ -36,21 +39,24 @@ function [resultGUI, optimizer] = matRad_fluenceOptimization(dij, cst, pln, stf,
 %| pragma Justify(metric, "cyc",
 %|   "grandfathered: pre-existing complexity of this core optimizer entry point; restructuring is out of scope for commits that merely touch it");
 
-if nargin >= 4
-    % Check whether the 4th argument is a structure.
-    if ~isstruct(stf)
-        % If it is not, then assign it to wInit.
-        tmp = stf;
-        if nargin >= 5
-            % If there are 5 arguments, swap stf and wInit.
-            stf = wInit;
-        end
-        wInit = tmp;
-        clear tmp;
-    end
-end
-
 matRad_cfg = MatRad_Config.instance();
+
+% the 4th argument used to hold wInit; it now holds the (optional) stf,
+% with wInit moved to 5th place. A non-struct, non-empty 4th argument is
+% treated as a legacy wInit call ([] is accepted as an stf placeholder).
+if nargin >= 4 && ~isstruct(stf) && ~isempty(stf)
+    matRad_cfg.dispDeprecationWarning(['The argument order of matRad_fluenceOptimization changed to ' ...
+                                       'matRad_fluenceOptimization(dij, cst, pln, stf, wInit). Please update your call.']);
+    tmp = stf;
+    if nargin >= 5
+        % swapped 5-argument call: the 5th argument holds the stf
+        stf = wInit;
+    else
+        stf = [];
+    end
+    wInit = tmp;
+    clear tmp;
+end
 
 if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'enableGPU')
     enableGPU = pln.propOpt.enableGPU;
@@ -363,6 +369,11 @@ else
 end
 
 if isfield(pln.propOpt, 'runVMAT') && pln.propOpt.runVMAT
+    if ~exist('stf', 'var') || ~isstruct(stf)
+        matRad_cfg.dispError(['VMAT fluence optimization requires the steering information to identify ' ...
+                              'the FMO beams: call matRad_fluenceOptimization(dij, cst, pln, stf).']);
+    end
+
     % Only the bixels belonging to FMO gantry angles should have their
     % weights optimized. The rest should be initialized and bounded to
     % zero.
