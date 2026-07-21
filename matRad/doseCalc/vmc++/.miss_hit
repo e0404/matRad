@@ -1,0 +1,8 @@
+# Relaxed limits for the legacy VMC++ wrapper code: like the Monte Carlo
+# engines grandfathered in +DoseEngines, these files are monoliths whose
+# restructuring is out of scope for commits that merely touch them. New
+# code should still aim for the repo-wide limits.
+line_length: 220
+
+metric "cyc": limit 40
+metric "cnest": limit 8
