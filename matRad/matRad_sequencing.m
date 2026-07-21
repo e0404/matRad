@@ -98,11 +98,7 @@ if strcmp(pln.radiationMode, 'photons')
     if ~isempty(dij)
         % merge the computed dose cubes into resultGUI instead of overwriting
         % it, so that pre-existing fields (e.g. from FMO) survive
-        doseCubes = matRad_calcCubes(sequence.w, dij);
-        fNames = fieldnames(doseCubes);
-        for f = 1:numel(fNames)
-            resultGUI.(fNames{f}) = doseCubes.(fNames{f});
-        end
+        resultGUI = matRad_mergeDoseCubes(resultGUI, matRad_calcCubes(sequence.w, dij));
     else
         matRad_cfg.dispWarning('Dose not recalculated with sequenced fluence');
     end
@@ -121,4 +117,13 @@ else
     end
 end
 
+end
+
+function resultGUI = matRad_mergeDoseCubes(resultGUI, doseCubes)
+% copy the dose cubes field-by-field into resultGUI, preserving any fields
+% (e.g. resultGUI.sequencing) that matRad_calcCubes does not produce
+fNames = fieldnames(doseCubes);
+for f = 1:numel(fNames)
+    resultGUI.(fNames{f}) = doseCubes.(fNames{f});
+end
 end

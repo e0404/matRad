@@ -3,7 +3,7 @@ function updatedInfo = matRad_recalcApertureBixelWeights(apertureInfo)
 % VMAT aperture sequence. Each beam's dose sector is integrated as two
 % uniform leaf sweeps (initial position -> centre, centre -> final
 % position) with the corresponding half-sector weights, reusing the
-% dynamic-sweep fluence model of matRad_bixWeightAndGrad (no Jacobian).
+% dynamic-sweep fluence model of matRad_calcBixelWeightAndGradient (no Jacobian).
 %
 % call
 %   updatedInfo = matRad_recalcApertureBixelWeights(apertureInfo)
@@ -111,7 +111,7 @@ for i = 1:numel(updatedInfo.beam)
     accum.shapeMapW       = shapeMap_I;
     accum.counters        = counters;
 
-    accum = matRad_bixWeightAndGrad(calcOptions, mlcOptions, variables, vectorIndices, accum);
+    accum = matRad_calcBixelWeightAndGradient(calcOptions, mlcOptions, variables, vectorIndices, accum);
 
     w          = accum.w;
     sumGradSq  = accum.sumGradSq;
@@ -136,7 +136,7 @@ for i = 1:numel(updatedInfo.beam)
     accum.shapeMapW       = shapeMap_F;
     accum.counters        = counters;
 
-    accum = matRad_bixWeightAndGrad(calcOptions, mlcOptions, variables, vectorIndices, accum);
+    accum = matRad_calcBixelWeightAndGradient(calcOptions, mlcOptions, variables, vectorIndices, accum);
 
     w          = accum.w;
     shapeMap_F = accum.shapeMapW;

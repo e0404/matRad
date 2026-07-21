@@ -1,10 +1,10 @@
-function accum = matRad_bixWeightAndGrad(calcOptions, mlcOptions, variables, vectorIndices, accum)
+function accum = matRad_calcBixelWeightAndGradient(calcOptions, mlcOptions, variables, vectorIndices, accum)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate the bixel weights from the aperture vector,
 % and also the Jacobian matrix relating these two.
 %
 % call
-%   accum = matRad_bixWeightAndGrad(calcOptions,mlcOptions,variables,vectorIndices,accum)
+%   accum = matRad_calcBixelWeightAndGradient(calcOptions,mlcOptions,variables,vectorIndices,accum)
 %
 % input
 %   calcOptions:    what to compute for this shape (isDAOBeam, saveJacobian)
@@ -29,25 +29,14 @@ function accum = matRad_bixWeightAndGrad(calcOptions, mlcOptions, variables, vec
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2018, Mark Bangert, on behalf of the matRad development team
+% Copyright 2018-2026 the matRad development team.
 %
-% m.bangert@dkfz.de
-%
-% This file is part of matRad.
-%
-% matrad is free software: you can redistribute it and/or modify it under
-% the terms of the GNU General Public License as published by the Free
-% Software Foundation, either version 3 of the License, or (at your option)
-% any later version.
-%
-% matRad is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-% details.
-%
-% You should have received a copy of the GNU General Public License in the
-% file license.txt along with matRad. If not, see
-% <http://www.gnu.org/licenses/>.
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

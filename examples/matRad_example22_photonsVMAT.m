@@ -145,14 +145,6 @@ resultGUI = matRad_calcDeliveryMetrics(resultGUI, stf);
 [stfFine, apertureInfoFine] = matRad_refineApertureArc(ct, cst, pln, resultGUI.apertureInfo, 7.5);
 resultGUIfine = matRad_calcDoseForward(ct, cst, stfFine, pln, apertureInfoFine.bixelWeights);
 
-% Instead of recomputing the dose, an already available dij can be recycled
-% by redirecting the fine beams onto the original DAO angles ('reuseDij')
-% and back-projecting the new weights through it:
-%
-%   [stfFine, apertureInfoFine] = matRad_refineApertureArc(ct, cst, pln, ...
-%       resultGUI.apertureInfo, 7.5, 'reuseDij', true);
-%   backProjOptions.numOfScenarios = 1;
-%   backProjOptions.bioOpt         = 'none';
-%   dij.scaleFactor = apertureInfoFine.weightToMU ./ dij.weightToMU;
-%   d = matRad_backProjection(apertureInfoFine.bixelWeights, dij, backProjOptions);
-%   resultGUIfine.physicalDose = reshape(d{1}, dij.dimensions);
+% Instead of recomputing the dose, an already available dij can also be
+% recycled by redirecting the fine beams onto the original DAO angles: see
+% the 'reuseDij' option of matRad_refineApertureArc.

@@ -359,7 +359,7 @@ for i = 1:numel(updatedInfo.beam)
         accum.shapeMapW       = shapeMap;
         accum.counters        = counters;
 
-        accum = matRad_bixWeightAndGrad(calcOptions, mlcOptions, variables, vectorIndices, accum);
+        accum = matRad_calcBixelWeightAndGradient(calcOptions, mlcOptions, variables, vectorIndices, accum);
 
         w              = accum.w;
         bixelJApVecVec = accum.bixelJApVec.vec;
