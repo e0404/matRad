@@ -129,3 +129,22 @@ resultGUI = matRad_planAnalysis(resultGUI, ct, cst, stf, pln);
 %% Calculate delivery metrics
 
 resultGUI = matRad_calcDeliveryMetrics(resultGUI, pln, stf);
+
+%% Dose recalculation on a finer arc
+% The plan was optimized at the (coarse) DAO control points. To check the
+% dose that is actually delivered along the arc, resample the optimized
+% apertures onto a finer gantry-angle grid and forward-calculate the dose.
+[stfFine, apertureInfoFine] = matRad_refineApertureArc(ct, cst, pln, resultGUI.apertureInfo, 7.5);
+resultGUIfine = matRad_calcDoseForward(ct, cst, stfFine, pln, apertureInfoFine.bixelWeights);
+
+% Instead of recomputing the dose, an already available dij can be recycled
+% by redirecting the fine beams onto the original DAO angles ('reuseDij')
+% and back-projecting the new weights through it:
+%
+%   [stfFine, apertureInfoFine] = matRad_refineApertureArc(ct, cst, pln, ...
+%       resultGUI.apertureInfo, 7.5, 'reuseDij', true);
+%   backProjOptions.numOfScenarios = 1;
+%   backProjOptions.bioOpt         = 'none';
+%   dij.scaleFactor = apertureInfoFine.weightToMU ./ dij.weightToMU;
+%   d = matRad_backProjection(apertureInfoFine.bixelWeights, dij, backProjOptions);
+%   resultGUIfine.physicalDose = reshape(d{1}, dij.dimensions);

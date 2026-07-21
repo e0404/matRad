@@ -131,7 +131,7 @@ assertTrue(isfinite(result.apertureInfo.planTime) && result.apertureInfo.planTim
 
 function test_vmatRecalcApertureChain
 % fine-angle aperture recalculation: interpolate the sequenced apertures
-% onto a finer dose grid and recompute the bixel weights
+% onto a finer arc and recompute the bixel weights via matRad_refineApertureArc
 [stf, pln] = helper_getVmatStf();
 sequencer = helper_getSequencer(pln);
 
@@ -140,20 +140,12 @@ sequence = sequencer.sequence(w, stf);
 apertureInfo = sequence.apertureInfo;
 
 p = load('photons_testData.mat', 'ct', 'cst');
-recalc.pln = pln;
-recalc.pln.propStf.maxGantryAngleSpacing = 7.5;
-recalc.interpNew = true;
-recalc.continuousAperture = false;
-recalc.stf = matRad_generateStf(p.ct, p.cst, recalc.pln);
+[stfFine, apertureInfoFine] = matRad_refineApertureArc(p.ct, p.cst, pln, apertureInfo, 7.5);
 
-recalc = matRad_recalcApertureInfo(recalc, apertureInfo);
-recalc.apertureInfo.continuousAperture = recalc.continuousAperture;
-recalc.apertureInfo = matRad_recalcApertureBixelWeights(recalc.apertureInfo);
-
-assertEqual(numel(recalc.apertureInfo.bixelWeights), sum([recalc.stf.totalNumOfBixels]));
-assertTrue(all(isfinite(recalc.apertureInfo.bixelWeights)));
-assertTrue(all(recalc.apertureInfo.bixelWeights >= 0));
-assertTrue(any(recalc.apertureInfo.bixelWeights > 0));
+assertEqual(numel(apertureInfoFine.bixelWeights), sum([stfFine.totalNumOfBixels]));
+assertTrue(all(isfinite(apertureInfoFine.bixelWeights)));
+assertTrue(all(apertureInfoFine.bixelWeights >= 0));
+assertTrue(any(apertureInfoFine.bixelWeights > 0));
 
 function test_vmatRecalcPreservesDAOAnchors
 % Regression: matRad_recalcApertureInfo used to populate nextDAOBeamIx from
@@ -167,21 +159,15 @@ w = ones(sum([stf.numOfRays]), 1);
 apertureInfo = sequencer.sequence(w, stf).apertureInfo;
 
 p = load('photons_testData.mat', 'ct', 'cst');
-recalc.pln = pln;
-recalc.pln.propStf.maxGantryAngleSpacing = 7.5;
-recalc.interpNew = true;
-recalc.continuousAperture = false;
-recalc.stf = matRad_generateStf(p.ct, p.cst, recalc.pln);
+[stfFine, apertureInfoFine] = matRad_refineApertureArc(p.ct, p.cst, pln, apertureInfo, 7.5);
 
-recalc = matRad_recalcApertureInfo(recalc, apertureInfo);
-
-lastIx = [recalc.apertureInfo.arc.beam.lastDAOBeamIx];
-nextIx = [recalc.apertureInfo.arc.beam.nextDAOBeamIx];
+lastIx = [apertureInfoFine.arc.beam.lastDAOBeamIx];
+nextIx = [apertureInfoFine.arc.beam.nextDAOBeamIx];
 
 % each anchor must come from its own stf field, not from the other one
 % (stf is a struct array, so the nested field needs arrayfun rather than [])
-assertEqual(lastIx, arrayfun(@(b) b.arc.lastDAOBeamIx, recalc.stf));
-assertEqual(nextIx, arrayfun(@(b) b.arc.nextDAOBeamIx, recalc.stf));
+assertEqual(lastIx, arrayfun(@(b) b.arc.lastDAOBeamIx, stfFine));
+assertEqual(nextIx, arrayfun(@(b) b.arc.nextDAOBeamIx, stfFine));
 
 % and the two must genuinely differ somewhere: were next copied from last,
 % as in the original bug, these would be identical for every beam
