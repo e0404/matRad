@@ -9,12 +9,12 @@ classdef matRad_WorkflowWidget < matRad_Widget
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
     % Copyright 2020-2026 the matRad development team.
-    % 
-    % This file is part of the matRad project. It is subject to the license 
-    % terms in the LICENSE file found in the top-level directory of this 
-    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-    % of the matRad project, including this file, may be copied, modified, 
-    % propagated, or distributed except according to the terms contained in the 
+    %
+    % This file is part of the matRad project. It is subject to the license
+    % terms in the LICENSE file found in the top-level directory of this
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+    % of the matRad project, including this file, may be copied, modified,
+    % propagated, or distributed except according to the terms contained in the
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -231,7 +231,7 @@ classdef matRad_WorkflowWidget < matRad_Widget
             handles = this.handles;
             matRad_cfg = MatRad_Config.instance();
             if matRad_cfg.eduMode
-                % Visisbility in Educational Mode
+                % Visibility in Educational Mode
                 eduHideHandles =   {handles.pushbutton_importFromBinary, ...
                                     handles.btnLoadDicom, ...
                                     handles.btn_export, ...
@@ -394,11 +394,6 @@ classdef matRad_WorkflowWidget < matRad_Widget
             % generate steering file
             try
                 currPln = evalin('base', 'pln');
-                %                     % if we run 3d conf opt -> hijack runDao to trigger computation of
-                %                     % connected bixels
-                %                     if strcmp(pln.radiationMode,'photons') && get(handles.radiobutton3Dconf,'Value')
-                %                         currpln.propOpt.runDAO = true;
-                %                     end
                 stf = matRad_generateStf(evalin('base', 'ct'), ...
                                          evalin('base', 'cst'), ...
                                          currPln);
@@ -876,11 +871,11 @@ classdef matRad_WorkflowWidget < matRad_Widget
                 showError(this, 'DicomImport: Could not export data', ME);
             end
         end
-        
-        function CheckOptimizerStatus(this, usedOptimizer,OptCase)
-            
-            [statusmsg,statusflag] = usedOptimizer.getStatus();
-            
+
+        function CheckOptimizerStatus(this, usedOptimizer, optCase)
+
+            [statusmsg, statusflag] = usedOptimizer.getStatus();
+
             if statusflag == 0 || statusflag == 1
                 statusIcon = 'none';
             else

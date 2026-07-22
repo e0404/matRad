@@ -6,7 +6,9 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
     %   concrete subclasses implement the specific leaf sequencing algorithm.
     properties
         numOfMLCLeafPairs = 80
-        numLevels = 5 % number of stratification levels for leaf sequencing
+        numLevels = 5 % number of fluence stratification levels for leaf sequencing (for VMAT only a
+        % starting value: it is increased automatically until every FMO beam yields
+        % at least as many apertures as it has DAO child angles)
         preconditioner = false % apply matRad_preconditionFactors to the resulting apertureInfo
     end
 

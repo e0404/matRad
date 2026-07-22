@@ -65,17 +65,22 @@ pln.propDoseCalc.doseGrid.resolution.z = 5; % [mm]
 pln.propDoseCalc.precision = 'single';
 
 % sequencing settings
-pln.propSeq.runSequencing      = true;   % true: run sequencing, false: don't / will be ignored for particles and also triggered by runDAO below
-pln.propSeq.sequencer          = 'siochi';
+pln.propSeq.sequencer          = 'siochi'; % the only sequencer with VMAT support
+
+% numLevels sets the number of stratification levels for decomposing each
+% FMO fluence map into apertures. For VMAT it is only a starting value: the
+% sequencer re-decomposes at increasing level counts until every FMO beam
+% yields at least as many apertures as it has DAO child angles, since each
+% DAO control point receives exactly one aperture.
 pln.propSeq.numLevels          = 7;
+
 pln.propSeq.continuousAperture = false;  % interpolate leaf positions between DAO control points (dynamic delivery)
 pln.propSeq.preconditioner     = true;   % apply Jacobi preconditioning to the aperture weights
 
 % optimization settings
 pln.propOpt.quantityOpt         = 'physicalDose';   % Quantity to optimizer (could also be RBExDose, BED, effect)
 pln.propOpt.optimizer           = 'IPOPT';          % We can also utilize 'fmincon' from Matlab's optimization toolbox
-pln.propOpt.runDAO              = true;             % 1/true: run DAO, 0/false: don't / will be ignored for particles
-pln.propOpt.runVMAT             = true;
+pln.propOpt.runVMAT             = true;             % put fluence optimization, sequencing and DAO into VMAT (arc) mode
 
 % optionally, the final plan can be scaled such that the target D95 matches
 % the prescription:
@@ -144,6 +149,7 @@ resultGUI = matRad_calcDeliveryMetrics(resultGUI, stf);
 % apertures onto a finer gantry-angle grid and forward-calculate the dose.
 [stfFine, apertureInfoFine] = matRad_refineApertureArc(ct, cst, pln, resultGUI.apertureInfo, 7.5);
 resultGUIfine = matRad_calcDoseForward(ct, cst, stfFine, pln, apertureInfoFine.bixelWeights);
+resultGUI.physicalDose_fine = resultGUIfine.physicalDose;
 
 % Instead of recomputing the dose, an already available dij can also be
 % recycled by redirecting the fine beams onto the original DAO angles: see
