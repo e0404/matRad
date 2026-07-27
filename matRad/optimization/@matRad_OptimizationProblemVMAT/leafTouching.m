@@ -67,13 +67,13 @@ for k = 1:numel(apertureInfo.beam)
     else
         leftLeafPoss(:, l) = apertureInfo.beam(k).shape(1).leftLeafPosInitial;
         rightLeafPoss(:, l) = apertureInfo.beam(k).shape(1).rightLeafPosInitial;
-        gantryAngles(l) = apertureInfo.beam(k).doseAngleBorders(1);
+        gantryAngles(l) = apertureInfo.arc.beam(k).doseAngleBorders(1);
 
         l = l + 1;
 
         leftLeafPoss(:, l) = apertureInfo.beam(k).shape(1).leftLeafPosFinal;
         rightLeafPoss(:, l) = apertureInfo.beam(k).shape(1).rightLeafPosFinal;
-        gantryAngles(l) = apertureInfo.beam(k).doseAngleBorders(2);
+        gantryAngles(l) = apertureInfo.arc.beam(k).doseAngleBorders(2);
 
         l = l + 1;
     end

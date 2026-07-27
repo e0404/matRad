@@ -157,6 +157,78 @@ assertEqual(numel(metrics.leafSpeedGantryAngle), numel(metrics.leafSpeed));
 assertTrue(all(metrics.fracForward >= 0 & metrics.fracForward <= 1));
 assertElementsAlmostEqual(metrics.totalFracForward + metrics.totalFracBackward, 1);
 
+function test_leafTouchingContinuousApertureReinvocation
+% leafTouching's continuous-aperture branch (taken once shape(1) already
+% carries leftLeafPosInitial/Final) must read doseAngleBorders from
+% apertureInfo.arc.beam, not apertureInfo.beam, which has no such field.
+% That branch is never reached by the current single call site (it creates
+% those fields itself, at the end of its only invocation), so this
+% re-invokes it directly to exercise the branch and guard against it
+% breaking again, e.g. if a future post-DAO cleanup pass starts calling it
+% a second time.
+[stf, pln] = helper_getVmatStf(true);
+sequencer = helper_getSequencer(pln);
+w = ones(sum([stf.numOfRays]), 1);
+sequence = sequencer.sequence(w, stf);
+apertureInfo = sequence.apertureInfo;
+assertTrue(isfield(apertureInfo.beam(1).shape(1), 'leftLeafPosInitial'));
+
+apertureInfo = matRad_OptimizationProblemVMAT.leafTouching(apertureInfo);
+
+for i = 1:numel(apertureInfo.beam)
+    shape = apertureInfo.beam(i).shape(1);
+    assertTrue(all(isfinite(shape.leftLeafPosInitial)) && all(isfinite(shape.rightLeafPosInitial)));
+    assertTrue(all(isfinite(shape.leftLeafPosFinal)) && all(isfinite(shape.rightLeafPosFinal)));
+    assertTrue(all(shape.leftLeafPosInitial <= shape.rightLeafPosInitial));
+    assertTrue(all(shape.leftLeafPosFinal <= shape.rightLeafPosFinal));
+end
+
+function test_maxLeafSpeedUsesRightLeafPositions
+% maxLeafSpeed's continuous-aperture branch must compute the right-leaf
+% speed from the right-leaf positions, not (as previously) from the
+% left-leaf positions. Zero out every left-leaf displacement and inject a
+% single, isolated right-leaf-only displacement: the correct computation
+% reports a positive overall max leaf speed driven by that displacement,
+% while the left/right mix-up reports exactly zero (since the left-leaf
+% displacement it actually reads is zero everywhere).
+[stf, pln] = helper_getVmatStf(true);
+sequencer = helper_getSequencer(pln);
+w = ones(sum([stf.numOfRays]), 1);
+sequence = sequencer.sequence(w, stf);
+apertureInfo = sequence.apertureInfo;
+
+vec = apertureInfo.apertureVector;
+nLP = apertureInfo.totalNumOfLeafPairs;
+injected = false;
+for i = 1:numel(apertureInfo.beam)
+    if isempty(apertureInfo.arc.beam(i).leafConstMask)
+        continue
+    end
+    n = apertureInfo.beam(i).numOfActiveLeafPairs;
+    if apertureInfo.arc.beam(i).isDAOBeam
+        ixLI = apertureInfo.beam(i).shape(1).vectorOffset(1) + (0:n - 1);
+        ixLF = apertureInfo.beam(i).shape(1).vectorOffset(2) + (0:n - 1);
+    else
+        ixLI = apertureInfo.beam(apertureInfo.arc.beam(i).lastDAOBeamIx).shape(1).vectorOffset(2) + (0:n - 1);
+        ixLF = apertureInfo.beam(apertureInfo.arc.beam(i).nextDAOBeamIx).shape(1).vectorOffset(1) + (0:n - 1);
+    end
+    ixRI = ixLI + nLP;
+    ixRF = ixLF + nLP;
+
+    vec(ixLF) = vec(ixLI); % zero left-leaf displacement everywhere
+    if ~injected && apertureInfo.arc.beam(i).isDAOBeam
+        vec(ixRF) = vec(ixRI) + 20; % isolated right-leaf-only displacement [mm]
+        injected = true;
+    else
+        vec(ixRF) = vec(ixRI); % zero right-leaf displacement elsewhere
+    end
+end
+assertTrue(injected);
+apertureInfo.apertureVector = vec;
+
+apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(apertureInfo);
+assertTrue(apertureInfo.maxLeafSpeed > 0);
+
 function test_vmatRecalcApertureChain
 % fine-angle aperture recalculation: interpolate the sequenced apertures
 % onto a finer arc and recompute the bixel weights via matRad_refineApertureArc

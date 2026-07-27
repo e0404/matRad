@@ -51,6 +51,24 @@ dij = p.dij;
 cst = helper_prepareCst(p.cst, dij, pln);
 vec = helper_perturbVector(apertureInfo);
 
+function [optiProb, dij, cst, vec] = helper_getDaoProblemMultiShape()
+% same fixture as helper_getDaoProblem, but with non-uniform bixel weights
+% so the siochi sequencer (numLevels = 5, default) actually produces beams
+% with more than one DAO shape -- the fixture's stock weights are uniform
+% (w == 1 everywhere), which collapses every beam to a single shape and so
+% cannot exercise per-shape indexing bugs
+p = load('photons_testData.mat');
+pln = p.pln;
+pln.propSeq.sequencer = 'siochi';
+resultGUI = p.resultGUI;
+resultGUI.w = 1 + 4 * mod((1:numel(resultGUI.w))' * 0.6180339887, 1);
+resultGUI = matRad_sequencing(resultGUI, p.stf, pln);
+apertureInfo = resultGUI.sequencing.apertureInfo;
+optiProb = matRad_OptimizationProblemDAO(matRad_DoseProjection(), apertureInfo);
+dij = p.dij;
+cst = helper_prepareCst(p.cst, dij, pln);
+vec = helper_perturbVector(apertureInfo);
+
 function [optiProb, dij, cst, vec] = helper_getVmatProblem()
 p = load('photons_testData.mat', 'ct', 'cst', 'pln', 'dij');
 pln = p.pln;
@@ -209,6 +227,30 @@ sampleIx = helper_sampleIndices(optiProb.apertureInfo, numel(vec));
 cFun = @(v) optiProb.matRad_constraintFunctions(v, dij, cst);
 J = optiProb.matRad_constraintJacobian(vec, dij, cst);
 helper_checkJacobian(cFun, J, vec, sampleIx);
+
+function test_daoJacobianStructureIsSupersetOfAnalyticJacobian
+% matRad_getJacobianStructure only reports where constraint-jacobian entries
+% may be nonzero; IPOPT relies on it to preallocate the analytic jacobian,
+% so every analytically nonzero entry must be flagged in the structure.
+% helper_getDaoProblemMultiShape sequences non-uniform bixel weights, so
+% beams here have multiple DAO shapes -- exactly the case where a stale
+% running column offset or a wrong shape() index can silently drop entries
+% for shapes after the first.
+[optiProb, dij, cst, vec] = helper_getDaoProblemMultiShape();
+assertTrue(any([optiProb.apertureInfo.beam.numOfShapes] > 1));
+
+% matRad_getJacobianStructure (unlike matRad_constraintJacobian) does not
+% sync optiProb.apertureInfo to vec itself, so bixelWeights etc. must
+% already be up to date -- mirror the sync matRad_constraintJacobian does
+% internally before comparing the two
+optiProb.apertureInfo = optiProb.matRad_daoVec2ApertureInfo(optiProb.apertureInfo, vec);
+
+jacobStruct = optiProb.matRad_getJacobianStructure(vec, dij, cst);
+jacobAn = optiProb.matRad_constraintJacobian(vec, dij, cst);
+
+missing = (jacobAn ~= 0) & (jacobStruct == 0);
+assertTrue(nnz(missing) == 0, ...
+           sprintf('jacobian structure misses %d analytically nonzero entries', nnz(missing)));
 
 function test_vmatObjectiveGradientConsistency
 [optiProb, dij, cst, vec] = helper_getVmatProblem();

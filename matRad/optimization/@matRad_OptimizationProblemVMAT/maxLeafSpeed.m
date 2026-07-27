@@ -97,7 +97,7 @@ if apertureInfo.continuousAperture
 
             % get max speed
             leftLeafSpeed = abs(leftLeafPosFinal - leftLeafPosInitial) ./ t;
-            rightLeafSpeed = abs(leftLeafPosFinal - leftLeafPosInitial) ./ t;
+            rightLeafSpeed = abs(rightLeafPosFinal - rightLeafPosInitial) ./ t;
             maxLeafSpeed_temp = max([leftLeafSpeed; rightLeafSpeed]);
 
             % update max speed
