@@ -490,50 +490,35 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             % output:
             %   newBeam:    beam struct with shapes and re-scaled intensities
 
-            newBeam = beam;
-            newBeam.shapes = zeros(size(newBeam.shapes, 1), size(newBeam.shapes, 2), numToKeep);
-            newBeam.shapesWeight = zeros(numToKeep, 1);
-
             % Find the numToKeep apertures having the highest dose-area product
             numToKeep = min(numToKeep, beam.numOfShapes);
 
-            DAP = zeros(beam.numOfShapes, 1);
-            comPos = zeros(beam.numOfShapes, 1);
+            newBeam = beam;
+            newBeam.shapes = zeros(size(beam.shapes, 1), size(beam.shapes, 2), numToKeep);
+            newBeam.shapesWeight = zeros(numToKeep, 1);
+            newBeam.numOfShapes = numToKeep;
 
+            if numToKeep == 0
+                return
+            end
+
+            DAP = zeros(beam.numOfShapes, 1);
             for shape = 1:beam.numOfShapes
                 DAP(shape) = nnz(beam.shapes(:, :, shape)) .* beam.shapesWeight(shape);
-                x = repmat(1:size(beam.shapes(:, :, shape), 2), size(beam.shapes(:, :, shape), 1), 1);
-                comPosRow = sum(beam.shapes(:, :, shape) .* x, 2) ./ sum(beam.shapes(:, :, shape), 2);
-                comPos(shape) = mean(comPosRow(~isnan(comPosRow), 1));
             end
 
-            % Note: some algorithms (in particular, Siochi) already sort shapes
-            % in increasing (left to right) leaf position, so sorting by centre
-            % of mass here is intentionally omitted - it would reorder them.
-
-            [~, comPosToDAPSort] = sort(DAP, 'descend');
+            [~, DAPSort] = sort(DAP, 'descend');
 
             totDAP_all = sum(DAP(:));
-            totDAP_keep = sum(DAP(comPosToDAPSort(1:numToKeep)));
+            keepIx = sort(DAPSort(1:numToKeep));
+            totDAP_keep = sum(DAP(keepIx));
 
-            segmentKeep = 1;
-
-            % Keep only those numToKeep apertures with the highest DAP
-            % Preserve the shapes of the apertures, but scale the weights so
-            % that the total DAP is kept
-            for shape = 1:beam.numOfShapes
-                if comPosToDAPSort(shape) <= numToKeep
-                    newBeam.shapes(:, :, segmentKeep) = beam.shapes(:, :, shape);
-                    tempNewDAP = totDAP_all * DAP(shape) / totDAP_keep;
-                    newBeam.shapesWeight(segmentKeep) = tempNewDAP / (nnz(newBeam.shapes(:, :, segmentKeep)));
-
-                    segmentKeep = segmentKeep + 1;
-                else
-                    continue
-                end
+            % Keep the selected apertures in their original trajectory order.
+            newBeam.shapes = beam.shapes(:, :, keepIx);
+            if totDAP_keep > 0
+                newBeam.shapesWeight = beam.shapesWeight(keepIx) .* ...
+                    (totDAP_all ./ totDAP_keep);
             end
-
-            newBeam.numOfShapes = numToKeep;
         end
 
     end

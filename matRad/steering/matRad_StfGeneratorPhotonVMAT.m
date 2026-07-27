@@ -190,6 +190,14 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
             anchorGantry = this.gantryAngles;
             anchorCouch  = this.couchAngles;
 
+            % The photon base generator accepts a scalar couch angle and
+            % applies it to every beam. VMAT expands the anchor angles
+            % before the base initialize method runs, so perform the same
+            % broadcasting here while the anchors are still active.
+            if isscalar(anchorCouch)
+                anchorCouch = repmat(anchorCouch, 1, numel(anchorGantry));
+            end
+
             % Broadcast scalar arcIndex to a per-anchor vector
             if isscalar(this.arcIndex)
                 arcIdx = this.arcIndex * ones(1, numel(anchorGantry));
@@ -214,6 +222,10 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                 couchVal    = couch(1);     % TODO: only uniform couch angle per arc
 
                 angularRange = abs(finishAngle - startAngle);
+                arcDirection = sign(finishAngle - startAngle);
+                if arcDirection == 0
+                    matRad_cfg.dispError('VMAT arc %g has identical start and finish angles (%g deg).', arcIds(a), startAngle);
+                end
 
                 if this.continuousAperture
                     % In continuous mode the gantry rotates between dose
@@ -228,8 +240,8 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     gantryAngleSpacing = angularRange / numGantryAngles;
                     DAOGantryAngleSpacing = (angularRange - gantryAngleSpacing) / (numDAOGantryAngles - 1);
 
-                    firstGantryAngle = startAngle  + gantryAngleSpacing / 2;
-                    lastGantryAngle  = finishAngle - gantryAngleSpacing / 2;
+                    firstGantryAngle = startAngle  + arcDirection * gantryAngleSpacing / 2;
+                    lastGantryAngle  = finishAngle - arcDirection * gantryAngleSpacing / 2;
                 else
                     % Step-and-shoot: first/last beams sit at the arc boundaries.
                     numDAOGantryAngles    = ceil(angularRange / this.maxDAOGantryAngleSpacing);
@@ -253,12 +265,12 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                 % maxFMOGantryAngleSpacing < the realized DAO spacing)
                 numApertures = max(numApertures, 1);
                 FMOGantryAngleSpacing = numApertures * DAOGantryAngleSpacing;
-                firstFMOGantryAngle   = firstGantryAngle + DAOGantryAngleSpacing * floor(numApertures / 2);
-                lastFMOGantryAngle    = lastGantryAngle  - DAOGantryAngleSpacing * floor(numApertures / 2);
+                firstFMOGantryAngle   = firstGantryAngle + arcDirection * DAOGantryAngleSpacing * floor(numApertures / 2);
+                lastFMOGantryAngle    = lastGantryAngle  - arcDirection * DAOGantryAngleSpacing * floor(numApertures / 2);
 
-                arcAngles = firstGantryAngle:gantryAngleSpacing:lastGantryAngle;
-                daoAngles = firstGantryAngle:DAOGantryAngleSpacing:lastGantryAngle;
-                fmoAngles = firstFMOGantryAngle:FMOGantryAngleSpacing:lastFMOGantryAngle;
+                arcAngles = firstGantryAngle:arcDirection * gantryAngleSpacing:lastGantryAngle;
+                daoAngles = firstGantryAngle:arcDirection * DAOGantryAngleSpacing:lastGantryAngle;
+                fmoAngles = firstFMOGantryAngle:arcDirection * FMOGantryAngleSpacing:lastFMOGantryAngle;
 
                 allGantryAngles = [allGantryAngles, arcAngles];
                 allCouchAngles  = [allCouchAngles,  couchVal * ones(1, numel(arcAngles))];
@@ -359,8 +371,8 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     stf(i).arc.doseAngleBorders = ([stf(i - 1).gantryAngle, stf(i + 1).gantryAngle] + stf(i).gantryAngle) / 2;
                 end
 
-                stf(i).arc.doseAngleBorderCentreDiff = [stf(i).gantryAngle - stf(i).arc.doseAngleBorders(1), ...
-                                                        stf(i).arc.doseAngleBorders(2) - stf(i).gantryAngle];
+                stf(i).arc.doseAngleBorderCentreDiff = abs([stf(i).gantryAngle - stf(i).arc.doseAngleBorders(1), ...
+                                                            stf(i).arc.doseAngleBorders(2) - stf(i).gantryAngle]);
                 stf(i).arc.doseAngleBordersDiff = sum(stf(i).arc.doseAngleBorderCentreDiff);
 
                 if stf(i).arc.isDAOBeam
@@ -410,8 +422,8 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     stf(i).arc.DAOBeamNumber     = numDAO;
                     numDAO = numDAO + 1;
 
-                    stf(i).arc.DAOAngleBorderCentreDiff = [stf(i).gantryAngle - stf(i).arc.DAOAngleBorders(1), ...
-                                                           stf(i).arc.DAOAngleBorders(2) - stf(i).gantryAngle];
+                    stf(i).arc.DAOAngleBorderCentreDiff = abs([stf(i).gantryAngle - stf(i).arc.DAOAngleBorders(1), ...
+                                                               stf(i).arc.DAOAngleBorders(2) - stf(i).gantryAngle]);
                     stf(i).arc.DAOAngleBordersDiff = sum(stf(i).arc.DAOAngleBorderCentreDiff);
 
                     % Time factor: fraction of DAO sector time covered by this dose sector
@@ -476,8 +488,8 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                         stf(i).arc.FMOAngleBorders = ...
                             ([this.arcFMOGantryAngles(FMOIndex - 1), this.arcFMOGantryAngles(FMOIndex + 1)] + this.arcFMOGantryAngles(FMOIndex)) / 2;
                     end
-                    stf(i).arc.FMOAngleBorderCentreDiff = [stf(i).gantryAngle - stf(i).arc.FMOAngleBorders(1), ...
-                                                           stf(i).arc.FMOAngleBorders(2) - stf(i).gantryAngle];
+                    stf(i).arc.FMOAngleBorderCentreDiff = abs([stf(i).gantryAngle - stf(i).arc.FMOAngleBorders(1), ...
+                                                               stf(i).arc.FMOAngleBorders(2) - stf(i).gantryAngle]);
                     stf(i).arc.FMOAngleBordersDiff = sum(stf(i).arc.FMOAngleBorderCentreDiff);
                 end
 
@@ -548,9 +560,9 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
 
                     % Time interpolation fractions (clamped to [0, 1])
                     lastDAOBorder2 = stf(stf(i).arc.lastDAOBeamIx).arc.DAOAngleBorders(2);
-                    stf(i).arc.timeFracFromLastDAO = min(max((lastDAOBorder2 - stf(i).arc.doseAngleBorders(1)) / ...
+                    stf(i).arc.timeFracFromLastDAO = min(max(abs(lastDAOBorder2 - stf(i).arc.doseAngleBorders(1)) / ...
                                                              stf(i).arc.doseAngleBordersDiff, 0), 1);
-                    stf(i).arc.timeFracFromNextDAO = min(max((stf(i).arc.doseAngleBorders(2) - lastDAOBorder2)  / ...
+                    stf(i).arc.timeFracFromNextDAO = min(max(abs(stf(i).arc.doseAngleBorders(2) - lastDAOBorder2)  / ...
                                                              stf(i).arc.doseAngleBordersDiff, 0), 1);
                 end
 

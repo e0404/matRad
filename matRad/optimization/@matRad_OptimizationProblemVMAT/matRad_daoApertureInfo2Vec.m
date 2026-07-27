@@ -129,8 +129,9 @@ if nargout > 1
             mappingMx(counter, 1) = i;
 
             % minimum/maximum time interval between two optimized beams/gantry angles
-            timeLimL = diff(apertureInfo.arc.beam(i).DAOAngleBorders) / apertureInfo.deliveryConstraints.gantryRotationSpeed(2);
-            timeLimU = diff(apertureInfo.arc.beam(i).DAOAngleBorders) / apertureInfo.deliveryConstraints.gantryRotationSpeed(1);
+            angleLength = abs(diff(apertureInfo.arc.beam(i).DAOAngleBorders));
+            timeLimL = angleLength / apertureInfo.deliveryConstraints.gantryRotationSpeed(2);
+            timeLimU = angleLength / apertureInfo.deliveryConstraints.gantryRotationSpeed(1);
 
             mappingMx(counter + (apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs * 2), 1) = i;
             limMx(counter + (apertureInfo.totalNumOfShapes + apertureInfo.totalNumOfLeafPairs * 2), :) = [timeLimL timeLimU];

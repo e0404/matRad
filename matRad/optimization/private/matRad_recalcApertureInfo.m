@@ -51,6 +51,27 @@ if recalc.interpNew
         oldLeftLeafPoss(:, i) = apertureInfoOld.beam(i).shape(1).leftLeafPos;
         oldRightLeafPoss(:, i) = apertureInfoOld.beam(i).shape(1).rightLeafPos;
     end
+
+    % Build a leaf trajectory at dose-sector borders. Continuous plans
+    % carry the actual initial/final leaf positions there. For a discrete
+    % source plan, extend the first/last aperture to the arc boundaries.
+    if matRad_getFieldOrDefault(apertureInfoOld, 'continuousAperture', false)
+        oldLeftFinal = arrayfun(@(b) b.shape(1).leftLeafPosFinal, apertureInfoOld.beam, ...
+                                'UniformOutput', false);
+        oldRightFinal = arrayfun(@(b) b.shape(1).rightLeafPosFinal, apertureInfoOld.beam, ...
+                                 'UniformOutput', false);
+        oldBorderAngles = [apertureInfoOld.arc.beam(1).doseAngleBorders(1), ...
+                           arrayfun(@(b) b.doseAngleBorders(2), apertureInfoOld.arc.beam)];
+        oldLeftBorderPoss = [apertureInfoOld.beam(1).shape(1).leftLeafPosInitial, ...
+                             oldLeftFinal{:}];
+        oldRightBorderPoss = [apertureInfoOld.beam(1).shape(1).rightLeafPosInitial, ...
+                              oldRightFinal{:}];
+    else
+        oldBorderAngles = [apertureInfoOld.arc.beam(1).doseAngleBorders(1), oldGantryAngles, ...
+                           apertureInfoOld.arc.beam(end).doseAngleBorders(2)];
+        oldLeftBorderPoss = [oldLeftLeafPoss(:, 1), oldLeftLeafPoss, oldLeftLeafPoss(:, end)];
+        oldRightBorderPoss = [oldRightLeafPoss(:, 1), oldRightLeafPoss, oldRightLeafPoss(:, end)];
+    end
 end
 
 % MLC parameters:
@@ -59,8 +80,9 @@ numOfMLCLeafPairs = 80;
 % initializing variables
 totalNumOfShapes = numel(stf);
 for i = 1:numel(apertureInfoOld.beam)
-    newInd = (apertureInfoOld.arc.beam(i).doseAngleBorders(1) <= [stf.gantryAngle] & ...
-              [stf.gantryAngle] <= apertureInfoOld.arc.beam(i).doseAngleBorders(2)) .* ...
+    oldSectorBounds = sort(apertureInfoOld.arc.beam(i).doseAngleBorders);
+    newInd = (oldSectorBounds(1) <= [stf.gantryAngle] & ...
+              [stf.gantryAngle] <= oldSectorBounds(2)) .* ...
               (1:numel([stf.gantryAngle]));
     newInd(newInd == 0) = [];
 
@@ -96,29 +118,21 @@ for i = 1:numel(apertureInfoOld.beam)
         apertureInfoNew.arc.beam(j).lastDAOBeamIx = stf(j).arc.lastDAOBeamIx;
         apertureInfoNew.arc.beam(j).nextDAOBeamIx = stf(j).arc.nextDAOBeamIx;
 
-        amountOfOldSpeed = (min(apertureInfoNew.arc.beam(j).doseAngleBorders(2), ...
-                                apertureInfoOld.arc.beam(i).doseAngleBorders(2)) - ...
-                            max(apertureInfoNew.arc.beam(j).doseAngleBorders(1), ...
-                                apertureInfoOld.arc.beam(i).doseAngleBorders(1))) ./ ...
-            apertureInfoNew.arc.beam(j).doseAngleBordersDiff;
-        amountOfOldWeight = (min(apertureInfoNew.arc.beam(j).doseAngleBorders(2), ...
-                                 apertureInfoOld.arc.beam(i).doseAngleBorders(2)) - ...
-                             max(apertureInfoNew.arc.beam(j).doseAngleBorders(1), ...
-                                 apertureInfoOld.arc.beam(i).doseAngleBorders(1))) ./ ...
-            apertureInfoOld.arc.beam(i).doseAngleBordersDiff;
+        newSectorBounds = sort(apertureInfoNew.arc.beam(j).doseAngleBorders);
+        overlap = matRad_intervalOverlap(newSectorBounds, oldSectorBounds);
+        amountOfOldSpeed = overlap ./ apertureInfoNew.arc.beam(j).doseAngleBordersDiff;
+        amountOfOldWeight = overlap ./ apertureInfoOld.arc.beam(i).doseAngleBordersDiff;
 
         totalAmountOfOldWeight = totalAmountOfOldWeight + amountOfOldWeight;
 
-        amountOfOldWeight_I = (min(apertureInfoNew.beam(j).gantryAngle, ...
-                                   apertureInfoOld.arc.beam(i).doseAngleBorders(2)) - ...
-                               max(apertureInfoNew.arc.beam(j).doseAngleBorders(1), ...
-                                   apertureInfoOld.arc.beam(i).doseAngleBorders(1))) ./ ...
-                                     apertureInfoOld.arc.beam(i).doseAngleBordersDiff;
-        amountOfOldWeight_F = (min(apertureInfoNew.arc.beam(j).doseAngleBorders(2), ...
-                                   apertureInfoOld.arc.beam(i).doseAngleBorders(2)) - ...
-                               max(apertureInfoNew.beam(j).gantryAngle, ...
-                                   apertureInfoOld.arc.beam(i).doseAngleBorders(1))) ./ ...
-                                     apertureInfoOld.arc.beam(i).doseAngleBordersDiff;
+        initialHalfBounds = sort([apertureInfoNew.arc.beam(j).doseAngleBorders(1), ...
+                                  apertureInfoNew.beam(j).gantryAngle]);
+        finalHalfBounds = sort([apertureInfoNew.beam(j).gantryAngle, ...
+                                apertureInfoNew.arc.beam(j).doseAngleBorders(2)]);
+        amountOfOldWeight_I = matRad_intervalOverlap(initialHalfBounds, oldSectorBounds) ./ ...
+                              apertureInfoOld.arc.beam(i).doseAngleBordersDiff;
+        amountOfOldWeight_F = matRad_intervalOverlap(finalHalfBounds, oldSectorBounds) ./ ...
+                              apertureInfoOld.arc.beam(i).doseAngleBordersDiff;
 
         if ~isfield(apertureInfoNew.beam(j), 'gantryRot') || isempty(apertureInfoNew.beam(j).gantryRot)
             apertureInfoNew.beam(j).gantryRot = 0;
@@ -148,20 +162,21 @@ for i = 1:numel(apertureInfoOld.beam)
         if recalc.interpNew
             % interpolate new apertures now so that weights are not
             % overwritten
-            apertureInfoNew.beam(j).shape(1).leftLeafPos = ...
-                (interp1(oldGantryAngles', oldLeftLeafPoss', apertureInfoNew.beam(j).gantryAngle))';
-            apertureInfoNew.beam(j).shape(1).rightLeafPos = ...
-                (interp1(oldGantryAngles', oldRightLeafPoss', apertureInfoNew.beam(j).gantryAngle))';
+            beamAngle = apertureInfoNew.beam(j).gantryAngle;
+            doseAngleBorders = apertureInfoNew.arc.beam(j).doseAngleBorders;
 
-            apertureInfoNew.beam(j).shape(1).leftLeafPosInitial = ...
-                (interp1(oldGantryAngles', oldLeftLeafPoss', apertureInfoNew.arc.beam(j).doseAngleBorders(1)))';
-            apertureInfoNew.beam(j).shape(1).rightLeafPosInitial = ...
-                (interp1(oldGantryAngles', oldRightLeafPoss', apertureInfoNew.arc.beam(j).doseAngleBorders(1)))';
-
-            apertureInfoNew.beam(j).shape(1).leftLeafPosFinal = ...
-                (interp1(oldGantryAngles', oldLeftLeafPoss', apertureInfoNew.arc.beam(j).doseAngleBorders(2)))';
-            apertureInfoNew.beam(j).shape(1).rightLeafPosFinal = ...
-                (interp1(oldGantryAngles', oldRightLeafPoss', apertureInfoNew.arc.beam(j).doseAngleBorders(2)))';
+            shape = apertureInfoNew.beam(j).shape(1);
+            shape.leftLeafPos = matRad_interpLeafTrajectory(oldGantryAngles, oldLeftLeafPoss, beamAngle);
+            shape.rightLeafPos = matRad_interpLeafTrajectory(oldGantryAngles, oldRightLeafPoss, beamAngle);
+            shape.leftLeafPosInitial = matRad_interpLeafTrajectory( ...
+                                                                   oldBorderAngles, oldLeftBorderPoss, doseAngleBorders(1));
+            shape.rightLeafPosInitial = matRad_interpLeafTrajectory( ...
+                                                                    oldBorderAngles, oldRightBorderPoss, doseAngleBorders(1));
+            shape.leftLeafPosFinal = matRad_interpLeafTrajectory( ...
+                                                                 oldBorderAngles, oldLeftBorderPoss, doseAngleBorders(2));
+            shape.rightLeafPosFinal = matRad_interpLeafTrajectory( ...
+                                                                  oldBorderAngles, oldRightBorderPoss, doseAngleBorders(2));
+            apertureInfoNew.beam(j).shape(1) = shape;
         else
             apertureInfoNew.beam(j).shape(1).leftLeafPos = apertureInfoOld.beam(i).shape(1).leftLeafPos;
             apertureInfoNew.beam(j).shape(1).rightLeafPos = apertureInfoOld.beam(i).shape(1).rightLeafPos;
@@ -200,3 +215,26 @@ apertureInfoNew.continuousAperture = false;
 
 recalc.apertureInfo = apertureInfoNew;
 recalc.stf = stf;
+
+end
+
+function leafPos = matRad_interpLeafTrajectory(angles, positions, queryAngle)
+% Interpolate a leaf trajectory independent of the arc direction. Duplicate
+% angle samples can occur for step-and-shoot endpoints and are collapsed.
+
+[angles, sortIx] = sort(angles);
+positions = positions(:, sortIx);
+[angles, uniqueIx] = unique(angles, 'stable');
+positions = positions(:, uniqueIx);
+
+leafPos = interp1(angles', positions', queryAngle, 'linear')';
+
+end
+
+function overlap = matRad_intervalOverlap(firstBounds, secondBounds)
+% Length of the overlap between two direction-independent angle intervals.
+
+overlap = max(0, min(firstBounds(2), secondBounds(2)) - ...
+              max(firstBounds(1), secondBounds(1)));
+
+end

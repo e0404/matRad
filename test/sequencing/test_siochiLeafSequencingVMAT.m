@@ -12,16 +12,22 @@ test_functions = localfunctions();
 % Test Case, and add them to the test-runner
 initTestSuite;
 
-function [stf, pln] = helper_getVmatStf(continuousAperture)
+function [stf, pln] = helper_getVmatStf(continuousAperture, gantryAngles, couchAngles)
 if nargin < 1
     continuousAperture = false;
+end
+if nargin < 2
+    gantryAngles = [-180, 180];
+end
+if nargin < 3
+    couchAngles = [0, 0];
 end
 p = load('photons_testData.mat', 'ct', 'cst', 'pln');
 pln = p.pln;
 
 pln.propStf.generator                = 'PhotonVMAT';
-pln.propStf.gantryAngles             = [-180, 180];
-pln.propStf.couchAngles              = [0, 0];
+pln.propStf.gantryAngles             = gantryAngles;
+pln.propStf.couchAngles              = couchAngles;
 pln.propStf.maxGantryAngleSpacing    = 15;
 pln.propStf.maxDAOGantryAngleSpacing = 30;
 pln.propStf.maxFMOGantryAngleSpacing = 45;
@@ -31,6 +37,35 @@ pln.propSeq.continuousAperture = continuousAperture;
 pln.propOpt.runVMAT = true;
 
 stf = matRad_generateStf(p.ct, p.cst, pln);
+
+function test_vmatAcceptsScalarCouchAngle
+[stf, ~] = helper_getVmatStf(false, [-180, 180], 17);
+
+assertTrue(~isempty(stf));
+assertEqual([stf.couchAngle], 17 * ones(1, numel(stf)));
+
+function test_vmatSupportsReverseDirectionArc
+[stf, pln] = helper_getVmatStf(true, [180, -180], 0);
+
+assertTrue(~isempty(stf));
+assertTrue(all(diff([stf.gantryAngle]) < 0));
+doseWidths = arrayfun(@(ix) stf(ix).arc.doseAngleBordersDiff, 1:numel(stf));
+assertTrue(all(doseWidths > 0));
+daoBeams = arrayfun(@(ix) stf(ix).arc.isDAOBeam, 1:numel(stf));
+daoWidths = arrayfun(@(ix) stf(ix).arc.DAOAngleBordersDiff, find(daoBeams));
+assertTrue(all(daoWidths > 0));
+
+sequencer = helper_getSequencer(pln);
+w = ones(sum([stf.numOfRays]), 1);
+apertureInfo = sequencer.sequence(w, stf).apertureInfo;
+assertTrue(all(isfinite(apertureInfo.bixelWeights)));
+assertTrue(all(apertureInfo.bixelWeights >= 0));
+
+p = load('photons_testData.mat', 'ct', 'cst');
+[stfFine, apertureInfoFine] = matRad_refineApertureArc(p.ct, p.cst, pln, apertureInfo, 7.5);
+assertTrue(all(diff([stfFine.gantryAngle]) < 0));
+assertTrue(all(isfinite(apertureInfoFine.bixelWeights)));
+assertTrue(any(apertureInfoFine.bixelWeights > 0));
 
 function sequencer = helper_getSequencer(pln)
 sequencer = matRad_SequencingPhotonsSiochiLeaf(pln);
@@ -246,6 +281,43 @@ assertEqual(numel(apertureInfoFine.bixelWeights), sum([stfFine.totalNumOfBixels]
 assertTrue(all(isfinite(apertureInfoFine.bixelWeights)));
 assertTrue(all(apertureInfoFine.bixelWeights >= 0));
 assertTrue(any(apertureInfoFine.bixelWeights > 0));
+
+function test_discardAperturesKeepsHighestDAPAndPreservesTotal
+beam.shapes = false(1, 3, 3);
+beam.shapes(:, :, 1) = [1 0 0];
+beam.shapes(:, :, 2) = [1 1 1];
+beam.shapes(:, :, 3) = [1 1 0];
+beam.shapesWeight = [1; 10; 2];
+beam.numOfShapes = 3;
+
+newBeam = matRad_PhotonSequencerAbstract.discardApertures(beam, 2);
+
+assertEqual(newBeam.numOfShapes, 2);
+assertEqual(newBeam.shapes, beam.shapes(:, :, [2 3]));
+oldDAP = sum(arrayfun(@(i) nnz(beam.shapes(:, :, i)) * beam.shapesWeight(i), 1:3));
+newDAP = sum(arrayfun(@(i) nnz(newBeam.shapes(:, :, i)) * newBeam.shapesWeight(i), 1:2));
+assertElementsAlmostEqual(newDAP, oldDAP);
+
+function test_vmatContinuousRecalcPreservesBoundaryLeaves
+[stf, pln] = helper_getVmatStf(true);
+sequencer = helper_getSequencer(pln);
+w = ones(sum([stf.numOfRays]), 1);
+apertureInfo = sequencer.sequence(w, stf).apertureInfo;
+
+p = load('photons_testData.mat', 'ct', 'cst');
+[~, apertureInfoFine] = matRad_refineApertureArc(p.ct, p.cst, pln, apertureInfo, 7.5);
+
+firstFine = apertureInfoFine.beam(1).shape(1);
+lastFine = apertureInfoFine.beam(end).shape(1);
+assertTrue(all(isfinite(apertureInfoFine.bixelWeights)));
+assertTrue(all(isfinite(firstFine.leftLeafPosInitial)));
+assertTrue(all(isfinite(firstFine.rightLeafPosInitial)));
+assertTrue(all(isfinite(lastFine.leftLeafPosFinal)));
+assertTrue(all(isfinite(lastFine.rightLeafPosFinal)));
+assertElementsAlmostEqual(firstFine.leftLeafPosInitial, ...
+                          apertureInfo.beam(1).shape(1).leftLeafPosInitial);
+assertElementsAlmostEqual(lastFine.rightLeafPosFinal, ...
+                          apertureInfo.beam(end).shape(1).rightLeafPosFinal);
 
 function test_vmatRecalcPreservesDAOAnchors
 % Regression: matRad_recalcApertureInfo used to populate nextDAOBeamIx from
