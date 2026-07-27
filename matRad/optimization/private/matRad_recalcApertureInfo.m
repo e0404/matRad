@@ -165,18 +165,19 @@ for i = 1:numel(apertureInfoOld.beam)
             beamAngle = apertureInfoNew.beam(j).gantryAngle;
             doseAngleBorders = apertureInfoNew.arc.beam(j).doseAngleBorders;
 
-            shape = apertureInfoNew.beam(j).shape(1);
-            shape.leftLeafPos = matRad_interpLeafTrajectory(oldGantryAngles, oldLeftLeafPoss, beamAngle);
-            shape.rightLeafPos = matRad_interpLeafTrajectory(oldGantryAngles, oldRightLeafPoss, beamAngle);
-            shape.leftLeafPosInitial = matRad_interpLeafTrajectory( ...
-                                                                   oldBorderAngles, oldLeftBorderPoss, doseAngleBorders(1));
-            shape.rightLeafPosInitial = matRad_interpLeafTrajectory( ...
-                                                                    oldBorderAngles, oldRightBorderPoss, doseAngleBorders(1));
-            shape.leftLeafPosFinal = matRad_interpLeafTrajectory( ...
-                                                                 oldBorderAngles, oldLeftBorderPoss, doseAngleBorders(2));
-            shape.rightLeafPosFinal = matRad_interpLeafTrajectory( ...
-                                                                  oldBorderAngles, oldRightBorderPoss, doseAngleBorders(2));
-            apertureInfoNew.beam(j).shape(1) = shape;
+            leftLeafPos = matRad_interpLeafTrajectory(oldGantryAngles, oldLeftLeafPoss, beamAngle);
+            rightLeafPos = matRad_interpLeafTrajectory(oldGantryAngles, oldRightLeafPoss, beamAngle);
+            leftLeafPosInitial = matRad_interpLeafTrajectory(oldBorderAngles, oldLeftBorderPoss, doseAngleBorders(1));
+            rightLeafPosInitial = matRad_interpLeafTrajectory(oldBorderAngles, oldRightBorderPoss, doseAngleBorders(1));
+            leftLeafPosFinal = matRad_interpLeafTrajectory(oldBorderAngles, oldLeftBorderPoss, doseAngleBorders(2));
+            rightLeafPosFinal = matRad_interpLeafTrajectory(oldBorderAngles, oldRightBorderPoss, doseAngleBorders(2));
+
+            apertureInfoNew.beam(j).shape(1).leftLeafPos = leftLeafPos;
+            apertureInfoNew.beam(j).shape(1).rightLeafPos = rightLeafPos;
+            apertureInfoNew.beam(j).shape(1).leftLeafPosInitial = leftLeafPosInitial;
+            apertureInfoNew.beam(j).shape(1).rightLeafPosInitial = rightLeafPosInitial;
+            apertureInfoNew.beam(j).shape(1).leftLeafPosFinal = leftLeafPosFinal;
+            apertureInfoNew.beam(j).shape(1).rightLeafPosFinal = rightLeafPosFinal;
         else
             apertureInfoNew.beam(j).shape(1).leftLeafPos = apertureInfoOld.beam(i).shape(1).leftLeafPos;
             apertureInfoNew.beam(j).shape(1).rightLeafPos = apertureInfoOld.beam(i).shape(1).rightLeafPos;
