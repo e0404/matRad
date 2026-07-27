@@ -141,10 +141,12 @@ for i = 1:dij.numOfBeams % loop over all beams
         % 0, then pushed to isocenter
 
         % correct for the source to collimator distance and change units mm -> cm
-        translation = stf(i).isoCenter / 10 + [0 0 pln.propDoseCalc.vmcOptions.SCD + stf(i).sourcePoint_bev(2)] / 10;
+        translationWorld = stf(i).isoCenter + ...
+                           [0 0 pln.propDoseCalc.vmcOptions.SCD + stf(i).sourcePoint_bev(2)];
+        translation = DoseEngines.matRad_PhotonVmcEngine.worldToVmcCoordinates(translationWorld, ct) / 10;
 
         % enter in isocentre
-        isocenter = stf(i).isoCenter / 10;
+        isocenter = DoseEngines.matRad_PhotonVmcEngine.worldToVmcCoordinates(stf(i).isoCenter, ct) / 10;
 
         % determine vmc++ rotation angles from gantry and couch
         % angles
@@ -180,10 +182,13 @@ for i = 1:dij.numOfBeams % loop over all beams
         switch pln.propDoseCalc.vmcOptions.source
             case 'beamlet'
                 % a) change coordinate system (Isocenter cs-> physical cs) and units mm -> cm
-                rayCorner1 = (stf(i).ray(j).rayCorners_SCD(1, :) + stf(i).isoCenter) / 10;
-                rayCorner2 = (stf(i).ray(j).rayCorners_SCD(2, :) + stf(i).isoCenter) / 10;
-                rayCorner3 = (stf(i).ray(j).rayCorners_SCD(3, :) + stf(i).isoCenter) / 10; % vmc needs only three corners (counter-clockwise)
-                beamSource = (stf(i).sourcePoint + stf(i).isoCenter) / 10;
+                rayCornersWorld = stf(i).ray(j).rayCorners_SCD + repmat(stf(i).isoCenter, 4, 1);
+                rayCorners = DoseEngines.matRad_PhotonVmcEngine.worldToVmcCoordinates(rayCornersWorld, ct) / 10;
+                rayCorner1 = rayCorners(1, :);
+                rayCorner2 = rayCorners(2, :);
+                rayCorner3 = rayCorners(3, :); % vmc needs only three corners (counter-clockwise)
+                beamSourceWorld = stf(i).sourcePoint + stf(i).isoCenter;
+                beamSource = DoseEngines.matRad_PhotonVmcEngine.worldToVmcCoordinates(beamSourceWorld, ct) / 10;
 
                 % b) swap x and y (CT-standard = [y,x,z])
                 rayCorner1 = rayCorner1([2, 1, 3]);
@@ -228,10 +233,10 @@ for i = 1:dij.numOfBeams % loop over all beams
             folderCleanup = onCleanup(@() cd(currentFolder));
             cd(VMCPath);
             if verbose > 0 % only show output if verbose level > 0
-                dos('run_parallel_simulations.bat');
+                dos('.\run_parallel_simulations.bat');
                 fprintf(['Completed ' num2str(writeCounter) ' of ' num2str(dij.totalNumOfBixels) ' beamlets...\n']);
             else
-                [~, ~] = dos('run_parallel_simulations.bat');
+                [~, ~] = dos('.\run_parallel_simulations.bat');
             end
             clear folderCleanup;
 
@@ -348,8 +353,8 @@ end
 function [dij, ct, numOfVoxels] = matRad_prepareVmcDij(dij, ct, stf)
 % Initialize legacy functional calls and validate the VMC++ grid contract.
 
+ct = matRad_getWorldAxes(ct);
 if isempty(dij)
-    ct = matRad_getWorldAxes(ct);
     dij.ctGrid.resolution = ct.resolution;
     dij.ctGrid.x = ct.x;
     dij.ctGrid.y = ct.y;

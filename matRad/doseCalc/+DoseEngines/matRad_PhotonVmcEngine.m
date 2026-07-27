@@ -136,4 +136,18 @@ classdef matRad_PhotonVmcEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
 
     end
+
+    methods (Static, Hidden)
+
+        function vmcCoordinates = worldToVmcCoordinates(worldCoordinates, ct)
+            % The VMC CT exporter rebases the first voxel centre to one
+            % voxel spacing along every axis.
+            ct = matRad_getWorldAxes(ct);
+            ctOriginOffset = [ct.resolution.x - ct.x(1), ...
+                              ct.resolution.y - ct.y(1), ...
+                              ct.resolution.z - ct.z(1)];
+            vmcCoordinates = worldCoordinates + ctOriginOffset;
+        end
+
+    end
 end
