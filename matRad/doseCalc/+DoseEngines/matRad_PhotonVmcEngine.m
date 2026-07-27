@@ -46,7 +46,19 @@ classdef matRad_PhotonVmcEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     methods (Access = protected)
 
         function dij = calcDose(this, ct, cst, stf)
-            this.timers.full = tic;
+            dij = this.initDoseCalc(ct, cst, stf);
+
+            if dij.numOfScenarios ~= 1 || ct.numOfCtScen ~= 1
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('The VMC++ dose engine currently supports only a single nominal CT scenario.');
+            end
+
+            if isfield(this.machine.data, 'weightToMU')
+                dij.weightToMU = this.machine.data.weightToMU;
+            else
+                dij.weightToMU = 100;
+            end
+            dij.scaleFactor = 1;
 
             % assemble the legacy pln shim expected by the functional
             % VMC++ wrapper
@@ -54,7 +66,30 @@ classdef matRad_PhotonVmcEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             plnLegacy.propStf.numOfBeams = numel(stf);
             plnLegacy.propDoseCalc.vmcOptions = this.vmcOptions;
 
-            dij = matRad_calcPhotonDoseVmc(ct, stf, plnLegacy, cst, this.calcDoseDirect);
+            dij = matRad_calcPhotonDoseVmc(ct, stf, plnLegacy, cst, this.calcDoseDirect, dij);
+        end
+
+        function dij = initDoseCalc(this, ct, cst, stf)
+            % VMC++ scores on the CT voxel grid. Make that constraint
+            % explicit before the common engine initializer derives grid
+            % metadata and structure indices.
+            ct = matRad_getWorldAxes(ct);
+            requestedDoseGrid = this.doseGrid;
+            useCtGrid = ~isfield(requestedDoseGrid, 'resolution') || ...
+                        ~isequal(requestedDoseGrid.resolution, ct.resolution);
+            if all(isfield(requestedDoseGrid, {'x', 'y', 'z'}))
+                useCtGrid = useCtGrid || ~isequal(requestedDoseGrid.x, ct.x) || ...
+                             ~isequal(requestedDoseGrid.y, ct.y) || ...
+                             ~isequal(requestedDoseGrid.z, ct.z);
+            end
+            if useCtGrid
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning('VMC++ scores on the CT grid; the requested dose grid will be ignored.');
+            end
+
+            this.doseGrid = struct('resolution', ct.resolution, ...
+                                   'x', ct.x, 'y', ct.y, 'z', ct.z);
+            dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this, ct, cst, stf);
         end
 
     end
@@ -86,14 +121,18 @@ classdef matRad_PhotonVmcEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
 
             % check for the VMC++ environment
-            matRad_cfg = MatRad_Config.instance();
-            vmcBinDir = fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'vmc++', 'bin');
+            vmcBinDir = fullfile(DoseEngines.matRad_PhotonVmcEngine.getVmcRoot(), 'bin');
             if ~isfolder(vmcBinDir)
                 msg = 'VMC++ environment not found (expected under doseCalc/vmc++/bin)!';
                 return
             end
 
             available = true;
+        end
+
+        function vmcRoot = getVmcRoot()
+            matRad_cfg = MatRad_Config.instance();
+            vmcRoot = fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'vmc++');
         end
 
     end

@@ -1,9 +1,9 @@
-function dij = matRad_calcPhotonDoseVmc(ct, stf, pln, cst, calcDoseDirect)
+function dij = matRad_calcPhotonDoseVmc(ct, stf, pln, cst, calcDoseDirect, dij)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad vmc++ photon dose calculation wrapper
 %
 % call
-%   dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,calcDoseDirect)
+%   dij = matRad_calcPhotonDoseVmc(ct,stf,pln,cst,calcDoseDirect,dij)
 %
 % input
 %   ct:                         matRad ct struct
@@ -13,6 +13,7 @@ function dij = matRad_calcPhotonDoseVmc(ct, stf, pln, cst, calcDoseDirect)
 %   calcDoseDirect:             boolian switch to bypass dose influence matrix
 %                               computation and directly calculate dose; only makes
 %                               sense in combination with matRad_calcDoseDirect.m%
+%   dij:                        initialized current-format dij (optional)
 % output
 %   dij:                        matRad dij struct
 %
@@ -21,34 +22,27 @@ function dij = matRad_calcPhotonDoseVmc(ct, stf, pln, cst, calcDoseDirect)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dij.radiationMode = pln.radiationMode;
-
 % default: dose influence matrix computation
-if ~exist('calcDoseDirect', 'var')
+if nargin < 5
     calcDoseDirect = false;
 end
+if nargin < 6
+    dij = [];
+end
+
+% Retain the functional entry point while allowing the DoseEngine class to
+% supply the current dij schema produced by initDoseCalc.
+[dij, ct, numOfVoxels] = matRad_prepareVmcDij(dij, ct, stf);
+dij.radiationMode = pln.radiationMode;
 
 % set output level. 0 = no vmc specific output. 1 = print to matlab cmd.
 % 2 = open in terminal(s)
 verbose = 0;
 
+VMCPath = DoseEngines.matRad_PhotonVmcEngine.getVmcRoot();
 if ~isdeployed % only if _not_ running as standalone
-    % add path for optimization functions
-    matRadRootDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(matRadRootDir, 'vmc++'));
+    addpath(VMCPath);
 end
-
-% meta information for dij
-dij.numOfBeams         = pln.propStf.numOfBeams;
-dij.numOfVoxels        = prod(ct.cubeDim);
-dij.resolution         = ct.resolution;
-dij.dimensions         = ct.cubeDim;
-dij.numOfScenarios     = 1;
-dij.numOfRaysPerBeam   = [stf(:).numOfRays];
-dij.weightToMU         = 100;
-dij.scaleFactor        = 1;
-dij.totalNumOfBixels   = sum([stf(:).totalNumOfBixels]);
-dij.totalNumOfRays     = sum(dij.numOfRaysPerBeam);
 
 % check if full dose influence data is required
 if calcDoseDirect
@@ -73,18 +67,15 @@ doseTmpContainerError   = cell(numOfBixelsContainer, dij.numOfScenarios);
 
 % Allocate space for dij.physicalDose sparse matrix
 for i = 1:dij.numOfScenarios
-    dij.physicalDose{i} = spalloc(prod(ct.cubeDim), numOfColumnsDij, 1);
-    dij.physicalDoseError{i} = spalloc(prod(ct.cubeDim), numOfColumnsDij, 1);
+    dij.physicalDose{i} = spalloc(numOfVoxels, numOfColumnsDij, 1);
+    dij.physicalDoseError{i} = spalloc(numOfVoxels, numOfColumnsDij, 1);
 end
 
 % set environment variables for vmc++
-cd(fileparts(mfilename('fullpath')));
-
-if exist(['vmc++' filesep 'bin'], 'dir') ~= 7
-    error(['Could not locate vmc++ environment. ' ...
-           'Please provide the files in the correct folder structure at matRadroot' filesep 'vmc++.']);
+if ~isfolder(fullfile(VMCPath, 'bin'))
+    error('matRad:vmc:EnvironmentNotFound', ...
+          'Could not locate the VMC++ environment at %s.', VMCPath);
 else
-    VMCPath     = fullfile(pwd, 'vmc++');
     switch pln.propDoseCalc.vmcOptions.version
         case 'Carleton'
             runsPath    = fullfile(VMCPath, 'run');
@@ -121,9 +112,13 @@ readCounter         = 0;
 maxNumOfParMCSim    = 0;
 
 % initialize waitbar
-figureWait = waitbar(0, 'calculate dose influence matrix for photons (vmc++)...');
-% show busy state
-set(figureWait, 'pointer', 'watch');
+matRad_cfg = MatRad_Config.instance();
+figureWait = [];
+if ~matRad_cfg.disableGUI
+    figureWait = waitbar(0, 'calculate dose influence matrix for photons (vmc++)...');
+    % show busy state
+    set(figureWait, 'pointer', 'watch');
+end
 
 fprintf('matRad: VMC++ photon dose calculation...\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -229,21 +224,24 @@ for i = 1:dij.numOfBeams % loop over all beams
             end
 
             %% perform vmc++ simulation
-            current = pwd;
+            currentFolder = pwd;
+            folderCleanup = onCleanup(@() cd(currentFolder));
             cd(VMCPath);
             if verbose > 0 % only show output if verbose level > 0
                 dos('run_parallel_simulations.bat');
                 fprintf(['Completed ' num2str(writeCounter) ' of ' num2str(dij.totalNumOfBixels) ' beamlets...\n']);
             else
-                [dummyOut1, dummyOut2] = dos('run_parallel_simulations.bat'); % suppress output by assigning dummy output arguments
+                [~, ~] = dos('run_parallel_simulations.bat');
             end
-            cd(current);
+            clear folderCleanup;
 
             for k = 1:currNumOfParMCSim
                 readCounter     = readCounter + 1;
 
                 % update waitbar
-                waitbar(writeCounter / dij.totalNumOfBixels);
+                if ishandle(figureWait)
+                    waitbar(writeCounter / dij.totalNumOfBixels, figureWait);
+                end
 
                 %% import calculated dose
                 idx = regexp(outfile, '_');
@@ -287,8 +285,8 @@ for i = 1:dij.numOfBeams % loop over all beams
                 bixelDose       = bixelDose * VmcOptions.run.absCalibrationFactorVmc;
 
                 % Save dose for every bixel in cell array
-                doseTmpContainer{mod(readCounter - 1, numOfBixelsContainer) + 1, 1}       = sparse(V, 1, bixelDose(V), dij.numOfVoxels, 1);
-                doseTmpContainerError{mod(readCounter - 1, numOfBixelsContainer) + 1, 1}  = sparse(V, 1, bixelDoseError(V), dij.numOfVoxels, 1);
+                doseTmpContainer{mod(readCounter - 1, numOfBixelsContainer) + 1, 1}       = sparse(V, 1, bixelDose(V), numOfVoxels, 1);
+                doseTmpContainerError{mod(readCounter - 1, numOfBixelsContainer) + 1, 1}  = sparse(V, 1, bixelDoseError(V), numOfVoxels, 1);
 
                 % save computation time and memory by sequentially filling the
                 % sparse matrix dose.dij from the cell array
@@ -296,8 +294,16 @@ for i = 1:dij.numOfBeams % loop over all beams
                     if calcDoseDirect
                         if isfield(stf(beamNum(readCounter)).ray(rayNum(readCounter)), 'weight')
                             % score physical dose
-                            dij.physicalDose{1}(:, i)        = dij.physicalDose{1}(:, i) + stf(beamNum(readCounter)).ray(rayNum(readCounter)).weight{1} * doseTmpContainer{1, 1};
-                            dij.physicalDoseError{1}(:, i)   = sqrt(dij.physicalDoseError{1}(:, i).^2 + (stf(beamNum(readCounter)).ray(rayNum(readCounter)).weight{1} * doseTmpContainerError{1, 1}).^2);
+                            rayWeight = stf(beamNum(readCounter)).ray(rayNum(readCounter)).weight;
+                            if iscell(rayWeight)
+                                rayWeight = rayWeight{1};
+                            else
+                                rayWeight = rayWeight(1);
+                            end
+                            dij.physicalDose{1}(:, i) = dij.physicalDose{1}(:, i) + ...
+                                                        rayWeight * doseTmpContainer{1, 1};
+                            dij.physicalDoseError{1}(:, i) = sqrt(dij.physicalDoseError{1}(:, i).^2 + ...
+                                                                  (rayWeight * doseTmpContainerError{1, 1}).^2);
                         else
                             error(['No weight available for beam ' num2str(beamNum(readCounter)) ', ray ' num2str(rayNum(readCounter))]);
                         end
@@ -333,10 +339,41 @@ for j = 1:maxNumOfParMCSim
     delete(fullfile(runsPath, filename));    % vmc outputfile
 end
 
-try
-    % wait 0.1s for closing all waitbars
-    allWaitBarFigures = findall(0, 'type', 'figure', 'tag', 'TMWWaitbar');
-    delete(allWaitBarFigures);
-    pause(0.1);
-catch
+if ishandle(figureWait)
+    delete(figureWait);
+end
+
+end
+
+function [dij, ct, numOfVoxels] = matRad_prepareVmcDij(dij, ct, stf)
+% Initialize legacy functional calls and validate the VMC++ grid contract.
+
+if isempty(dij)
+    ct = matRad_getWorldAxes(ct);
+    dij.ctGrid.resolution = ct.resolution;
+    dij.ctGrid.x = ct.x;
+    dij.ctGrid.y = ct.y;
+    dij.ctGrid.z = ct.z;
+    dij.ctGrid.dimensions = ct.cubeDim;
+    dij.ctGrid.numOfVoxels = prod(ct.cubeDim);
+    dij.doseGrid = dij.ctGrid;
+    dij.doseGrid.cubeCoordOffset = [0 0 0];
+    dij.numOfBeams = numel(stf);
+    dij.numOfScenarios = 1;
+    dij.numOfRaysPerBeam = [stf(:).numOfRays];
+    dij.totalNumOfBixels = sum([stf(:).totalNumOfBixels]);
+    dij.totalNumOfRays = sum(dij.numOfRaysPerBeam);
+    dij.weightToMU = 100;
+    dij.scaleFactor = 1;
+end
+
+numOfVoxels = prod(ct.cubeDim);
+if dij.doseGrid.numOfVoxels ~= numOfVoxels || ...
+        ~isequal(dij.doseGrid.dimensions, ct.cubeDim)
+    error('matRad:vmc:InvalidDoseGrid', 'VMC++ requires the dose grid to match the CT grid.');
+end
+if dij.numOfScenarios ~= 1 || ct.numOfCtScen ~= 1
+    error('matRad:vmc:UnsupportedScenarios', 'VMC++ currently supports only a single nominal CT scenario.');
+end
+
 end

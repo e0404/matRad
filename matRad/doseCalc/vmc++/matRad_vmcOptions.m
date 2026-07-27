@@ -32,6 +32,7 @@ vmcOpts.run.version = pln.propDoseCalc.vmcOptions.version;
 % SAD = 1000mm, SCD = 500mm, bixelWidth = 5mm, IC = [240mm,240mm,240mm]
 % fieldsize@IC = 105mm x 105mm, phantomsize = 81 x 81 x 81 = 243mm x 243mm x 243mm
 % rel_Dose_cutoff = 10^(-3), ncase = 500000/bixel
+vmcOpts.run.absCalibrationFactorVmc_err = 0;
 switch pln.propDoseCalc.vmcOptions.version
     case 'Carleton'
         switch pln.propDoseCalc.vmcOptions.source
