@@ -132,8 +132,15 @@ resultGUI = matRad_directApertureOptimization(dij, cst, resultGUI.apertureInfo, 
 matRad_visApertureInfo(resultGUI.apertureInfo);
 
 % Individual views can also be requested explicitly, e.g. the leaf
-% trajectories in physical coordinates:
-% matRad_visApertureInfo(resultGUI.apertureInfo, 'physical', 'trajectory');
+% trajectories. The leaf pairs are labelled by index by default; the
+% 'leafCoordinate' option draws them at their physical coordinates instead:
+% matRad_visApertureInfo(resultGUI.apertureInfo, 'trajectory', 'leafCoordinate', 'physical');
+
+% The 'animate' view plays the arc back as it is delivered - one aperture at
+% a time, each shown for its delivery time, with the leaves and the gantry
+% moving between control points. Pausing it frees the sliders to step
+% through the control points by hand ('interactive' starts out paused):
+% matRad_visApertureInfo(resultGUI.apertureInfo, 'animate', 'leafCoordinate', 'physical');
 
 %% Indicator Calculation and display of DVH and QI
 resultGUI = matRad_planAnalysis(resultGUI, ct, cst, stf, pln);
