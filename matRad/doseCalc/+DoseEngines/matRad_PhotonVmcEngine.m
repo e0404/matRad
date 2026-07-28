@@ -48,10 +48,11 @@ classdef matRad_PhotonVmcEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function dij = calcDose(this, ct, cst, stf)
             dij = this.initDoseCalc(ct, cst, stf);
 
-            if dij.numOfScenarios ~= 1 || ct.numOfCtScen ~= 1
-                matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispError('The VMC++ dose engine currently supports only a single nominal CT scenario.');
-            end
+            % Note: the single-scenario and matching-grid contracts are
+            % enforced in matRad_calcPhotonDoseVmc below, which raises
+            % identified (and therefore catchable) errors. Do not duplicate
+            % the checks here - matRad_cfg.dispError carries no identifier,
+            % so the two paths would not fail uniformly.
 
             if isfield(this.machine.data, 'weightToMU')
                 dij.weightToMU = this.machine.data.weightToMU;
@@ -75,18 +76,23 @@ classdef matRad_PhotonVmcEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % metadata and structure indices.
             ct = matRad_getWorldAxes(ct);
             requestedDoseGrid = this.doseGrid;
-            useCtGrid = ~isfield(requestedDoseGrid, 'resolution') || ...
-                        ~isequal(requestedDoseGrid.resolution, ct.resolution);
+            doseGridOverridden = ~isfield(requestedDoseGrid, 'resolution') || ...
+                                 ~isequal(requestedDoseGrid.resolution, ct.resolution);
             if all(isfield(requestedDoseGrid, {'x', 'y', 'z'}))
-                useCtGrid = useCtGrid || ~isequal(requestedDoseGrid.x, ct.x) || ...
-                             ~isequal(requestedDoseGrid.y, ct.y) || ...
-                             ~isequal(requestedDoseGrid.z, ct.z);
+                doseGridOverridden = doseGridOverridden || ~isequal(requestedDoseGrid.x, ct.x) || ...
+                                     ~isequal(requestedDoseGrid.y, ct.y) || ...
+                                     ~isequal(requestedDoseGrid.z, ct.z);
             end
-            if useCtGrid
+            if doseGridOverridden
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispWarning('VMC++ scores on the CT grid; the requested dose grid will be ignored.');
             end
 
+            % Overwriting the property is how every engine ends up carrying
+            % its realized grid (the base initializer itself assigns
+            % this.doseGrid = dij.doseGrid on the way out). On a reused engine
+            % instance the comparison above sees the previous ct's axes and
+            % re-derives them, so this stays correct across calls.
             this.doseGrid = struct('resolution', ct.resolution, ...
                                    'x', ct.x, 'y', ct.y, 'z', ct.z);
             dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this, ct, cst, stf);

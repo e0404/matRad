@@ -97,6 +97,13 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
             % the former matRad_siochiLeafSequencing.m functional
             % implementation.
 
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispInfo('VMAT sequencing (%s): stratifying %d FMO fluence maps, starting at %d levels\n', ...
+                                this.name, nnz(arrayfun(@(s) s.arc.isFMOBeam, stf)), this.numLevels);
+
+            seqStats = struct('numFMOBeams', 0, 'numEmptyBeams', 0, ...
+                              'levelsUsed', [], 'shapesMade', [], 'shapesKept', []);
+
             offset = 0;
 
             for i = 1:numel(stf)
@@ -171,7 +178,18 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
                     sequence.beam(i).shapesWeight = shapesWeight(1:k) / numOfLevels * calFac;
                     sequence.beam(i).bixelIx      = 1 + offset:numOfRaysPerBeam + offset;
                     sequence.beam(i).fluence      = D_0;
+
+                    matRad_cfg.dispDebug(['VMAT sequencing: FMO beam %d (%.4g deg) stratified at %d levels ' ...
+                                          '-> %d shapes, keeping %d for its DAO children\n'], ...
+                                         i, stf(i).gantryAngle, numOfLevels, k, numToKeep);
+                    seqStats.numFMOBeams   = seqStats.numFMOBeams + 1;
+                    seqStats.levelsUsed    = [seqStats.levelsUsed, numOfLevels];
+                    seqStats.shapesMade    = [seqStats.shapesMade, k];
+                    seqStats.shapesKept    = [seqStats.shapesKept, min(numToKeep, k)];
                 else
+                    matRad_cfg.dispDebug('VMAT sequencing: FMO beam %d (%.4g deg) has zero fluence, skipped\n', ...
+                                         i, stf(i).gantryAngle);
+                    seqStats.numEmptyBeams = seqStats.numEmptyBeams + 1;
                     sequence.beam(i).numOfShapes  = 1;
                     sequence.beam(i).shapes       = zeros(dimOfFluenceMxZ, dimOfFluenceMxX);
                     sequence.beam(i).shapesWeight = zeros(dimOfFluenceMxZ, dimOfFluenceMxX);
@@ -189,6 +207,24 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
                 end
 
                 offset = offset + numOfRaysPerBeam;
+            end
+
+            if seqStats.numFMOBeams > 0
+                matRad_cfg.dispInfo(['VMAT sequencing: %d maps stratified at %d-%d levels, ' ...
+                                     '%d shapes generated, %d kept (%d discarded)\n'], ...
+                                    seqStats.numFMOBeams, min(seqStats.levelsUsed), max(seqStats.levelsUsed), ...
+                                    sum(seqStats.shapesMade), sum(seqStats.shapesKept), ...
+                                    sum(seqStats.shapesMade) - sum(seqStats.shapesKept));
+                if any(seqStats.levelsUsed > this.numLevels)
+                    matRad_cfg.dispInfo(['VMAT sequencing: numLevels raised from %d to %d on %d map(s) ' ...
+                                         'to reach the required aperture count\n'], ...
+                                        this.numLevels, max(seqStats.levelsUsed), ...
+                                        nnz(seqStats.levelsUsed > this.numLevels));
+                end
+            end
+            if seqStats.numEmptyBeams > 0
+                matRad_cfg.dispWarning('VMAT sequencing: %d FMO beam(s) carried zero fluence and produced no aperture\n', ...
+                                       seqStats.numEmptyBeams);
             end
 
             % spread shapes to DAO-angle children, compute gantry rotation/MU rate

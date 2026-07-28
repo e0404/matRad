@@ -132,6 +132,8 @@ if preconditioner
     dij.weightToMU = dij.weightToMU * dij.scaleFactor;
     apertureInfo.weightToMU = apertureInfo.weightToMU * dij.scaleFactor;
     apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) = apertureInfo.apertureVector(1:apertureInfo.totalNumOfShapes) / dij.scaleFactor;
+
+    matRad_cfg.dispInfo('DAO: Jacobi preconditioner active, dij scale factor %.4g\n', dij.scaleFactor);
 end
 
 % Use Dose Projection only
@@ -141,8 +143,29 @@ backProjection = matRad_DoseProjection();
 % dispatches polymorphically through the optiProb instance
 if pln.propOpt.runVMAT
     optiProb = matRad_OptimizationProblemVMAT(backProjection, apertureInfo);
+
+    isDAOBeam = [apertureInfo.arc.beam.isDAOBeam];
+    matRad_cfg.dispInfo(['DAO (VMAT): %d apertures on %d DAO control points, ' ...
+                         '%d beams interpolated between them\n'], ...
+                        apertureInfo.totalNumOfShapes, nnz(isDAOBeam), nnz(~isDAOBeam));
+    deliveryModes = {'step-and-shoot', 'continuous aperture'};
+    matRad_cfg.dispInfo(['DAO (VMAT): %d variables = %d weights + %d leaf positions + %d gantry times; ' ...
+                         'delivery mode %s\n'], ...
+                        numel(apertureInfo.apertureVector), apertureInfo.totalNumOfShapes, ...
+                        2 * apertureInfo.totalNumOfLeafPairs, apertureInfo.totalNumOfShapes, ...
+                        deliveryModes{1 + apertureInfo.continuousAperture});
+    matRad_cfg.dispInfo(['DAO (VMAT): delivery limits - gantry %.4g-%.4g deg/s, leaf %.4g mm/s, ' ...
+                         'monitor units %.4g-%.4g MU/s\n'], ...
+                        apertureInfo.deliveryConstraints.gantryRotationSpeed(1), ...
+                        apertureInfo.deliveryConstraints.gantryRotationSpeed(2), ...
+                        apertureInfo.deliveryConstraints.leafSpeed(2), ...
+                        apertureInfo.deliveryConstraints.monitorUnitRate(1), ...
+                        apertureInfo.deliveryConstraints.monitorUnitRate(2));
 else
     optiProb = matRad_OptimizationProblemDAO(backProjection, apertureInfo);
+    matRad_cfg.dispInfo('DAO: %d apertures over %d beams, %d variables\n', ...
+                        apertureInfo.totalNumOfShapes, numel(apertureInfo.beam), ...
+                        numel(apertureInfo.apertureVector));
 end
 apertureInfo = optiProb.matRad_daoVec2ApertureInfo(apertureInfo, apertureInfo.apertureVector);
 optiProb.apertureInfo = apertureInfo;
@@ -242,7 +265,7 @@ end
 if pln.propOpt.runVMAT
     % optimize the delivery for the fastest plan permitted by the machine
     % constraints; this also updates the per-segment maximum leaf speeds
-    resultGUI.apertureInfo = matRad_OptimizationProblemVMAT.optDelivery(resultGUI.apertureInfo);
+    resultGUI.apertureInfo = matRad_enforceDeliveryConstraints(resultGUI.apertureInfo);
 end
 
 end

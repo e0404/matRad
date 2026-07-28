@@ -514,10 +514,18 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             totDAP_keep = sum(DAP(keepIx));
 
             % Keep the selected apertures in their original trajectory order.
-            newBeam.shapes = beam.shapes(:, :, keepIx);
+            % Assign into the preallocations so that the shape/class of the
+            % outputs does not depend on that of the inputs (shapes stay
+            % double even for a logical input, weights stay a column vector
+            % even for a row-vector input).
+            newBeam.shapes(:, :, :) = beam.shapes(:, :, keepIx);
             if totDAP_keep > 0
-                newBeam.shapesWeight = beam.shapesWeight(keepIx) .* ...
+                newBeam.shapesWeight(:) = beam.shapesWeight(keepIx) .* ...
                     (totDAP_all ./ totDAP_keep);
+            else
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning(['All %d kept apertures have zero dose-area product; ' ...
+                                        'the beam is left with zero weight.'], numToKeep);
             end
         end
 

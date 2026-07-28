@@ -1,4 +1,4 @@
-function apertureInfo = leafTouching(apertureInfo)
+function apertureInfo = matRad_leafTouching(apertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to improve instances of leaf touching by moving leaves
 % from the centre to sweep with the non-touching leaves.
@@ -7,13 +7,28 @@ function apertureInfo = leafTouching(apertureInfo)
 % crucial)
 %
 % call
-%   apertureInfo = matRad_OptimizationProblemVMAT.leafTouching(apertureInfo)
+%   apertureInfo = matRad_leafTouching(apertureInfo)
 %
 % input
-%   apertureInfo: matRad aperture weight and shape info struct
+%   apertureInfo: matRad aperture weight and shape info struct (requires
+%                 apertureInfo.arc)
 %
 % output
 %   apertureInfo: matRad aperture weight and shape info struct
+%
+% Note on the two sampling modes below: the function dispatches on whether
+% shape(1) already carries leftLeafPosInitial/Final, sampling the trajectory
+% either once (beam centre) or twice (dose sector borders) per DAO beam. Only
+% the once-per-beam mode has ever run. The sole call site
+% (matRad_PhotonSequencerVMATAbstract) does not set those fields beforehand --
+% this function creates them itself, at the end of its own run -- and that has
+% been true since the function was first added. The twice-per-beam mode was
+% presumably written for a second, post-DAO cleanup invocation that was never
+% wired up; it read a field that never existed on apertureInfo.beam, so it
+% would have errored on its first execution. Its output has therefore never
+% been validated: do not enable a second invocation without checking the
+% sweep-reset semantics (the limLeft/limRight substitution at FMO sector
+% borders) against intent.
 %
 % References
 %
@@ -34,9 +49,14 @@ function apertureInfo = leafTouching(apertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % initialize
-dimZ = apertureInfo.beam(1).numOfActiveLeafPairs;
+% Only DAO beams carry a shape at this point (interpolated beams get theirs
+% from matRad_daoVec2ApertureInfo later), and beam 1 is not necessarily a DAO
+% beam - with centre-sampled dose angles the arc opens with interpolated
+% beams. Probe the first DAO beam instead.
+refBeam = find([apertureInfo.arc.beam.isDAOBeam], 1);
+dimZ = apertureInfo.beam(refBeam).numOfActiveLeafPairs;
 numBeams = nnz([apertureInfo.arc.beam.isDAOBeam]);
-if ~isfield(apertureInfo.beam(1).shape(1), 'leftLeafPosInitial')
+if ~isfield(apertureInfo.beam(refBeam).shape(1), 'leftLeafPosInitial')
     % Each non-interpolated beam should have 1 left/right leaf position
     leftLeafPoss = nan(dimZ, numBeams);
     rightLeafPoss = nan(dimZ, numBeams);
@@ -58,7 +78,7 @@ for k = 1:numel(apertureInfo.beam)
         continue
     end
 
-    if ~isfield(apertureInfo.beam(1).shape(1), 'leftLeafPosInitial')
+    if ~isfield(apertureInfo.beam(refBeam).shape(1), 'leftLeafPosInitial')
         leftLeafPoss(:, l) = apertureInfo.beam(k).shape(1).leftLeafPos;
         rightLeafPoss(:, l) = apertureInfo.beam(k).shape(1).rightLeafPos;
         gantryAngles(l) = apertureInfo.beam(k).gantryAngle;
@@ -148,7 +168,12 @@ for row = 1:dimZ
         leftLeafPossAug = [leftLeafPossAugTemp, initBorderLeftLeafPoss];
         gantryAnglesAug = [gantryAngles, initBorderGantryAngles];
     end
-    notTouchingInd = [setdiff(1:numBeams, touchingInd), repInd];
+    % Support points are all sampled columns, not just the first numBeams:
+    % the twice-per-beam mode fills two columns (initial/final) per DAO beam.
+    % Equivalent to 1:numBeams in the once-per-beam mode that actually runs
+    % (duplicate gantry angles are already skipped when collecting, so the
+    % unique above does not shrink the array there).
+    notTouchingInd = [setdiff(1:numel(gantryAngles), touchingInd), repInd];
     notTouchingInd = unique(notTouchingInd);
     % make sure to include the repeated ones in the
     % interpolation!

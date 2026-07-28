@@ -1,12 +1,17 @@
-function apertureInfo = optDelivery(apertureInfo, fast)
+function apertureInfo = matRad_enforceDeliveryConstraints(apertureInfo, fast)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% matRad: optimize VMAT delivery
+% matRad: make an arc plan deliverable within the machine limits
+%
+% Slows the gantry (and with it the dose rate) at each DAO control point
+% until the realized leaf speed and monitor unit rate fit the machine
+% constraints in apertureInfo.deliveryConstraints.
 %
 % call
-%   apertureInfo = matRad_OptimizationProblemVMAT.optDelivery(apertureInfo,fast)
+%   apertureInfo = matRad_enforceDeliveryConstraints(apertureInfo, fast)
 %
 % input
 %   apertureInfo:       aperture shape info struct from DAO/sequencing
+%                       (requires apertureInfo.arc)
 %   fast:               1 => fastest possible delivery
 %                       0 => multiply delivery time by 10%
 %
@@ -41,7 +46,7 @@ matRad_cfg = MatRad_Config.instance();
 % Do this after DAO
 
 % calculate max leaf speed
-apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(apertureInfo);
+apertureInfo = matRad_calcMaxLeafSpeed(apertureInfo);
 
 doInterp = false;
 

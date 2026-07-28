@@ -48,15 +48,15 @@ pln.bioModel = 'none';      % biological RBE model, not interesting for photons
 pln.multScen = 'nomScen';   % scenario creation type 'nomScen'  'wcScen' 'impScen' 'rndScen'
 
 % beam geometry settings
+pln.propStf.generator                = 'PhotonVMAT';
 pln.propStf.bixelWidth               = 5;           % [mm] / also corresponds to lateral spot spacing for particles
 pln.propStf.gantryAngles             = [-180, 180]; % gantry arc anchor points
 pln.propStf.couchAngles              = [0, 0];      % couch angle for arcs
 % pln.propStf.arcIndex                 = [1 1];     % assign anchor points to arcs (if more than one arc is defined)
-pln.propStf.maxGantryAngleSpacing    = 15;          % [deg] / max gantry angle spacing for dose calculation
-pln.propStf.maxDAOGantryAngleSpacing = 30;          % [deg] / max gantry angle spacing for DAO
-pln.propStf.maxFMOGantryAngleSpacing = 45;          % [deg] / max gantry angle spacing for FMO
-pln.propStf.isoCenter                = matRad_getIsoCenter(cst, ct, 0);
-pln.propStf.generator                = 'PhotonVMAT';
+pln.propStf.maxGantryAngleSpacing    = 10;          % [deg] / max gantry angle spacing for dose calculation
+pln.propStf.maxDAOGantryAngleSpacing = 25;          % [deg] / max gantry angle spacing for DAO
+pln.propStf.maxFMOGantryAngleSpacing = 72;          % [deg] / max gantry angle spacing for FMO
+pln.propStf.minAperturesPerFMOBeam   = 5;           % Minimum number of apertures sequenced for DAO per fluence-optimized beam.
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
@@ -72,7 +72,7 @@ pln.propSeq.sequencer          = 'siochi'; % the only sequencer with VMAT suppor
 % sequencer re-decomposes at increasing level counts until every FMO beam
 % yields at least as many apertures as it has DAO child angles, since each
 % DAO control point receives exactly one aperture.
-pln.propSeq.numLevels          = 7;
+pln.propSeq.numLevels          = 10;
 
 pln.propSeq.continuousAperture = false;  % interpolate leaf positions between DAO control points (dynamic delivery)
 pln.propSeq.preconditioner     = true;   % apply Jacobi preconditioning to the aperture weights
@@ -147,7 +147,7 @@ resultGUI = matRad_calcDeliveryMetrics(resultGUI, stf);
 % The plan was optimized at the (coarse) DAO control points. To check the
 % dose that is actually delivered along the arc, resample the optimized
 % apertures onto a finer gantry-angle grid and forward-calculate the dose.
-[stfFine, apertureInfoFine] = matRad_refineApertureArc(ct, cst, pln, resultGUI.apertureInfo, 7.5);
+[stfFine, apertureInfoFine] = matRad_refineApertureArc(ct, cst, pln, resultGUI.apertureInfo, 2.0);
 resultGUIfine = matRad_calcDoseForward(ct, cst, stfFine, pln, apertureInfoFine.bixelWeights);
 resultGUI.physicalDose_fine = resultGUIfine.physicalDose;
 

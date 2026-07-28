@@ -12,7 +12,8 @@ test_functions = localfunctions();
 % Test Case, and add them to the test-runner
 initTestSuite;
 
-function [stf, pln] = helper_getVmatStf(continuousAperture, gantryAngles, couchAngles)
+function [stf, pln] = helper_getVmatStf(continuousAperture, gantryAngles, couchAngles, ...
+                                        maxGantryAngleSpacing, maxDAOGantryAngleSpacing, maxFMOGantryAngleSpacing)
 if nargin < 1
     continuousAperture = false;
 end
@@ -22,15 +23,24 @@ end
 if nargin < 3
     couchAngles = [0, 0];
 end
+if nargin < 4
+    maxGantryAngleSpacing = 15;
+end
+if nargin < 5
+    maxDAOGantryAngleSpacing = 30;
+end
+if nargin < 6
+    maxFMOGantryAngleSpacing = 45;
+end
 p = load('photons_testData.mat', 'ct', 'cst', 'pln');
 pln = p.pln;
 
 pln.propStf.generator                = 'PhotonVMAT';
 pln.propStf.gantryAngles             = gantryAngles;
 pln.propStf.couchAngles              = couchAngles;
-pln.propStf.maxGantryAngleSpacing    = 15;
-pln.propStf.maxDAOGantryAngleSpacing = 30;
-pln.propStf.maxFMOGantryAngleSpacing = 45;
+pln.propStf.maxGantryAngleSpacing    = maxGantryAngleSpacing;
+pln.propStf.maxDAOGantryAngleSpacing = maxDAOGantryAngleSpacing;
+pln.propStf.maxFMOGantryAngleSpacing = maxFMOGantryAngleSpacing;
 pln.propStf.isoCenter                = matRad_getIsoCenter(p.cst, p.ct, 0);
 
 pln.propSeq.continuousAperture = continuousAperture;
@@ -66,6 +76,69 @@ p = load('photons_testData.mat', 'ct', 'cst');
 assertTrue(all(diff([stfFine.gantryAngle]) < 0));
 assertTrue(all(isfinite(apertureInfoFine.bixelWeights)));
 assertTrue(any(apertureInfoFine.bixelWeights > 0));
+
+function helper_assertTimeFracPartition(stf)
+% The DAO angle border splits an interpolated beam's dose sector into a part
+% whose time is taken from the last and one taken from the next DAO beam, so
+% the two fractions must sum to exactly 1 -- matRad_daoVec2ApertureInfo feeds
+% them into 1 ./ (fracLast ./ rotLast + fracNext ./ rotNext).
+interpIx = find(arrayfun(@(s) ~s.arc.isFMOBeam && ~s.arc.isDAOBeam, stf));
+assertTrue(~isempty(interpIx));
+for ix = interpIx
+    fracSum = stf(ix).arc.timeFracFromLastDAO + stf(ix).arc.timeFracFromNextDAO;
+    assertElementsAlmostEqual(fracSum, 1, 'absolute', 1e-12, ...
+                              sprintf('beam %d: time fractions sum to %g', ix, fracSum));
+end
+
+function test_vmatTimeFractionsPartitionDoseSector
+% Regression: taking abs() of the numerators defeated the [0, 1] clamp for a
+% DAO border lying outside the dose sector -- both fractions then clamped to
+% 1 instead of to 0 and 1. Needs >= 3 dose angles per DAO sector (7.5 vs 30
+% deg) to expose it; the default 15/30 fixture puts exactly one interpolated
+% beam per sector, whose sector always contains the border.
+[stfFwd, ~] = helper_getVmatStf(true, [-180, 180], 0, 7.5);
+helper_assertTimeFracPartition(stfFwd);
+
+[stfRev, ~] = helper_getVmatStf(true, [180, -180], 0, 7.5);
+helper_assertTimeFracPartition(stfRev);
+
+% both clamp ends must still be reachable, i.e. the test data really does
+% contain beams whose sector does not straddle the DAO border
+allFracs = arrayfun(@(s) s.arc.timeFracFromLastDAO, ...
+                    stfFwd(arrayfun(@(s) ~s.arc.isFMOBeam && ~s.arc.isDAOBeam, stfFwd)));
+assertTrue(any(allFracs == 0) || any(allFracs == 1));
+
+function test_vmatSequencesArcsWithInterpolatedBeams
+% 4/10/30 puts 3 dose angles in every DAO sector, so most beams carry no
+% aperture of their own and the arc opens and closes with interpolated
+% beams. Regression: leafTouching probed apertureInfo.beam(1).shape(1) to
+% decide its sampling mode, which only exists on DAO beams - beam 1 is no
+% longer guaranteed to be one. Configurations whose dose angles coincide
+% with the DAO control points (e.g. 15/30/45) never exercise this.
+for continuousAperture = [false true]
+    [stf, pln] = helper_getVmatStf(continuousAperture, [-180, 180], [0, 0], 4, 10, 30);
+
+    isDAO = arrayfun(@(s) s.arc.isDAOBeam, stf);
+    assertTrue(~isDAO(1) && ~isDAO(end), 'fixture must open and close with interpolated beams');
+    assertTrue(nnz(~isDAO) > nnz(isDAO), 'fixture must be dominated by interpolated beams');
+
+    sequencer = helper_getSequencer(pln);
+    w = ones(sum([stf.numOfRays]), 1);
+    apertureInfo = sequencer.sequence(w, stf).apertureInfo;
+
+    assertEqual(apertureInfo.totalNumOfShapes, nnz(isDAO));
+    assertTrue(all(isfinite(apertureInfo.bixelWeights)));
+    assertTrue(all(apertureInfo.bixelWeights >= 0));
+    assertTrue(any(apertureInfo.bixelWeights > 0));
+
+    % every beam - interpolated ones included - ends up with usable leaf
+    % positions once matRad_daoVec2ApertureInfo has run
+    for i = 1:numel(stf)
+        shape = apertureInfo.beam(i).shape(1);
+        assertTrue(all(isfinite(shape.leftLeafPos)) && all(isfinite(shape.rightLeafPos)));
+        assertTrue(all(shape.leftLeafPos <= shape.rightLeafPos));
+    end
+end
 
 function sequencer = helper_getSequencer(pln)
 sequencer = matRad_SequencingPhotonsSiochiLeaf(pln);
@@ -208,7 +281,7 @@ sequence = sequencer.sequence(w, stf);
 apertureInfo = sequence.apertureInfo;
 assertTrue(isfield(apertureInfo.beam(1).shape(1), 'leftLeafPosInitial'));
 
-apertureInfo = matRad_OptimizationProblemVMAT.leafTouching(apertureInfo);
+apertureInfo = matRad_leafTouching(apertureInfo);
 
 for i = 1:numel(apertureInfo.beam)
     shape = apertureInfo.beam(i).shape(1);
@@ -261,7 +334,7 @@ end
 assertTrue(injected);
 apertureInfo.apertureVector = vec;
 
-apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(apertureInfo);
+apertureInfo = matRad_calcMaxLeafSpeed(apertureInfo);
 assertTrue(apertureInfo.maxLeafSpeed > 0);
 
 function test_vmatRecalcApertureChain
@@ -293,10 +366,34 @@ beam.numOfShapes = 3;
 newBeam = matRad_PhotonSequencerAbstract.discardApertures(beam, 2);
 
 assertEqual(newBeam.numOfShapes, 2);
-assertEqual(newBeam.shapes, beam.shapes(:, :, [2 3]));
+assertEqual(newBeam.shapes, double(beam.shapes(:, :, [2 3])));
 oldDAP = sum(arrayfun(@(i) nnz(beam.shapes(:, :, i)) * beam.shapesWeight(i), 1:3));
 newDAP = sum(arrayfun(@(i) nnz(newBeam.shapes(:, :, i)) * newBeam.shapesWeight(i), 1:2));
 assertElementsAlmostEqual(newDAP, oldDAP);
+
+function test_discardAperturesOutputShapeIsIndependentOfInput
+% The output should not inherit the class of a logical shape stack nor the
+% orientation of a row-vector weight list -- downstream code indexes the
+% weights as a column and multiplies the shapes as doubles.
+beam.shapes = false(1, 3, 3);
+beam.shapes(:, :, 1) = [1 0 0];
+beam.shapes(:, :, 2) = [1 1 1];
+beam.shapes(:, :, 3) = [1 1 0];
+beam.numOfShapes = 3;
+
+beam.shapesWeight = [1 10 2];   % row vector
+newBeam = matRad_PhotonSequencerAbstract.discardApertures(beam, 2);
+assertEqual(size(newBeam.shapesWeight), [2 1]);
+assertTrue(isa(newBeam.shapes, 'double'));
+
+beam.shapesWeight = [1; 10; 2]; % column vector -> same result
+newBeamCol = matRad_PhotonSequencerAbstract.discardApertures(beam, 2);
+assertElementsAlmostEqual(newBeamCol.shapesWeight, newBeam.shapesWeight);
+
+% asking for more apertures than exist clamps instead of padding
+newBeamAll = matRad_PhotonSequencerAbstract.discardApertures(beam, 99);
+assertEqual(newBeamAll.numOfShapes, 3);
+assertEqual(size(newBeamAll.shapes, 3), 3);
 
 function test_vmatContinuousRecalcPreservesBoundaryLeaves
 [stf, pln] = helper_getVmatStf(true);
@@ -318,6 +415,20 @@ assertElementsAlmostEqual(firstFine.leftLeafPosInitial, ...
                           apertureInfo.beam(1).shape(1).leftLeafPosInitial);
 assertElementsAlmostEqual(lastFine.rightLeafPosFinal, ...
                           apertureInfo.beam(end).shape(1).rightLeafPosFinal);
+
+% Regression: the beam-centre positions used to interpolate on the old beam
+% centres alone, which do not bracket the outermost new centres -- the first
+% and last refined beam came back NaN. matRad_recalcApertureInfo marks its
+% output as discrete (continuousAperture = false), so every consumer reads
+% exactly these fields.
+for i = 1:numel(apertureInfoFine.beam)
+    shape = apertureInfoFine.beam(i).shape(1);
+    assertTrue(all(isfinite(shape.leftLeafPos)), ...
+               sprintf('beam %d has non-finite leftLeafPos', i));
+    assertTrue(all(isfinite(shape.rightLeafPos)), ...
+               sprintf('beam %d has non-finite rightLeafPos', i));
+    assertTrue(all(shape.leftLeafPos <= shape.rightLeafPos));
+end
 
 function test_vmatRecalcPreservesDAOAnchors
 % Regression: matRad_recalcApertureInfo used to populate nextDAOBeamIx from

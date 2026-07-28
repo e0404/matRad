@@ -1,15 +1,21 @@
-function apertureInfo = maxLeafSpeed(apertureInfo)
+function apertureInfo = matRad_calcMaxLeafSpeed(apertureInfo)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad calculation of maximum leaf speed
 %
+% Records the leaf speed realized by an arc plan, per DAO control point and
+% over the whole arc. This is the reporting/limiting computation used after
+% sequencing; the differentiable leaf speed *constraint* used during DAO is
+% computed separately in matRad_OptimizationProblemVMAT.
+%
 % call
-%   apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(apertureInfo)
+%   apertureInfo = matRad_calcMaxLeafSpeed(apertureInfo)
 %
 % input
-%   apertureInfo:   aperture info struct
+%   apertureInfo:   aperture info struct (requires apertureInfo.arc)
 %
 % output
-%   apertureInfo:   aperture info struct
+%   apertureInfo:   aperture info struct, with maxLeafSpeed set on each DAO
+%                   beam and on the struct itself
 %
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

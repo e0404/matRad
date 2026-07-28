@@ -72,6 +72,14 @@ if recalc.interpNew
         oldLeftBorderPoss = [oldLeftLeafPoss(:, 1), oldLeftLeafPoss, oldLeftLeafPoss(:, end)];
         oldRightBorderPoss = [oldRightLeafPoss(:, 1), oldRightLeafPoss, oldRightLeafPoss(:, end)];
     end
+
+    % The new beam centres are not bracketed by the old beam centres: the
+    % outermost new centres sit between the arc boundary and the first/last
+    % old centre. Anchor the centre trajectory at the arc boundaries too, so
+    % those beams interpolate instead of extrapolating to NaN.
+    oldCentreAngles = [oldBorderAngles(1), oldGantryAngles, oldBorderAngles(end)];
+    oldLeftCentrePoss = [oldLeftBorderPoss(:, 1), oldLeftLeafPoss, oldLeftBorderPoss(:, end)];
+    oldRightCentrePoss = [oldRightBorderPoss(:, 1), oldRightLeafPoss, oldRightBorderPoss(:, end)];
 end
 
 % MLC parameters:
@@ -165,8 +173,8 @@ for i = 1:numel(apertureInfoOld.beam)
             beamAngle = apertureInfoNew.beam(j).gantryAngle;
             doseAngleBorders = apertureInfoNew.arc.beam(j).doseAngleBorders;
 
-            leftLeafPos = matRad_interpLeafTrajectory(oldGantryAngles, oldLeftLeafPoss, beamAngle);
-            rightLeafPos = matRad_interpLeafTrajectory(oldGantryAngles, oldRightLeafPoss, beamAngle);
+            leftLeafPos = matRad_interpLeafTrajectory(oldCentreAngles, oldLeftCentrePoss, beamAngle);
+            rightLeafPos = matRad_interpLeafTrajectory(oldCentreAngles, oldRightCentrePoss, beamAngle);
             leftLeafPosInitial = matRad_interpLeafTrajectory(oldBorderAngles, oldLeftBorderPoss, doseAngleBorders(1));
             rightLeafPosInitial = matRad_interpLeafTrajectory(oldBorderAngles, oldRightBorderPoss, doseAngleBorders(1));
             leftLeafPosFinal = matRad_interpLeafTrajectory(oldBorderAngles, oldLeftBorderPoss, doseAngleBorders(2));

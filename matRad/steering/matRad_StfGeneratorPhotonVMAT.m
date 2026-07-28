@@ -34,12 +34,36 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
         % Set to e.g. [1 1 2 2] to define two separate arcs.
         arcIndex = 1
 
+        % Upper bounds on the realized angular spacings [deg]. They are
+        % maxima, not targets: the generator picks the coarsest nesting that
+        % satisfies all three, and is free to go finer where a bound or a
+        % minimum count forces it to.
         % Maximum angular spacing between consecutive dose-calc beams [deg]
         maxGantryAngleSpacing    = 4
         % Maximum angular spacing between consecutive DAO control points [deg]
         maxDAOGantryAngleSpacing = 8
         % Maximum angular spacing between consecutive FMO control points [deg]
         maxFMOGantryAngleSpacing = 32
+
+        % Minimum number of DAO control points per FMO fluence map. This is
+        % the sequencer's aperture budget: each DAO control point receives
+        % exactly one aperture, so a value of 1 collapses every optimized
+        % fluence map to a single unmodulated field shape. Rounded up to the
+        % next odd number, since the FMO angle sits at the centre of its DAO
+        % children.
+        minAperturesPerFMOBeam = 3
+
+        % Optional explicit integer subdivision factors. Leave empty to
+        % derive them from the max*GantryAngleSpacing bounds above; set them
+        % to pin the nesting directly. Both must be odd.
+        aperturesPerFMOBeam  = []   % DAO control points per FMO sector
+        doseAnglesPerDAOBeam = []   % dose-calc angles per DAO sector
+
+        % Guard against runaway problem size. Because the bounds above are
+        % maxima, a tight maxFMOGantryAngleSpacing combined with a loose
+        % maxDAOGantryAngleSpacing can legitimately force a very fine DAO
+        % grid - fail loudly rather than silently build it.
+        maxNumOfDAOAngles = 500
 
         continuousAperture = false
     end
@@ -227,50 +251,32 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     matRad_cfg.dispError('VMAT arc %g has identical start and finish angles (%g deg).', arcIds(a), startAngle);
                 end
 
-                if this.continuousAperture
-                    % In continuous mode the gantry rotates between dose
-                    % positions; first/last beams are centred half a
-                    % spacing inside the arc boundaries.
-                    numGantryAngles    = max(ceil(angularRange / this.maxGantryAngleSpacing), 2);
-                    gantryAngleSpacing = angularRange / numGantryAngles;
+                [numFMOSectors, aperturesPerFMO, doseAnglesPerDAO] = ...
+                    this.deriveArcSubdivision(angularRange, arcIds(a));
 
-                    numDAOGantryAngles = ceil((numGantryAngles - 1) * gantryAngleSpacing / this.maxDAOGantryAngleSpacing) + 1;
-                    % Align numGantryAngles so DAO angles land exactly on fine angles
-                    numGantryAngles    = (numDAOGantryAngles - 1) * ceil((numGantryAngles - 1) / (numDAOGantryAngles - 1)) + 1;
-                    gantryAngleSpacing = angularRange / numGantryAngles;
-                    DAOGantryAngleSpacing = (angularRange - gantryAngleSpacing) / (numDAOGantryAngles - 1);
+                numDAOGantryAngles = numFMOSectors * aperturesPerFMO;
+                numGantryAngles    = numDAOGantryAngles * doseAnglesPerDAO;
+                gantryAngleSpacing = angularRange / numGantryAngles;
 
-                    firstGantryAngle = startAngle  + arcDirection * gantryAngleSpacing / 2;
-                    lastGantryAngle  = finishAngle - arcDirection * gantryAngleSpacing / 2;
-                else
-                    % Step-and-shoot: first/last beams sit at the arc boundaries.
-                    numDAOGantryAngles    = ceil(angularRange / this.maxDAOGantryAngleSpacing);
-                    DAOGantryAngleSpacing = angularRange / numDAOGantryAngles;
-                    numGantryAngles       = ceil(numDAOGantryAngles * DAOGantryAngleSpacing / this.maxGantryAngleSpacing);
-                    % Align the fine dose grid so DAO angles land exactly on
-                    % fine angles (fine count must be a multiple of DAO count)
-                    numGantryAngles       = numDAOGantryAngles * ceil(numGantryAngles / numDAOGantryAngles);
-                    gantryAngleSpacing    = angularRange / numGantryAngles;
+                % Every beam sits at the centre of its own sector, in both
+                % delivery modes. Centre sampling is what makes the three
+                % angle sets nest exactly (given the odd subdivision factors)
+                % and keeps every beam strictly inside the arc, so a closed
+                % 360 deg arc cannot place two beams on the same physical
+                % gantry position. continuousAperture changes how apertures
+                % are interpolated between control points, not where the
+                % control points sit.
+                arcAngles = startAngle + ...
+                    arcDirection * ((0:numGantryAngles - 1) + 0.5) * gantryAngleSpacing;
 
-                    firstGantryAngle = startAngle;
-                    lastGantryAngle  = finishAngle;
-                end
+                % Subset by index rather than by recomputing the angles, so
+                % the DAO/FMO membership tests downstream compare bit-identical
+                % values instead of relying on floating-point agreement.
+                daoIx = (doseAnglesPerDAO - 1) / 2 + (0:numDAOGantryAngles - 1) * doseAnglesPerDAO;
+                daoAngles = arcAngles(daoIx + 1);
 
-                % FMO spacing must be an odd integer multiple of the DAO spacing
-                numApertures = floor(this.maxFMOGantryAngleSpacing / DAOGantryAngleSpacing);
-                if mod(numApertures, 2) == 0
-                    numApertures = numApertures - 1;
-                end
-                % At least one DAO aperture per FMO angle (guards against
-                % maxFMOGantryAngleSpacing < the realized DAO spacing)
-                numApertures = max(numApertures, 1);
-                FMOGantryAngleSpacing = numApertures * DAOGantryAngleSpacing;
-                firstFMOGantryAngle   = firstGantryAngle + arcDirection * DAOGantryAngleSpacing * floor(numApertures / 2);
-                lastFMOGantryAngle    = lastGantryAngle  - arcDirection * DAOGantryAngleSpacing * floor(numApertures / 2);
-
-                arcAngles = firstGantryAngle:arcDirection * gantryAngleSpacing:lastGantryAngle;
-                daoAngles = firstGantryAngle:arcDirection * DAOGantryAngleSpacing:lastGantryAngle;
-                fmoAngles = firstFMOGantryAngle:arcDirection * FMOGantryAngleSpacing:lastFMOGantryAngle;
+                fmoIx = (aperturesPerFMO - 1) / 2 + (0:numFMOSectors - 1) * aperturesPerFMO;
+                fmoAngles = daoAngles(fmoIx + 1);
 
                 allGantryAngles = [allGantryAngles, arcAngles];
                 allCouchAngles  = [allCouchAngles,  couchVal * ones(1, numel(arcAngles))];
@@ -283,12 +289,118 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
             this.arcDAOGantryAngles = allDAOAngles;
             this.arcFMOGantryAngles = allFMOAngles;
 
+            if numel(arcIds) > 1
+                matRad_cfg.dispInfo('VMAT total over %d arcs: %d FMO / %d DAO / %d dose angles\n', ...
+                                    numel(arcIds), numel(allFMOAngles), numel(allDAOAngles), numel(allGantryAngles));
+            end
+            matRad_cfg.dispInfo(['VMAT: %d of %d dose angles are DAO control points, ' ...
+                                 '%d are interpolated from their neighbours\n'], ...
+                                numel(allDAOAngles), numel(allGantryAngles), ...
+                                numel(allGantryAngles) - numel(allDAOAngles));
+            matRad_cfg.dispDebug('VMAT dose angles: %s\n', mat2str(round(allGantryAngles, 4)));
+            matRad_cfg.dispDebug('VMAT DAO angles:  %s\n', mat2str(round(allDAOAngles, 4)));
+            matRad_cfg.dispDebug('VMAT FMO angles:  %s\n', mat2str(round(allFMOAngles, 4)));
+
             % Store arc extent boundaries for border calculations.
             % TODO: per-arc tracking when multi-arc is supported.
             this.arcStartAngle  = anchorGantry(arcIdx == arcIds(1));
             this.arcStartAngle  = this.arcStartAngle(1);
             this.arcFinishAngle = anchorGantry(arcIdx == arcIds(end));
             this.arcFinishAngle = this.arcFinishAngle(end);
+        end
+
+        function [numFMOSectors, aperturesPerFMO, doseAnglesPerDAO] = deriveArcSubdivision(this, angularRange, arcId)
+            % Partition an arc into nested FMO / DAO / dose sectors.
+            %
+            % The arc holds numFMOSectors FMO sectors, each holding
+            % aperturesPerFMO DAO sectors, each holding doseAnglesPerDAO dose
+            % sectors. Both subdivision factors are odd so that the coarser
+            % level's beam coincides with the centre one of its children.
+            %
+            % max*GantryAngleSpacing are upper bounds, so every count is
+            % derived with ceil and every odd correction rounds *up*: going
+            % finer can never violate a maximum, whereas the previous
+            % floor/round-down derivation paid for the odd constraint by
+            % dropping apertures, and could collapse to a single unmodulated
+            % aperture per fluence map.
+
+            matRad_cfg = MatRad_Config.instance();
+
+            % 1. FMO sectors: coarsest partition meeting the FMO bound
+            numFMOSectors = max(ceil(angularRange / this.maxFMOGantryAngleSpacing), 1);
+            FMOGantryAngleSpacing = angularRange / numFMOSectors;
+
+            % 2. DAO control points per FMO sector (= apertures per map)
+            if ~isempty(this.aperturesPerFMOBeam)
+                aperturesPerFMO = this.validateSubdivisionFactor(this.aperturesPerFMOBeam, 'aperturesPerFMOBeam');
+            else
+                aperturesPerFMO = max(ceil(FMOGantryAngleSpacing / this.maxDAOGantryAngleSpacing), ...
+                                      this.minAperturesPerFMOBeam);
+                aperturesPerFMO = aperturesPerFMO + mod(aperturesPerFMO + 1, 2);
+            end
+            DAOGantryAngleSpacing = FMOGantryAngleSpacing / aperturesPerFMO;
+
+            % 3. dose-calc angles per DAO sector
+            if ~isempty(this.doseAnglesPerDAOBeam)
+                doseAnglesPerDAO = this.validateSubdivisionFactor(this.doseAnglesPerDAOBeam, 'doseAnglesPerDAOBeam');
+            else
+                doseAnglesPerDAO = ceil(DAOGantryAngleSpacing / this.maxGantryAngleSpacing);
+                doseAnglesPerDAO = doseAnglesPerDAO + mod(doseAnglesPerDAO + 1, 2);
+            end
+            gantryAngleSpacing = DAOGantryAngleSpacing / doseAnglesPerDAO;
+
+            numDAOGantryAngles = numFMOSectors * aperturesPerFMO;
+            if numDAOGantryAngles > this.maxNumOfDAOAngles
+                matRad_cfg.dispError(['VMAT arc %g needs %d DAO control points to satisfy the requested ' ...
+                                      'spacings (max %g deg FMO / %g deg DAO) with %d apertures per fluence map, ' ...
+                                      'exceeding maxNumOfDAOAngles (%d). Relax maxFMOGantryAngleSpacing, ' ...
+                                      'relax maxDAOGantryAngleSpacing, or raise maxNumOfDAOAngles.'], ...
+                                     arcId, numDAOGantryAngles, this.maxFMOGantryAngleSpacing, ...
+                                     this.maxDAOGantryAngleSpacing, aperturesPerFMO, this.maxNumOfDAOAngles);
+            end
+
+            % Explicit subdivision factors override the bounds, so report when
+            % that lets a realized spacing exceed what the user asked for.
+            this.warnIfSpacingExceedsBound(gantryAngleSpacing, this.maxGantryAngleSpacing, ...
+                                           'dose-calc', 'maxGantryAngleSpacing', arcId);
+            this.warnIfSpacingExceedsBound(DAOGantryAngleSpacing, this.maxDAOGantryAngleSpacing, ...
+                                           'DAO', 'maxDAOGantryAngleSpacing', arcId);
+            this.warnIfSpacingExceedsBound(FMOGantryAngleSpacing, this.maxFMOGantryAngleSpacing, ...
+                                           'FMO', 'maxFMOGantryAngleSpacing', arcId);
+
+            if aperturesPerFMO < 3
+                matRad_cfg.dispWarning(['VMAT arc %g yields only %d aperture(s) per FMO fluence map. ' ...
+                                        'Each DAO control point receives exactly one aperture, so the ' ...
+                                        'sequenced plan will carry little or no modulation.'], ...
+                                       arcId, aperturesPerFMO);
+            end
+
+            matRad_cfg.dispInfo(['VMAT arc %g: %d FMO / %d DAO / %d dose angles, %d apertures per fluence map, ' ...
+                                 'spacings %.3g / %.3g / %.3g deg (FMO/DAO/dose)\n'], ...
+                                arcId, numFMOSectors, numDAOGantryAngles, ...
+                                numDAOGantryAngles * doseAnglesPerDAO, aperturesPerFMO, ...
+                                FMOGantryAngleSpacing, DAOGantryAngleSpacing, gantryAngleSpacing);
+        end
+
+        function warnIfSpacingExceedsBound(~, realized, bound, levelName, propName, arcId)
+            if realized > bound * (1 + 1e-12)
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispWarning(['VMAT arc %g: realized %s angle spacing (%g deg) exceeds %s (%g deg) ' ...
+                                        'because the subdivision factors were set explicitly.'], ...
+                                       arcId, levelName, realized, propName, bound);
+            end
+        end
+
+        function value = validateSubdivisionFactor(~, value, propName)
+            matRad_cfg = MatRad_Config.instance();
+            if ~isscalar(value) || ~isfinite(value) || value < 1 || mod(value, 1) ~= 0
+                matRad_cfg.dispError('%s must be a positive integer scalar, got %s.', ...
+                                     propName, mat2str(value));
+            end
+            if mod(value, 2) == 0
+                matRad_cfg.dispError(['%s must be odd (got %d) so that the coarser control point ' ...
+                                      'coincides with the centre one of its children.'], propName, value);
+            end
         end
 
         function stf = generateSourceGeometry(this)
@@ -352,6 +464,13 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
             timeFacIndOffset    = 1;
             SAD = this.machine.meta.SAD;
 
+            % Beams sit at the centre of their dose sector, so the first and
+            % last dose beams of an arc lie *outside* the span bracketed by
+            % DAO control points. Resolve each beam's bracketing DAO beams up
+            % front rather than carrying them forward from the previous loop
+            % iteration, which silently assumed beam 1 was a DAO beam.
+            daoBeamIx = find(arrayfun(@(s) any(abs(this.arcDAOGantryAngles - s.gantryAngle) < 1e-6), stf));
+
             for i = 1:nBeams
 
                 %% Determine FMO parent beam
@@ -393,28 +512,33 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     stf(parent).arc.childrenIx(n)          = i;
 
                     % DAO influence angle borders
-                    DAOBeamNumber = find(abs(this.arcDAOGantryAngles - stf(i).gantryAngle) < 1e-8);
+                    DAOBeamNumber   = find(daoBeamIx == i);
+                    numDAOBeams     = numel(daoBeamIx);
+                    neighbourAngles = [NaN, NaN];
+                    if DAOBeamNumber > 1
+                        neighbourAngles(1) = stf(daoBeamIx(DAOBeamNumber - 1)).gantryAngle;
+                    end
+                    if DAOBeamNumber < numDAOBeams
+                        neighbourAngles(2) = stf(daoBeamIx(DAOBeamNumber + 1)).gantryAngle;
+                    end
 
+                    % the outermost DAO sectors run out to the arc boundary
+                    stf(i).arc.DAOAngleBorders = (neighbourAngles + stf(i).gantryAngle) / 2;
                     if DAOBeamNumber == 1
-                        stf(i).arc.DAOAngleBorders = [this.arcStartAngle, ...
-                                                      (this.arcDAOGantryAngles(DAOBeamNumber + 1) + this.arcDAOGantryAngles(DAOBeamNumber)) / 2];
+                        stf(i).arc.DAOAngleBorders(1) = this.arcStartAngle;
+                    end
+                    if DAOBeamNumber == numDAOBeams
+                        stf(i).arc.DAOAngleBorders(2) = this.arcFinishAngle;
+                    end
+
+                    % a DAO beam anchors the interval starting at it, except
+                    % the last one, which anchors the interval ending at it
+                    if DAOBeamNumber < numDAOBeams
                         lastDAOBeamIx = i;
-                        nextDAOBeamIx = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOBeamNumber + 1)) < 1e-8);
-
-                    elseif DAOBeamNumber == numel(this.arcDAOGantryAngles)
-                        stf(i).arc.DAOAngleBorders = [ ...
-                                                      (this.arcDAOGantryAngles(DAOBeamNumber - 1) + this.arcDAOGantryAngles(DAOBeamNumber)) / 2, ...
-                                                      this.arcFinishAngle];
-                        lastDAOBeamIx = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOBeamNumber - 1)) < 1e-8);
-                        nextDAOBeamIx = i;
-
+                        nextDAOBeamIx = daoBeamIx(DAOBeamNumber + 1);
                     else
-                        neighbourAngles = [this.arcDAOGantryAngles(DAOBeamNumber - 1), ...
-                                           this.arcDAOGantryAngles(DAOBeamNumber + 1)];
-                        stf(i).arc.DAOAngleBorders = ...
-                            (neighbourAngles + this.arcDAOGantryAngles(DAOBeamNumber)) / 2;
-                        lastDAOBeamIx = i;
-                        nextDAOBeamIx = find(abs([stf.gantryAngle] - this.arcDAOGantryAngles(DAOBeamNumber + 1)) < 1e-8);
+                        lastDAOBeamIx = daoBeamIx(max(DAOBeamNumber - 1, 1));
+                        nextDAOBeamIx = i;
                     end
 
                     stf(i).arc.lastDAOBeamIx = lastDAOBeamIx;
@@ -438,6 +562,21 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                         stf(i).arc.timeFactors(3) = ...
                             (stf(i).arc.DAOAngleBorderCentreDiff(2) - stf(i).arc.doseAngleBorderCentreDiff(2)) / ...
                             stf(i).arc.DAOAngleBordersDiff;
+
+                        % timeFactors(1) and (3) index the leaf-sweep segments
+                        % shared with the previous and next DAO control point.
+                        % The outermost DAO sectors run out to the arc boundary,
+                        % where there is no neighbouring aperture to sweep to -
+                        % the dose beams out there simply repeat this aperture -
+                        % so those segments do not exist. Zeroing them keeps
+                        % timeFactorIx (which numbers the segments, and starts at
+                        % timeFacIndOffset - 1) from producing a 0 index.
+                        if DAOBeamNumber == 1
+                            stf(i).arc.timeFactors(1) = 0;
+                        end
+                        if DAOBeamNumber == numDAOBeams
+                            stf(i).arc.timeFactors(3) = 0;
+                        end
 
                         delInd                         = stf(i).arc.timeFactors == 0;
                         stf(i).arc.timeFactorIx     = [timeFacIndOffset - 1, timeFacIndOffset, timeFacIndOffset + 1];
@@ -467,8 +606,25 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     stf(parent).arc.subChildrenGantryAngles(n)  = stf(i).gantryAngle;
                     stf(parent).arc.subChildrenIx(n)         = i;
 
-                    stf(i).arc.weightFracFromLastDAO = (stf(nextDAOBeamIx).gantryAngle - stf(i).gantryAngle) / ...
-                                                      (stf(nextDAOBeamIx).gantryAngle - stf(lastDAOBeamIx).gantryAngle);
+                    lastDAOBeamIx = daoBeamIx(find(daoBeamIx < i, 1, 'last'));
+                    nextDAOBeamIx = daoBeamIx(find(daoBeamIx > i, 1, 'first'));
+                    if isempty(lastDAOBeamIx)
+                        lastDAOBeamIx = nextDAOBeamIx;
+                    end
+                    if isempty(nextDAOBeamIx)
+                        nextDAOBeamIx = lastDAOBeamIx;
+                    end
+
+                    if lastDAOBeamIx == nextDAOBeamIx
+                        % leading/trailing dose beam: it lies inside the first
+                        % (last) DAO sector but before (after) that sector's
+                        % control point, so its aperture comes entirely from
+                        % that single control point
+                        stf(i).arc.weightFracFromLastDAO = 1;
+                    else
+                        stf(i).arc.weightFracFromLastDAO = (stf(nextDAOBeamIx).gantryAngle - stf(i).gantryAngle) / ...
+                                                          (stf(nextDAOBeamIx).gantryAngle - stf(lastDAOBeamIx).gantryAngle);
+                    end
                     stf(i).arc.lastDAOBeamIx = lastDAOBeamIx;
                     stf(i).arc.nextDAOBeamIx = nextDAOBeamIx;
                 end
@@ -548,6 +704,20 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                 end
 
                 if ~stf(i).arc.isFMOBeam && ~stf(i).arc.isDAOBeam
+                    if stf(i).arc.lastDAOBeamIx == stf(i).arc.nextDAOBeamIx
+                        % leading/trailing dose beam - no pair to interpolate
+                        % between, everything comes from the one DAO beam
+                        % whose sector it sits in (see prepareArcs)
+                        stf(i).arc.weightFracFromLastDAOInitial = 1;
+                        stf(i).arc.weightFracFromLastDAOFinal   = 1;
+                        stf(i).arc.weightFracFromNextDAOInitial = 0;
+                        stf(i).arc.weightFracFromNextDAOFinal   = 0;
+                        stf(i).arc.timeFracFromLastDAO          = 1;
+                        stf(i).arc.timeFracFromNextDAO          = 0;
+                        matRad_progress(i, nBeams);
+                        continue
+                    end
+
                     % Leaf position interpolation fractions
                     lastBorder = stf(stf(i).arc.lastDAOBeamIx).arc.doseAngleBorders(2);
                     nextBorder = stf(stf(i).arc.nextDAOBeamIx).arc.doseAngleBorders(1);
@@ -558,12 +728,20 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                     stf(i).arc.weightFracFromNextDAOInitial = (stf(i).arc.doseAngleBorders(1) - lastBorder) / span;
                     stf(i).arc.weightFracFromNextDAOFinal = (stf(i).arc.doseAngleBorders(2) - lastBorder) / span;
 
-                    % Time interpolation fractions (clamped to [0, 1])
+                    % Time interpolation fractions (clamped to [0, 1]).
+                    % The DAO border splits this dose sector into a part
+                    % belonging to the last and one belonging to the next DAO
+                    % beam, so the two fractions must sum to 1. Keep both
+                    % numerator and denominator signed (as for the weight
+                    % fractions above): the arc direction then cancels, while
+                    % a DAO border lying outside the sector still clamps to
+                    % 0 / 1 rather than to 1 / 1.
                     lastDAOBorder2 = stf(stf(i).arc.lastDAOBeamIx).arc.DAOAngleBorders(2);
-                    stf(i).arc.timeFracFromLastDAO = min(max(abs(lastDAOBorder2 - stf(i).arc.doseAngleBorders(1)) / ...
-                                                             stf(i).arc.doseAngleBordersDiff, 0), 1);
-                    stf(i).arc.timeFracFromNextDAO = min(max(abs(stf(i).arc.doseAngleBorders(2) - lastDAOBorder2)  / ...
-                                                             stf(i).arc.doseAngleBordersDiff, 0), 1);
+                    doseSectorSpan = stf(i).arc.doseAngleBorders(2) - stf(i).arc.doseAngleBorders(1);
+                    stf(i).arc.timeFracFromLastDAO = min(max((lastDAOBorder2 - stf(i).arc.doseAngleBorders(1)) / ...
+                                                             doseSectorSpan, 0), 1);
+                    stf(i).arc.timeFracFromNextDAO = min(max((stf(i).arc.doseAngleBorders(2) - lastDAOBorder2) / ...
+                                                             doseSectorSpan, 0), 1);
                 end
 
                 matRad_progress(i, nBeams);

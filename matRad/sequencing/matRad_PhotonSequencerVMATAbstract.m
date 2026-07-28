@@ -118,6 +118,14 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
 
                         count = count + 1;
                     end
+
+                    matRad_cfg = MatRad_Config.instance();
+                    sweepNames = {'right-to-left', 'left-to-right'};
+                    matRad_cfg.dispDebug(['VMAT arc sequencing: FMO beam %d (%.4g deg) spread %d shape(s) ' ...
+                                          'over DAO children %s, sweeping %s\n'], ...
+                                         i, stf(i).gantryAngle, numOfShapes, ...
+                                         mat2str(childrenIndex(1:numOfShapes)'), ...
+                                         sweepNames{1 + (leafDir == 1)});
                 else
                     % if beam isn't an FMO beam, then there is no info in the beam
                     % struct
@@ -155,6 +163,14 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             end
 
             beam = rmfield(beam, {'tempShapes', 'tempShapesWeight', 'tempNumOfShapes'});
+
+            matRad_cfg = MatRad_Config.instance();
+            isDAO   = arrayfun(@(s) s.arc.isDAOBeam, stf);
+            MURate  = [beam(isDAO).MURate];
+            gantryRot = [beam(isDAO).gantryRot];
+            matRad_cfg.dispInfo(['VMAT arc sequencing: one aperture placed on each of %d DAO control points, ' ...
+                                 'MU rate %.4g-%.4g MU/s, gantry rotation %.4g deg/s\n'], ...
+                                nnz(isDAO), min(MURate), max(MURate), max(gantryRot));
         end
 
         function constraints = getMachineConstraints(~, stf)
@@ -386,7 +402,7 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             end
 
             % fix instances of leaf touching
-            apertureInfo = matRad_OptimizationProblemVMAT.leafTouching(apertureInfo);
+            apertureInfo = matRad_leafTouching(apertureInfo);
 
             shapeInd = 0;
             for i = 1:numel(apertureInfo.beam)
@@ -399,16 +415,45 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             % create vectors for optimization
             [apertureInfo.apertureVector, apertureInfo.mappingMx, apertureInfo.limMx] ...
                 = matRad_OptimizationProblemVMAT.matRad_daoApertureInfo2Vec(apertureInfo);
+
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispInfo(['VMAT apertureInfo: %d optimization variables ' ...
+                                 '(%d shape weights + 2x%d leaf positions + %d gantry times)\n'], ...
+                                numel(apertureInfo.apertureVector), apertureInfo.totalNumOfShapes, ...
+                                apertureInfo.totalNumOfLeafPairs, apertureInfo.totalNumOfShapes);
+            deliveryModes = {'step-and-shoot', 'continuous aperture'};
+            matRad_cfg.dispInfo('VMAT apertureInfo: delivery mode %s, %d bixels total\n', ...
+                                deliveryModes{1 + this.continuousAperture}, ...
+                                apertureInfo.totalNumOfBixels);
+            if this.continuousAperture
+                matRad_cfg.dispInfo('VMAT apertureInfo: %d leaf speed constraints (%d at DAO control points)\n', ...
+                                    apertureInfo.arc.numLeafSpeedConstraint, ...
+                                    apertureInfo.arc.numLeafSpeedConstraintDAO);
+            end
         end
 
         function apertureInfo = postProcessVMATApertureInfo(~, apertureInfo)
             % Interpolates sub-child gantry segments, then runs the
             % leaf-speed/dose-rate limiting pass (optDelivery).
 
+            matRad_cfg = MatRad_Config.instance();
+
             apertureInfo = matRad_OptimizationProblemVMAT.matRad_daoVec2ApertureInfo(apertureInfo, apertureInfo.apertureVector);
-            apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(apertureInfo);
-            apertureInfo = matRad_OptimizationProblemVMAT.optDelivery(apertureInfo, 0);
-            apertureInfo = matRad_OptimizationProblemVMAT.maxLeafSpeed(apertureInfo);
+            apertureInfo = matRad_calcMaxLeafSpeed(apertureInfo);
+            leafSpeedBefore = apertureInfo.maxLeafSpeed;
+
+            apertureInfo = matRad_enforceDeliveryConstraints(apertureInfo, 0);
+            apertureInfo = matRad_calcMaxLeafSpeed(apertureInfo);
+
+            leafSpeedLimit = apertureInfo.deliveryConstraints.leafSpeed(2);
+            matRad_cfg.dispInfo(['VMAT delivery check: max leaf speed %.4g -> %.4g mm/s ' ...
+                                 '(machine limit %.4g mm/s)\n'], ...
+                                leafSpeedBefore, apertureInfo.maxLeafSpeed, leafSpeedLimit);
+            if apertureInfo.maxLeafSpeed > leafSpeedLimit * (1 + 1e-6)
+                matRad_cfg.dispWarning(['VMAT delivery check: max leaf speed %.4g mm/s still exceeds the ' ...
+                                        'machine limit %.4g mm/s after slowing the gantry\n'], ...
+                                       apertureInfo.maxLeafSpeed, leafSpeedLimit);
+            end
         end
 
     end

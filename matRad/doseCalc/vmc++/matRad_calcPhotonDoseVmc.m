@@ -229,14 +229,17 @@ for i = 1:dij.numOfBeams % loop over all beams
             end
 
             %% perform vmc++ simulation
+            % The batch file is invoked from within VMCPath, so it needs an
+            % explicit relative prefix - which differs between the shells.
+            batchCommand = ['.' filesep 'run_parallel_simulations.bat'];
             currentFolder = pwd;
             folderCleanup = onCleanup(@() cd(currentFolder));
             cd(VMCPath);
             if verbose > 0 % only show output if verbose level > 0
-                dos('.\run_parallel_simulations.bat');
+                system(batchCommand);
                 fprintf(['Completed ' num2str(writeCounter) ' of ' num2str(dij.totalNumOfBixels) ' beamlets...\n']);
             else
-                [~, ~] = dos('.\run_parallel_simulations.bat');
+                [~, ~] = system(batchCommand);
             end
             clear folderCleanup;
 
