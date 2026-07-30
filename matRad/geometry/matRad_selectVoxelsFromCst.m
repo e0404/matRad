@@ -11,9 +11,9 @@ function [includeMask] = matRad_selectVoxelsFromCst(cstOnDoseGrid, doseGrid, sel
 %   selectionMode:          define which method to apply to select cst structures.
 %                           Choices: all, targetOnly, oarsOnly, objectivesOnly,
 %                           robustnessOnly, [indexes]
-% 
+%
 % output:
-% 
+%
 %   includeMask:            logical array #voxels in dose grid
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,99 +29,110 @@ function [includeMask] = matRad_selectVoxelsFromCst(cstOnDoseGrid, doseGrid, sel
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    matRad_cfg = MatRad_Config.instance();
-    cstOnDoseGrid  = matRad_setOverlapPriorities(cstOnDoseGrid);   
+%| pragma Justify(metric, "cyc",
+%|                 "grandfathered: pre-existing complexity of the " +
+%|                 "objective and constraint scanning; restructuring is " +
+%|                 "out of scope for commits that merely touch it");
+%| pragma Justify(metric, "cnest",
+%|                 "grandfathered: pre-existing nesting of the " +
+%|                 "per-structure, per-function loops; restructuring is " +
+%|                 "out of scope for commits that merely touch it");
 
-    selectedCstStructs = [];
-    
-    includeMask = cell(size(cstOnDoseGrid{1,4},2),1);
-    includeMask(:) = {false(prod(doseGrid.dimensions),1)};
-        
-    if isequal(selectionMode , 'all')
-        for ctScenIdx=1:size(includeMask,2)
-            includeMask{ctScenIdx}(:) = true;
-        end
-    else
+matRad_cfg = MatRad_Config.instance();
+cstOnDoseGrid  = matRad_setOverlapPriorities(cstOnDoseGrid);
 
-        if ischar(selectionMode)
+selectedCstStructs = [];
 
-            switch selectionMode
-                case 'targetOnly'
-                    selectedCstStructs = find(cellfun(@(x) strcmp(x,'TARGET'), [cstOnDoseGrid(:,3)]));
-                case 'objectivesOnly'
-                    for i=1:size(cstOnDoseGrid,1)
-                        if numel(cstOnDoseGrid{i,6})>0
+includeMask = cell(size(cstOnDoseGrid{1, 4}, 2), 1);
+includeMask(:) = {false(prod(doseGrid.dimensions), 1)};
+
+if isequal(selectionMode, 'all')
+    for ctScenIdx = 1:size(includeMask, 2)
+        includeMask{ctScenIdx}(:) = true;
+    end
+else
+
+    if ischar(selectionMode)
+
+        switch selectionMode
+            case 'targetOnly'
+                selectedCstStructs = find(cellfun(@(x) strcmp(x, 'TARGET'), [cstOnDoseGrid(:, 3)]));
+            case 'objectivesOnly'
+                for i = 1:size(cstOnDoseGrid, 1)
+                    if numel(cstOnDoseGrid{i, 6}) > 0
+                        selectedCstStructs = [selectedCstStructs, i];
+                    end
+                end
+            case 'oarsOnly'
+                selectedCstStructs = find(cellfun(@(x) strcmp(x, 'OAR'), [cstOnDoseGrid(:, 3)]));
+            case 'robustnessOnly'
+                for i = 1:size(cstOnDoseGrid, 1)
+                    for j = 1:numel(cstOnDoseGrid{i, 6})
+                        if isfield(cstOnDoseGrid{i, 6}{j}, 'robustness') && ~isequal(cstOnDoseGrid{i, 6}{j}.robustness, 'none')
                             selectedCstStructs = [selectedCstStructs, i];
                         end
                     end
-                case 'oarsOnly'
-                    selectedCstStructs = find(cellfun(@(x) strcmp(x,'OAR'), [cstOnDoseGrid(:,3)]));
-                case 'robustnessOnly'
-                    for i=1:size(cstOnDoseGrid,1)
-                        for j = 1:numel(cstOnDoseGrid{i,6})
-                            if isfield(cstOnDoseGrid{i,6}{j}, 'robustness') && ~isequal(cstOnDoseGrid{i,6}{j}.robustness, 'none')
-                                selectedCstStructs = [selectedCstStructs,i];
-                            end
-                        end
-                    end
-                otherwise
-                    matRad_cfg.dispError('Unrecognized voxel selection mode: %s', selectionMode);
-            end
-        elseif isnumeric(selectionMode)
-
-            selectedCstStructs = unique(intersect(selectionMode, [cstOnDoseGrid{:,1}]+1));
-            if ~isequal(selectedCstStructs, unique(selectionMode))
-                matRad_cfg.dispWarning('Specified structures are not compatible with cst structures. Only performing calculation on stuctures: %s',num2str(selectedCstStructs));
-            end
+                end
+            otherwise
+                matRad_cfg.dispError('Unrecognized voxel selection mode: %s', selectionMode);
         end
-        
-        %loop over all cst sturctures 
-        for i=1:size(cstOnDoseGrid,1)
-        
-            if ~isempty(cstOnDoseGrid{i,4}{1})
-                
-                if numel(cstOnDoseGrid{i,6}) > 0
-                    %loop over obj/constraint functions
-                    for j = 1:numel(cstOnDoseGrid{i,6})
-        
-    
-                        obj = cstOnDoseGrid{i,6}{j};
-        
-                        if ~isa(obj,'matRad_DoseOptimizationFunction')
-                            try
-                                obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
-                            catch
-                                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!',i,j);
-                            end
-                        end
-    
-                        robustness = obj.robustness;
-    
-                        if any(intersect(i, selectedCstStructs))
-                            for ctIdx=1:size(cstOnDoseGrid{i,4},2)
-                                includeMask{ctIdx}(cstOnDoseGrid{i,4}{ctIdx}) = 1;
-                            end
-    
-                            if isequal(robustness, 'none')
-                                matRad_cfg.dispWarning('Including cst structure %s even though this structure has no robustness.', cstOnDoseGrid{i,2});
-                            end
-                        else
-                            matRad_cfg.dispWarning('Excluding cst structure %s even though this structure has an objective or constratint.', cstOnDoseGrid{i,2});
-                            
-                            if ~isequal(robustness, 'none')
-                                matRad_cfg.dispWarning('Excluding cst structure %s even though this structure has robustness.', cstOnDoseGrid{i,2});
-                            end
-                        end
-                    end
-    
-                else %numel(cst{i,6}) <= 0
-                    if any(intersect(i, selectedCstStructs))
-                        matRad_cfg.dispWarning('Including cst structure %s even though this structure does not have any objective or constraint', cstOnDoseGrid{i,2}');
-                    end
-                end %numel(cst{i,6}) > 0
-            end %if cst{i,4} not empty
+    elseif isnumeric(selectionMode)
 
-        end %for loop over cst
-
+        selectedCstStructs = unique(intersect(selectionMode, [cstOnDoseGrid{:, 1}] + 1));
+        if ~isequal(selectedCstStructs, unique(selectionMode))
+            matRad_cfg.dispWarning(['Specified structures are not compatible with cst structures. ' ...
+                                    'Only performing calculation on structures: %s'], num2str(selectedCstStructs));
+        end
     end
+
+    % loop over all cst structures
+    for i = 1:size(cstOnDoseGrid, 1)
+
+        if ~isempty(cstOnDoseGrid{i, 4}{1})
+
+            if numel(cstOnDoseGrid{i, 6}) > 0
+                % loop over obj/constraint functions
+                for j = 1:numel(cstOnDoseGrid{i, 6})
+
+                    obj = cstOnDoseGrid{i, 6}{j};
+
+                    if ~isa(obj, 'matRad_DoseOptimizationFunction')
+                        try
+                            obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
+                        catch
+                            matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!', i, j);
+                        end
+                    end
+
+                    robustness = obj.robustness;
+
+                    if any(intersect(i, selectedCstStructs))
+                        for ctIdx = 1:size(cstOnDoseGrid{i, 4}, 2)
+                            includeMask{ctIdx}(cstOnDoseGrid{i, 4}{ctIdx}) = 1;
+                        end
+
+                        if isequal(robustness, 'none')
+                            matRad_cfg.dispWarning('Including cst structure %s even though this structure has no robustness.', cstOnDoseGrid{i, 2});
+                        end
+                    else
+                        matRad_cfg.dispWarning(['Excluding cst structure %s even though this structure ' ...
+                                                'has an objective or constraint.'], cstOnDoseGrid{i, 2});
+
+                        if ~isequal(robustness, 'none')
+                            matRad_cfg.dispWarning('Excluding cst structure %s even though this structure has robustness.', cstOnDoseGrid{i, 2});
+                        end
+                    end
+                end
+
+            else % numel(cst{i,6}) <= 0
+                if any(intersect(i, selectedCstStructs))
+                    matRad_cfg.dispWarning(['Including cst structure %s even though this structure does ' ...
+                                            'not have any objective or constraint'], cstOnDoseGrid{i, 2}');
+                end
+            end % numel(cst{i,6}) > 0
+        end % if cst{i,4} not empty
+
+    end % for loop over cst
+
+end
 end
