@@ -1,6 +1,6 @@
 %% Example Photon Treatment Plan with VMAT direct aperture optimization
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017-2026 the matRad development team.
 %
@@ -11,7 +11,7 @@
 % propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
 % In this example we will show
@@ -53,10 +53,23 @@ pln.propStf.bixelWidth               = 5;           % [mm] / also corresponds to
 pln.propStf.gantryAngles             = [-180, 180]; % gantry arc anchor points
 pln.propStf.couchAngles              = [0, 0];      % couch angle for arcs
 % pln.propStf.arcIndex                 = [1 1];     % assign anchor points to arcs (if more than one arc is defined)
-pln.propStf.maxGantryAngleSpacing    = 10;          % [deg] / max gantry angle spacing for dose calculation
-pln.propStf.maxDAOGantryAngleSpacing = 25;          % [deg] / max gantry angle spacing for DAO
-pln.propStf.maxFMOGantryAngleSpacing = 72;          % [deg] / max gantry angle spacing for FMO
-pln.propStf.minAperturesPerFMOBeam   = 5;           % Minimum number of apertures sequenced for DAO per fluence-optimized beam.
+pln.propStf.maxGantryAngleSpacing    = 8;           % [deg] / max gantry angle spacing for dose calculation
+pln.propStf.maxDAOGantryAngleSpacing = 8;           % [deg] / max gantry angle spacing for DAO
+pln.propStf.maxFMOGantryAngleSpacing = 24;          % [deg] / max gantry angle spacing for FMO
+pln.propStf.minAperturesPerFMOBeam   = 3;           % Minimum number of apertures sequenced for DAO per fluence-optimized beam.
+
+% The FMO spacing is the parameter that decides how faithfully the arc can be
+% sequenced, so it should stay small. Each fluence map is optimized at one
+% gantry angle but delivered as minAperturesPerFMOBeam separate apertures
+% spread over the FMO sector - the sum reproduces the optimized fluence, yet
+% every individual control point receives only one fragment of it. The wider
+% that sector, the more the delivered dose clusters into a few entrance
+% directions. Measured on this case as the peak-to-mean of the out-of-target
+% dose binned by gantry angle, the excess introduced by sequencing is +2% at
+% 24 deg, +30% at 45 deg and +38% at 72 deg - and direct aperture
+% optimization amplifies whatever it inherits rather than repairing it.
+% Target coverage and maximum dose look healthy in every case, so this shows
+% up only in the spatial dose distribution.
 
 % dose calculation settings
 pln.propDoseCalc.doseGrid.resolution.x = 5; % [mm]
@@ -77,10 +90,31 @@ pln.propSeq.numLevels          = 10;
 pln.propSeq.continuousAperture = false;  % interpolate leaf positions between DAO control points (dynamic delivery)
 pln.propSeq.preconditioner     = true;   % apply Jacobi preconditioning to the aperture weights
 
+% Smoothing of each FMO fluence map before it is decomposed into apertures
+% ('gaussian' or 'none'). The blurred field rim is what lets the sequencer
+% produce one aperture per DAO control point, at the price of the sequenced
+% fluence no longer reproducing the optimized one - which is why it is
+% applied for VMAT only. 'none' is only usable for fluences that are already
+% modulated enough to stratify into as many apertures as there are DAO
+% control points per FMO beam.
+pln.propSeq.arcFluenceSmoothing = 'gaussian';
+
+% The stratification generates more apertures per FMO beam than the arc can
+% deliver, so all but numOfChildren of them are discarded. 'doseAreaProduct'
+% keeps the ones with the largest open area and rescales them by a common
+% factor; 'leastSquares' instead keeps the apertures that best reconstruct
+% the optimized fluence and refits their weights to it, preserving the total
+% dose-area product. On this example the latter starts the DAO closer to the
+% fluence optimization result, mainly by producing a less hot plan.
+pln.propSeq.apertureSelection   = 'leastSquares';
+
 % optimization settings
 pln.propOpt.quantityOpt         = 'physicalDose';   % Quantity to optimizer (could also be RBExDose, BED, effect)
 pln.propOpt.optimizer           = 'IPOPT';          % We can also utilize 'fmincon' from Matlab's optimization toolbox
 pln.propOpt.runVMAT             = true;             % put fluence optimization, sequencing and DAO into VMAT (arc) mode
+
+% add a fluence objective for smoothing for smoother fluences
+pln.propOpt.fluenceObjectives   = {FluenceObjectives.matRad_FluenceVariance(5)};
 
 % optionally, the final plan can be scaled such that the target D95 matches
 % the prescription:
@@ -125,22 +159,11 @@ resultGUI = matRad_sequencing(resultGUI, stf, pln, dij);
 resultGUI = matRad_directApertureOptimization(dij, cst, resultGUI.apertureInfo, resultGUI, pln);
 
 %% Aperture visualization
-% Use a matRad function to visualize the result. For a VMAT plan this shows
-% three views: the apertures of all control points on one grid, the leaf
-% trajectories over the arc, and the delivery metrics (MU rate, gantry
-% rotation speed, leaf speed) against the machine constraints.
-matRad_visApertureInfo(resultGUI.apertureInfo);
+% Use a matRad function to visualize the result.
 
-% Individual views can also be requested explicitly, e.g. the leaf
-% trajectories. The leaf pairs are labelled by index by default; the
-% 'leafCoordinate' option draws them at their physical coordinates instead:
-% matRad_visApertureInfo(resultGUI.apertureInfo, 'trajectory', 'leafCoordinate', 'physical');
-
-% The 'animate' view plays the arc back as it is delivered - one aperture at
-% a time, each shown for its delivery time, with the leaves and the gantry
-% moving between control points. Pausing it frees the sliders to step
-% through the control points by hand ('interactive' starts out paused):
-% matRad_visApertureInfo(resultGUI.apertureInfo, 'animate', 'leafCoordinate', 'physical');
+visLeafCoordinate = 'physical'; % 'leafNum' to show leaf numbers
+visMode = 'animate'; % other options 'perBeam', 'trajectory', 'interactive'
+matRad_visApertureInfo(resultGUI.apertureInfo, visMode, 'leafCoordinate', visLeafCoordinate);
 
 %% Indicator Calculation and display of DVH and QI
 resultGUI = matRad_planAnalysis(resultGUI, ct, cst, stf, pln);
@@ -154,7 +177,8 @@ resultGUI = matRad_calcDeliveryMetrics(resultGUI, stf);
 % The plan was optimized at the (coarse) DAO control points. To check the
 % dose that is actually delivered along the arc, resample the optimized
 % apertures onto a finer gantry-angle grid and forward-calculate the dose.
-[stfFine, apertureInfoFine] = matRad_refineApertureArc(ct, cst, pln, resultGUI.apertureInfo, 2.0);
+refinedSpacing = 2; % [deg] / gantry angle spacing for dose calculation
+[stfFine, apertureInfoFine] = matRad_refineApertureArc(ct, cst, pln, resultGUI.apertureInfo, refinedSpacing);
 resultGUIfine = matRad_calcDoseForward(ct, cst, stfFine, pln, apertureInfoFine.bixelWeights);
 resultGUI.physicalDose_fine = resultGUIfine.physicalDose;
 

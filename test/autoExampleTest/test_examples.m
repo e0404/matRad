@@ -25,6 +25,7 @@ exampleScripts = {'examples/matRad_example1_phantom.m', ...
                   'examples/matRad_example17_biologicalModels.m', ...
                   'examples/matRad_example19_CT_sCT_DVH_difference_photons.m', ...
                   'examples/matRad_example20_VHEE.m', ...
+                  'examples/matRad_example22_photonsVMAT.m', ...
                   'matRad.m' ...
                  };
 
@@ -38,6 +39,16 @@ testing_prefix = 'tmptest_';
 unitTestBixelWidth = 20;
 unitTestSpotSpacing = matRad_cfg.defaults.propStf.longitudinalSpotSpacing;
 unitTestResolution = matRad_cfg.defaults.propDoseCalc.doseGrid.resolution;
+
+% Arc (VMAT) examples are by far the most expensive ones, since the number of
+% gantry angles multiplies the cost of dose calculation, fluence optimization
+% and direct aperture optimization alike. Collapse the arc to a handful of
+% angles: one aperture per fluence-optimized angle and no interpolated control
+% points in between. Every code path is still taken, only with a few beams.
+unitTestArcSpacing = 120;               % [deg] -> 3 gantry angles on a full arc
+unitTestAperturesPerFMOBeam = 1;        % one DAO control point per FMO angle
+unitTestRefinedArcSpacing = 60;         % [deg] for the fine-arc recalculation
+unitTestApertureVisMode = 'perBeam';    % static view; 'animate' plays the arc back in real time
 
 %% Copy and manipulate all scripts
 [folders, names, exts] = cellfun(@fileparts, exampleScripts, 'UniformOutput', false);
@@ -65,6 +76,25 @@ matRad_unitTestTextManipulation(testScriptFiles, 'pln.propDoseCalc.doseGrid.reso
                                 ['pln.propDoseCalc.doseGrid.resolution.y = ' num2str(unitTestResolution.y) ';'], tmpExampleTestFolder);
 matRad_unitTestTextManipulation(testScriptFiles, 'pln.propDoseCalc.doseGrid.resolution.z', ...
                                 ['pln.propDoseCalc.doseGrid.resolution.z = ' num2str(unitTestResolution.z) ';'], tmpExampleTestFolder);
+
+% Arc geometry. The three spacings must satisfy dose <= DAO <= FMO, and are all
+% set to the same value here so that every dose-calculation angle is also a DAO
+% control point and an FMO angle - no interpolated beams, one aperture each.
+matRad_unitTestTextManipulation(testScriptFiles, 'pln.propStf.maxGantryAngleSpacing', ...
+                                ['pln.propStf.maxGantryAngleSpacing = ' num2str(unitTestArcSpacing) ';'], tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles, 'pln.propStf.maxDAOGantryAngleSpacing', ...
+                                ['pln.propStf.maxDAOGantryAngleSpacing = ' num2str(unitTestArcSpacing) ';'], tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles, 'pln.propStf.maxFMOGantryAngleSpacing', ...
+                                ['pln.propStf.maxFMOGantryAngleSpacing = ' num2str(unitTestArcSpacing) ';'], tmpExampleTestFolder);
+% without this the stf generator subdivides the DAO angles again to reach the
+% requested number of apertures per FMO beam, undoing the coarsening above
+matRad_unitTestTextManipulation(testScriptFiles, 'pln.propStf.minAperturesPerFMOBeam', ...
+                                ['pln.propStf.minAperturesPerFMOBeam = ' num2str(unitTestAperturesPerFMOBeam) ';'], tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles, 'refinedSpacing =', ...
+                                ['refinedSpacing = ' num2str(unitTestRefinedArcSpacing) ';'], tmpExampleTestFolder);
+matRad_unitTestTextManipulation(testScriptFiles, 'visMode = ''', ...
+                                ['visMode = ''' unitTestApertureVisMode ''';'], tmpExampleTestFolder);
+
 matRad_unitTestTextManipulation(testScriptFiles, 'disp(', ...
                                 '%%%%%%%%%%%%%%% REMOVED DISPLAY FOR TESTING %%%%%%%%%%%%%%', tmpExampleTestFolder);
 
