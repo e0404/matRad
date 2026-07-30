@@ -96,12 +96,16 @@ else
 
                     obj = cstOnDoseGrid{i, 6}{j};
 
-                    if ~isa(obj, 'matRad_DoseOptimizationFunction')
+                    if ~isa(obj, 'matRad_OptimizationFunction')
                         try
                             obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
                         catch
                             matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!', i, j);
                         end
+                    end
+
+                    if ~isa(obj, 'matRad_DoseOptimizationFunction')
+                        continue % voxel selection is driven by the dose functions only
                     end
 
                     robustness = obj.robustness;

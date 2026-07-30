@@ -64,26 +64,7 @@ end
 cst = matRad_setOverlapPriorities(cst);
 
 % check & adjust objectives and constraints internally for fractionation
-for i = 1:size(cst, 1)
-    for j = 1:numel(cst{i, 6})
-        obj = cst{i, 6}{j};
-
-        % In case it is a default saved struct, convert to object
-        % Also intrinsically checks that we have a valid optimization
-        % objective or constraint function in the end
-        if ~isa(obj, 'matRad_DoseOptimizationFunction')
-            try
-                obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
-            catch
-                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!', i, j);
-            end
-        end
-
-        obj = obj.setDoseParameters(obj.getDoseParameters() / pln.numOfFractions);
-
-        cst{i, 6}{j} = obj;
-    end
-end
+cst = matRad_fractionateCstFunctions(cst, pln.numOfFractions);
 
 % resizing cst to dose cube resolution
 cst = matRad_resizeCstToGrid(cst, dij.ctGrid.x, dij.ctGrid.y, dij.ctGrid.z, ...
@@ -169,6 +150,13 @@ else
 end
 apertureInfo = optiProb.matRad_daoVec2ApertureInfo(apertureInfo, apertureInfo.apertureVector);
 optiProb.apertureInfo = apertureInfo;
+
+% Fluence objectives shape the fluence *before* it is sequenced into
+% apertures. Once the fluence is a sum of deliverable apertures, smoothing it
+% further has no well defined meaning, so they are dropped here. Aperture
+% related regularization would need its own objective class acting on the
+% aperture vector.
+matRad_warnIgnoredFluenceObjectives(pln, cst);
 
 if ~isfield(pln.propOpt, 'optimizer')
     pln.propOpt.optimizer = 'IPOPT';
@@ -268,6 +256,17 @@ if pln.propOpt.runVMAT
     resultGUI.apertureInfo = matRad_enforceDeliveryConstraints(resultGUI.apertureInfo);
 end
 
+end
+
+function matRad_warnIgnoredFluenceObjectives(pln, cst)
+% warn about fluence objectives that DAO cannot honor
+fluenceObjectives = matRad_getFluenceObjectives(pln, cst, []);
+if ~isempty(fluenceObjectives)
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispWarning(['%d fluence objective(s) are ignored in direct aperture optimization - ' ...
+                            'they only act on the fluence optimization preceding the sequencing.'], ...
+                           numel(fluenceObjectives));
+end
 end
 
 function resultGUI = matRad_mergeDoseCubes(resultGUI, doseCubes)

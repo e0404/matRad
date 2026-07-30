@@ -1,8 +1,10 @@
-classdef (Abstract) matRad_DoseOptimizationFunction
-    % matRad_DoseOptimizationFunction. Superclass for objectives and
+classdef (Abstract) matRad_DoseOptimizationFunction < matRad_OptimizationFunction
+    % matRad_DoseOptimizationFunction. Superclass for dose objectives and
     % constraints.
-    % This is the superclass for all objectives and constraints to enable easy
-    % one-line identification.
+    % This is the superclass for all objectives and constraints acting on the
+    % dose, to enable easy one-line identification. It adds the dose parameter
+    % accessors and the robustness setting to the generic
+    % matRad_OptimizationFunction.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
@@ -17,35 +19,20 @@ classdef (Abstract) matRad_DoseOptimizationFunction
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    properties (Abstract, Constant)
-        name                % Display name of the Objective. Needs to be implemented in sub-classes.
-        parameterNames      % Cell array of Display names of the parameters. Needs to be implemented in sub-classes.
-        % Cell array of parameter types. Valid types are 'dose', 'numeric', or
-        % a cell list of string options. Needs to be implemented in sub-classes.
-        parameterTypes
-    end
-
-    properties (Abstract, Access = public)
-        parameters
-    end
-
     properties
         robustness = 'none'     % Robustness setting -> may be removed from the DoseObjective class in a future release
     end
 
     methods
 
-        function obj = matRad_DoseOptimizationFunction(dataStruct)
-            if nargin > 0 && ~isempty(dataStruct) && isstruct(dataStruct)
-                obj = assignCommonPropertiesFromStruct(obj, dataStruct);
-            end
+        function obj = matRad_DoseOptimizationFunction(varargin)
+            obj@matRad_OptimizationFunction(varargin{:});
         end
 
         % Overload the struct function to return a struct with general
         % the objective / constraint
         function s = struct(obj)
-            s.className = class(obj);
-            s.parameters = obj.parameters;
+            s = struct@matRad_OptimizationFunction(obj);
             s.robustness = obj.robustness;
         end
 
@@ -77,22 +64,6 @@ classdef (Abstract) matRad_DoseOptimizationFunction
 
     end
 
-    methods (Access = private)
-
-        function obj = assignCommonPropertiesFromStruct(obj, s)
-            for fn = fieldnames(s)'    % enumerat fields
-                try
-                    obj.(fn{1}) = s.(fn{1});   % and copy
-                catch
-                    continue
-                    % Do Nothing here
-                    % warning('Could not copy field %s', fn{1});
-                end
-            end
-        end
-
-    end
-
     methods (Static)
 
         % creates an optimization function from a struct
@@ -103,21 +74,12 @@ classdef (Abstract) matRad_DoseOptimizationFunction
                 if isfield(s, 'type')
                     s = matRad_DoseOptimizationFunction.convertOldOptimizationStruct(s);
                 end
-
-                % Create objective / constraint from class name
-                obj = eval([s.className '(s)']);
-
-                env = matRad_getEnvironment();
-
-                % Workaround for Octave which has a problem assigning
-                % properties in superclass
-                if strcmp(env, 'OCTAVE')
-                    obj = assignCommonPropertiesFromStruct(obj, s);
-                end
-
             catch ME
                 error(['Could not instantiate Optimization Function: ' ME.message]);
             end
+
+            % The generic instantiation lives in the common ancestor
+            obj = matRad_OptimizationFunction.createInstanceFromStruct(s);
         end
 
         function rob = availableRobustness()

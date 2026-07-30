@@ -278,7 +278,7 @@ classdef matRad_OptimizationWidget < matRad_Widget
                     obj = cst{i, 6}{j};
 
                     % Convert to class if not
-                    if ~isa(obj, 'matRad_DoseOptimizationFunction')
+                    if ~isa(obj, 'matRad_OptimizationFunction')
                         try
                             obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
                         catch ME

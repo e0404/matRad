@@ -77,31 +77,7 @@ end
 cst  = matRad_setOverlapPriorities(cst);
 
 % check & adjust objectives and constraints internally for fractionation
-for i = 1:size(cst, 1)
-    % Compatibility Layer for old objective format
-    if isstruct(cst{i, 6})
-        cst{i, 6} = arrayfun(@matRad_DoseOptimizationFunction.convertOldOptimizationStruct, cst{i, 6}, 'UniformOutput', false);
-    end
-    for j = 1:numel(cst{i, 6})
-
-        obj = cst{i, 6}{j};
-
-        % In case it is a default saved struct, convert to object
-        % Also intrinsically checks that we have a valid optimization
-        % objective or constraint function in the end
-        if ~isa(obj, 'matRad_DoseOptimizationFunction')
-            try
-                obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
-            catch
-                matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!', i, j);
-            end
-        end
-
-        obj = obj.setDoseParameters(obj.getDoseParameters() / pln.numOfFractions);
-
-        cst{i, 6}{j} = obj;
-    end
-end
+cst = matRad_fractionateCstFunctions(cst, pln.numOfFractions);
 
 % resizing cst to dose cube resolution
 cst = matRad_resizeCstToGrid(cst, dij.ctGrid.x,  dij.ctGrid.y,  dij.ctGrid.z, ...
@@ -129,6 +105,9 @@ for i = 1:size(cst, 1)
         % Iterate through objectives/constraints
         fDoses = [];
         for fObjCell = cst{i, 6}
+            if ~isa(fObjCell{1}, 'matRad_DoseOptimizationFunction')
+                continue % e.g. a fluence objective, which prescribes no dose
+            end
             dParams = fObjCell{1}.getDoseParameters();
             % Don't care for Inf constraints
             dParams = dParams(isfinite(dParams));
@@ -306,6 +285,9 @@ FLAG_ROB_OPT   = false;
 
 for i = 1:size(cst, 1)
     for j = 1:numel(cst{i, 6})
+        if ~isa(cst{i, 6}{j}, 'matRad_DoseOptimizationFunction')
+            continue % only dose related functions have a robustness setting
+        end
         if strcmp(cst{i, 6}{j}.robustness, 'PROB') && numel(linIxDIJ) > 1
             FLAG_CALC_PROB = true;
         end
@@ -333,6 +315,11 @@ backProjection.nominalCtScenarios = linIxDIJ_nominalCT;
 % backProjection.scenDim      = pln.multScen
 
 optiProb = matRad_OptimizationProblem(backProjection);
+
+% objectives acting directly on the fluence (e.g. smoothing). They are built
+% from the stf beforehand (see FluenceObjectives.matRad_FluenceSmoothness.fromStf)
+% and handed over in pln.propOpt.fluenceObjectives or within the cst
+optiProb.fluenceObjectives = matRad_getFluenceObjectives(pln, cst, dij);
 
 if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'useLogSumExpForRobOpt')
     optiProb.useLogSumExpForRobOpt = pln.propOpt.useLogSumExpForRobOpt;

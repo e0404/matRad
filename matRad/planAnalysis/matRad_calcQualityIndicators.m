@@ -99,7 +99,7 @@ for runVoi = 1:size(cst, 1)
             for runObjective = 1:numel(cst{runVoi, 6})
                 % check if this is an objective that penalizes underdosing
                 obj = cst{runVoi, 6}{runObjective};
-                if ~isa(obj, 'matRad_DoseOptimizationFunction')
+                if ~isa(obj, 'matRad_OptimizationFunction')
                     try
                         obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
                     catch ME

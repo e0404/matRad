@@ -329,3 +329,10 @@ if vOmega ~= 0
     % Only implemented for first scenario now
     weightGradient = weightGradient + gProb{1};
 end
+
+% Objectives acting on the fluence itself. Their gradient is already a
+% gradient w.r.t. the weights, so no chain rule / backprojection is needed.
+for i = 1:numel(optiProb.fluenceObjectives)
+    fluenceObjective = optiProb.fluenceObjectives{i};
+    weightGradient = weightGradient + fluenceObjective.penalty * fluenceObjective.computeFluenceObjectiveGradient(w);
+end

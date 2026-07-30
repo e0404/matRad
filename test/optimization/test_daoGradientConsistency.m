@@ -22,7 +22,7 @@ cst = matRad_setOverlapPriorities(cst);
 for i = 1:size(cst, 1)
     for j = 1:numel(cst{i, 6})
         obj = cst{i, 6}{j};
-        if ~isa(obj, 'matRad_DoseOptimizationFunction')
+        if ~isa(obj, 'matRad_OptimizationFunction')
             obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
         end
         obj = obj.setDoseParameters(obj.getDoseParameters() / pln.numOfFractions);

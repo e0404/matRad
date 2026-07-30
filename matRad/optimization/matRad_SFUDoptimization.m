@@ -71,12 +71,17 @@ for i = 1:size(cst, 1)
         % In case it is a default saved struct, convert to object
         % Also intrinsically checks that we have a valid optimization
         % objective or constraint function in the end
-        if ~isa(obj, 'matRad_DoseOptimizationFunction')
+        if ~isa(obj, 'matRad_OptimizationFunction')
             try
                 obj = matRad_DoseOptimizationFunction.createInstanceFromStruct(obj);
             catch
                 matRad_cfg.dispError('cst{%d,6}{%d} is not a valid Objective/constraint! Remove or Replace and try again!', i, j);
             end
+        end
+
+        if ~isa(obj, 'matRad_DoseOptimizationFunction')
+            sb_cst{i, 6}{j} = obj;
+            continue % single beam dose splitting only applies to dose functions
         end
 
         % biological dose splitting for carbon

@@ -227,3 +227,10 @@ if fMax > 0
 end
 % Sum up max of composite worst case part
 f = f + fMax;
+
+% Objectives acting on the fluence itself. They do not pass through the
+% backprojection, so they are simply added on top of the dose objectives.
+for i = 1:numel(optiProb.fluenceObjectives)
+    fluenceObjective = optiProb.fluenceObjectives{i};
+    f = f + fluenceObjective.penalty * fluenceObjective.computeFluenceObjectiveFunction(w);
+end

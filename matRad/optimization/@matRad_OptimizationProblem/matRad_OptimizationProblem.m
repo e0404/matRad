@@ -30,6 +30,12 @@ classdef matRad_OptimizationProblem < handle
 
         minimumW = NaN
         maximumW = NaN
+
+        % Objectives acting on the fluence vector directly instead of on the
+        % dose (see FluenceObjectives.matRad_FluenceObjective). They bypass
+        % the backprojection, so their gradient is added to the weight
+        % gradient without a chain rule.
+        fluenceObjectives = {}
     end
 
     methods
