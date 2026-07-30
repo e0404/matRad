@@ -38,7 +38,7 @@ function test_getSequencerFromPlnExplicitSelection
 pln = helper_getPln('photons');
 pln.propSeq.sequencer = 'xia';
 seq = matRad_SequencerBase.getSequencerFromPln(pln);
-assertTrue(isa(seq, 'matRad_SequencingPhotonsXiaLeaf'));
+assertTrue(isa(seq, 'matRad_PhotonLeafSequencerXia'));
 assertEqual(seq.shortName, 'xia');
 
 function test_getSequencerFromPlnInvalidFallsBackToDefault
@@ -51,10 +51,10 @@ assertEqual(seq.shortName, 'siochi');
 
 function test_getSequencerFromPlnObjectPassthrough
 pln = helper_getPln('photons');
-sequencer = matRad_SequencingPhotonsEngelLeaf(pln);
+sequencer = matRad_PhotonLeafSequencerEngel(pln);
 pln.propSeq = sequencer;
 seq = matRad_SequencerBase.getSequencerFromPln(pln);
-assertTrue(isa(seq, 'matRad_SequencingPhotonsEngelLeaf'));
+assertTrue(isa(seq, 'matRad_PhotonLeafSequencerEngel'));
 % a sequencer object stored in pln.propSeq must be returned as-is, i.e. the
 % same handle - verified via shared mutation (handle '==' is not available
 % in Octave)
@@ -64,22 +64,22 @@ assertEqual(sequencer.visMode, 1);
 function test_getSequencerFromPlnParticleDefault
 pln = helper_getPln('protons');
 seq = matRad_SequencerBase.getSequencerFromPln(pln, false);
-assertTrue(isa(seq, 'matRad_ParticleSequencer'));
+assertTrue(isa(seq, 'matRad_ParticleScanningSequencerSpill'));
 assertEqual(seq.shortName, 'IMPT');
 
 function test_isAvailablePhotonSequencer
 pln = helper_getPln('photons');
 machine = matRad_loadMachine(pln);
-assertTrue(matRad_SequencingPhotonsSiochiLeaf.isAvailable(pln, machine));
+assertTrue(matRad_PhotonLeafSequencerSiochi.isAvailable(pln, machine));
 % the particle sequencer must not be available for a photon machine/pln
-assertFalse(matRad_ParticleSequencer.isAvailable(pln, machine));
+assertFalse(matRad_ParticleScanningSequencerSpill.isAvailable(pln, machine));
 
 function test_isAvailableParticleSequencer
 pln = helper_getPln('protons');
 machine = matRad_loadMachine(pln);
-assertTrue(matRad_ParticleSequencer.isAvailable(pln, machine));
+assertTrue(matRad_ParticleScanningSequencerSpill.isAvailable(pln, machine));
 % a photon leaf sequencer must not be available for a particle machine/pln
-assertFalse(matRad_SequencingPhotonsSiochiLeaf.isAvailable(pln, machine));
+assertFalse(matRad_PhotonLeafSequencerSiochi.isAvailable(pln, machine));
 
 function test_assignPropertiesFromPlnSetsNumLevels
 pln = helper_getPln('photons');
@@ -108,7 +108,7 @@ function test_numLevelsAffectsNumberOfShapes
 % shapes. This also covers the initBeam stratification at different levels.
 p = load('photons_testData.mat');
 
-seq = matRad_SequencingPhotonsSiochiLeaf();
+seq = matRad_PhotonLeafSequencerSiochi();
 
 seq.numLevels = 2;
 sequenceLow = seq.sequence(p.resultGUI.w, p.stf);

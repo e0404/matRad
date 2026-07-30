@@ -1,13 +1,13 @@
-classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerAbstract
+classdef (Abstract) matRad_PhotonLeafSequencerVMATAbstract < matRad_PhotonLeafSequencerAbstract
 
-    % matRad_PhotonSequencerVMATAbstract: Abstract base class for photon leaf
+    % matRad_PhotonLeafSequencerVMATAbstract: Abstract base class for photon leaf
     %   sequencers that additionally support VMAT (dynamic/arc) delivery.
     %   Holds the machinery shared by any VMAT-capable sequencing algorithm -
     %   FMO/DAO-angle bookkeeping, arc spreading, VMAT aperture-info
     %   construction and the leaf-speed/dose-rate post-processing pipeline -
     %   which is independent of how an individual beam's shapes are decomposed.
     %   Concrete subclasses still implement sequence(); when this.runVMAT is
-    %   false they behave exactly as a plain matRad_PhotonSequencerAbstract.
+    %   false they behave exactly as a plain matRad_PhotonLeafSequencerAbstract.
 
     properties (Constant)
         isVMATCapable = true % cheap tag for isprop-style capability checks
@@ -23,11 +23,11 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
 
     methods
 
-        function this = matRad_PhotonSequencerVMATAbstract(pln)
+        function this = matRad_PhotonLeafSequencerVMATAbstract(pln)
             if nargin < 1
                 pln = [];
             end
-            this = this@matRad_PhotonSequencerAbstract(pln);
+            this = this@matRad_PhotonLeafSequencerAbstract(pln);
         end
 
         function set.arcFluenceSmoothing(this, value)

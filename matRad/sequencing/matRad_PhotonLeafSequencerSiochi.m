@@ -1,10 +1,10 @@
-classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstract
+classdef  matRad_PhotonLeafSequencerSiochi < matRad_PhotonLeafSequencerVMATAbstract
 
-    % matRad_SequencingPhotonsSiochiLeaf: photon MLC leaf sequencing after
+    % matRad_PhotonLeafSequencerSiochi: photon MLC leaf sequencing after
     %   Siochi (1999), using rod pushing with collision and tongue-and-groove
     %   correction to convert the optimized fluence into deliverable segments.
     %   Supports both static (IMRT) and VMAT (dynamic/arc) delivery - see
-    %   this.runVMAT and matRad_PhotonSequencerVMATAbstract.
+    %   this.runVMAT and matRad_PhotonLeafSequencerVMATAbstract.
     %
     % References
     %   [1] https://www.ncbi.nlm.nih.gov/pubmed/10078655
@@ -18,11 +18,11 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
 
     methods
 
-        function this = matRad_SequencingPhotonsSiochiLeaf(pln)
+        function this = matRad_PhotonLeafSequencerSiochi(pln)
             if nargin < 1
                 pln = [];
             end
-            this = this@matRad_PhotonSequencerVMATAbstract(pln);
+            this = this@matRad_PhotonLeafSequencerVMATAbstract(pln);
         end
 
         function sequence = sequence(this, w, stf)
@@ -398,7 +398,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
             end
 
             % Check superclass availability
-            [available, msg] = matRad_PhotonSequencerAbstract.isAvailable(pln, machine);
+            [available, msg] = matRad_PhotonLeafSequencerAbstract.isAvailable(pln, machine);
 
             if ~available
                 return
@@ -412,8 +412,8 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
                 checkBasic = isfield(machine, 'meta') && isfield(machine, 'data');
 
                 % check modality
-                checkModality = any(strcmp(matRad_SequencingPhotonsSiochiLeaf.possibleRadiationModes, machine.meta.radiationMode)) && ...
-                    any(strcmp(matRad_SequencingPhotonsSiochiLeaf.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_PhotonLeafSequencerSiochi.possibleRadiationModes, machine.meta.radiationMode)) && ...
+                    any(strcmp(matRad_PhotonLeafSequencerSiochi.possibleRadiationModes, pln.radiationMode));
 
                 % Sanity check compatibility
                 if checkModality

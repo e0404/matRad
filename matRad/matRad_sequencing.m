@@ -80,7 +80,7 @@ if strcmp(pln.radiationMode, 'photons')
     % class, so it is bridged here rather than moved to propSeq.
     dynamic = matRad_getFieldOrDefault(pln.propOpt, 'runVMAT', false);
 
-    if isa(sequencer, 'matRad_PhotonSequencerVMATAbstract')
+    if isa(sequencer, 'matRad_PhotonLeafSequencerVMATAbstract')
         sequencer.runVMAT = dynamic;
         if ~isfield(pln.propSeq, 'continuousAperture') && isfield(pln.propOpt, 'continuousAperture')
             matRad_cfg.dispDeprecationWarning('pln.propOpt.continuousAperture is deprecated. Use pln.propSeq.continuousAperture instead!');

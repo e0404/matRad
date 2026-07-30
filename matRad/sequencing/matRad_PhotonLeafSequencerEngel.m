@@ -1,4 +1,4 @@
-classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
+classdef  matRad_PhotonLeafSequencerEngel < matRad_PhotonLeafSequencerAbstract
 
     % multileaf collimator leaf sequencing algorithm
     % for intensity modulated beams with multiple static segments according
@@ -28,11 +28,11 @@ classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
 
     methods
 
-        function this = matRad_SequencingPhotonsEngelLeaf(pln)
+        function this = matRad_PhotonLeafSequencerEngel(pln)
             if nargin < 1
                 pln = [];
             end
-            this = this@matRad_PhotonSequencerAbstract(pln);
+            this = this@matRad_PhotonLeafSequencerAbstract(pln);
         end
 
         function sequence = sequence(this, w, stf)
@@ -273,7 +273,7 @@ classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
             end
 
             % Check superclass availability
-            [available, msg] = matRad_PhotonSequencerAbstract.isAvailable(pln, machine);
+            [available, msg] = matRad_PhotonLeafSequencerAbstract.isAvailable(pln, machine);
 
             if ~available
                 return
@@ -287,8 +287,8 @@ classdef  matRad_SequencingPhotonsEngelLeaf < matRad_PhotonSequencerAbstract
                 checkBasic = isfield(machine, 'meta') && isfield(machine, 'data');
 
                 % check modality
-                checkModality = any(strcmp(matRad_SequencingPhotonsEngelLeaf.possibleRadiationModes, machine.meta.radiationMode)) && ...
-                                any(strcmp(matRad_SequencingPhotonsEngelLeaf.possibleRadiationModes, pln.radiationMode));
+                checkModality = any(strcmp(matRad_PhotonLeafSequencerEngel.possibleRadiationModes, machine.meta.radiationMode)) && ...
+                                any(strcmp(matRad_PhotonLeafSequencerEngel.possibleRadiationModes, pln.radiationMode));
 
                 % Sanity check compatibility
                 if checkModality

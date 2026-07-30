@@ -1,6 +1,6 @@
-classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
+classdef  (Abstract) matRad_PhotonLeafSequencerAbstract < matRad_SequencerBase
 
-    % matRad_PhotonSequencerAbstract: Abstract base class for photon multileaf
+    % matRad_PhotonLeafSequencerAbstract: Abstract base class for photon multileaf
     %   collimator (MLC) leaf sequencers. Provides the shared fluence
     %   stratification, aperture-info generation and segment visualization;
     %   concrete subclasses implement the specific leaf sequencing algorithm.
@@ -19,7 +19,7 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
     methods
 
-        function this = matRad_PhotonSequencerAbstract(pln)
+        function this = matRad_PhotonLeafSequencerAbstract(pln)
             % Constructor, forwards to the base class. An explicit constructor
             % chain is required so that property assignment from pln persists
             % under Octave.
@@ -508,9 +508,9 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
             switch selection
                 case 'doseAreaProduct'
-                    [keepIx, weights] = matRad_PhotonSequencerAbstract.selectByDoseAreaProduct(beam, numToKeep);
+                    [keepIx, weights] = matRad_PhotonLeafSequencerAbstract.selectByDoseAreaProduct(beam, numToKeep);
                 case 'leastSquares'
-                    [keepIx, weights] = matRad_PhotonSequencerAbstract.selectByLeastSquares(beam, numToKeep);
+                    [keepIx, weights] = matRad_PhotonLeafSequencerAbstract.selectByLeastSquares(beam, numToKeep);
                 otherwise
                     matRad_cfg = MatRad_Config.instance();
                     matRad_cfg.dispError('Invalid aperture selection ''%s''!', selection);
@@ -597,8 +597,8 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                     end
 
                     trialIx = [selected(1:i - 1); candidate];
-                    trialWeights = matRad_PhotonSequencerAbstract.solveNonNegativeLeastSquares( ...
-                                                                                               shapeMx(:, trialIx), targetFluence);
+                    trialWeights = matRad_PhotonLeafSequencerAbstract.solveNonNegativeLeastSquares( ...
+                                                                                                   shapeMx(:, trialIx), targetFluence);
                     residual = norm(targetFluence - shapeMx(:, trialIx) * trialWeights);
 
                     if residual < bestResidual

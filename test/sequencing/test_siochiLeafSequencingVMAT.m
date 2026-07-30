@@ -141,7 +141,7 @@ for continuousAperture = [false true]
 end
 
 function sequencer = helper_getSequencer(pln)
-sequencer = matRad_SequencingPhotonsSiochiLeaf(pln);
+sequencer = matRad_PhotonLeafSequencerSiochi(pln);
 sequencer.runVMAT = true;
 sequencer.numLevels = 5;
 sequencer.weightToMU = 100;
@@ -149,7 +149,7 @@ sequencer.weightToMU = 100;
 function test_siochiVMATIsVMATCapable
 [~, pln] = helper_getVmatStf();
 sequencer = helper_getSequencer(pln);
-assertTrue(isa(sequencer, 'matRad_PhotonSequencerVMATAbstract'));
+assertTrue(isa(sequencer, 'matRad_PhotonLeafSequencerVMATAbstract'));
 assertTrue(sequencer.isVMATCapable);
 assertTrue(sequencer.runVMAT);
 
@@ -157,7 +157,7 @@ function test_siochiVMATStaticModeUnchanged
 % Regression guard: changing this class's ancestry must not affect static
 % (non-VMAT) sequencing behavior.
 p = load('photons_testData.mat');
-sequencer = matRad_SequencingPhotonsSiochiLeaf(p.pln);
+sequencer = matRad_PhotonLeafSequencerSiochi(p.pln);
 assertFalse(sequencer.runVMAT);
 
 sequence = sequencer.sequence(p.resultGUI.w, p.stf);
@@ -291,8 +291,8 @@ function test_apertureSelectionLeastSquaresFitsBetter
 beam = helper_apertureFixture();
 
 for numToKeep = [2 3 4]
-    byDAP = matRad_PhotonSequencerAbstract.discardApertures(beam, numToKeep, 'doseAreaProduct');
-    byLS  = matRad_PhotonSequencerAbstract.discardApertures(beam, numToKeep, 'leastSquares');
+    byDAP = matRad_PhotonLeafSequencerAbstract.discardApertures(beam, numToKeep, 'doseAreaProduct');
+    byLS  = matRad_PhotonLeafSequencerAbstract.discardApertures(beam, numToKeep, 'leastSquares');
 
     assertEqual(byLS.numOfShapes, numToKeep);
     assertTrue(all(byLS.shapesWeight >= 0), 'least squares produced a negative aperture weight');
@@ -302,7 +302,7 @@ for numToKeep = [2 3 4]
 end
 
 % keeping every aperture must reproduce the fluence exactly
-byLSAll = matRad_PhotonSequencerAbstract.discardApertures(beam, beam.numOfShapes, 'leastSquares');
+byLSAll = matRad_PhotonLeafSequencerAbstract.discardApertures(beam, beam.numOfShapes, 'leastSquares');
 assertElementsAlmostEqual(helper_reconstructionResidual(byLSAll, beam), 0, 'absolute', 1e-10);
 
 function test_apertureSelectionDefaultIsUnchanged
@@ -310,8 +310,8 @@ function test_apertureSelectionDefaultIsUnchanged
 % preserves the total dose-area product.
 beam = helper_apertureFixture();
 
-byDefault  = matRad_PhotonSequencerAbstract.discardApertures(beam, 3);
-byExplicit = matRad_PhotonSequencerAbstract.discardApertures(beam, 3, 'doseAreaProduct');
+byDefault  = matRad_PhotonLeafSequencerAbstract.discardApertures(beam, 3);
+byExplicit = matRad_PhotonLeafSequencerAbstract.discardApertures(beam, 3, 'doseAreaProduct');
 assertEqual(byDefault.shapes, byExplicit.shapes);
 assertEqual(byDefault.shapesWeight, byExplicit.shapesWeight);
 
@@ -323,7 +323,7 @@ assertElementsAlmostEqual(dapKept, dapAll);
 sequencer = helper_getSequencer(pln);
 assertEqual(sequencer.apertureSelection, 'doseAreaProduct');
 assertTrue(all(ismember({'doseAreaProduct', 'leastSquares'}, ...
-                        matRad_PhotonSequencerAbstract.availableApertureSelection())));
+                        matRad_PhotonLeafSequencerAbstract.availableApertureSelection())));
 assertExceptionThrown(@() helper_setApertureSelection(sequencer, 'randomPick'));
 
 function helper_setApertureSelection(sequencer, value)
@@ -475,7 +475,7 @@ beam.shapes(:, :, 3) = [1 1 0];
 beam.shapesWeight = [1; 10; 2];
 beam.numOfShapes = 3;
 
-newBeam = matRad_PhotonSequencerAbstract.discardApertures(beam, 2);
+newBeam = matRad_PhotonLeafSequencerAbstract.discardApertures(beam, 2);
 
 assertEqual(newBeam.numOfShapes, 2);
 assertEqual(newBeam.shapes, double(beam.shapes(:, :, [2 3])));
@@ -494,16 +494,16 @@ beam.shapes(:, :, 3) = [1 1 0];
 beam.numOfShapes = 3;
 
 beam.shapesWeight = [1 10 2];   % row vector
-newBeam = matRad_PhotonSequencerAbstract.discardApertures(beam, 2);
+newBeam = matRad_PhotonLeafSequencerAbstract.discardApertures(beam, 2);
 assertEqual(size(newBeam.shapesWeight), [2 1]);
 assertTrue(isa(newBeam.shapes, 'double'));
 
 beam.shapesWeight = [1; 10; 2]; % column vector -> same result
-newBeamCol = matRad_PhotonSequencerAbstract.discardApertures(beam, 2);
+newBeamCol = matRad_PhotonLeafSequencerAbstract.discardApertures(beam, 2);
 assertElementsAlmostEqual(newBeamCol.shapesWeight, newBeam.shapesWeight);
 
 % asking for more apertures than exist clamps instead of padding
-newBeamAll = matRad_PhotonSequencerAbstract.discardApertures(beam, 99);
+newBeamAll = matRad_PhotonLeafSequencerAbstract.discardApertures(beam, 99);
 assertEqual(newBeamAll.numOfShapes, 3);
 assertEqual(size(newBeamAll.shapes, 3), 3);
 

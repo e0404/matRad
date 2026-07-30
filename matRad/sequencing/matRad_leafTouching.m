@@ -20,7 +20,7 @@ function apertureInfo = matRad_leafTouching(apertureInfo)
 % shape(1) already carries leftLeafPosInitial/Final, sampling the trajectory
 % either once (beam centre) or twice (dose sector borders) per DAO beam. Only
 % the once-per-beam mode has ever run. The sole call site
-% (matRad_PhotonSequencerVMATAbstract) does not set those fields beforehand --
+% (matRad_PhotonLeafSequencerVMATAbstract) does not set those fields beforehand --
 % this function creates them itself, at the end of its own run -- and that has
 % been true since the function was first added. The twice-per-beam mode was
 % presumably written for a second, post-DAO cleanup invocation that was never

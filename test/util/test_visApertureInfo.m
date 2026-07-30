@@ -49,7 +49,7 @@ if isempty(cachedInfo)
 
     stf = matRad_generateStf(p.ct, p.cst, pln);
 
-    sequencer = matRad_SequencingPhotonsSiochiLeaf(pln);
+    sequencer = matRad_PhotonLeafSequencerSiochi(pln);
     sequencer.runVMAT = true;
     sequencer.numLevels = 5;
     sequencer.weightToMU = 100;
