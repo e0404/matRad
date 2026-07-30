@@ -5,31 +5,34 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     %
     %
     % The following parameters for the FRED engine can be tuned by the user. In
-    % order to do so, specify the desired value in: pln.propDoseCalc.
-    % [s]: string/character array
-    % [b]: boolean
-    % [i]: integer
-    % [f]: float/double/any non strictly integer number
+    % order to do so, specify the desired value in pln.propDoseCalc. The type of
+    % each parameter is given as::
     %
+    %   [s]: string/character array
+    %   [b]: boolean
+    %   [i]: integer
+    %   [f]: float/double/any non strictly integer number
+    %   [c]: cell array
     %
-    % HUclamping:            [b] allows for clamping of HU table. Default: true
-    % HUtable:               [s] HU table name. Example: 'internal', 'matRad_default_FRED'
-    % externalCalculation    [b/s] off (default): run FRED
-    %                              t/'write'  : Only write simulation parameter files
-    %                              'path'     : read simulation files from 'path'
+    % The available parameters are::
     %
-    % sourceModel            [s] see AvailableSourceModels, {'gaussian', 'emittance', 'sigmaSqrModel'}
-    % useGPU                 [b] trigger use of GPU (if available)
-    % roomMaterial           [s] material of the patient surroundings. Example:
-    %                            'vacuum', 'Air'
-    % printOutput            [b] 't: FRED output is mirrored to Matlab console, f: no output is printed'
-    % numHistoriesDirect     [i]
-    % numHistoriesPerBeamlet [i]
-    % scorers                [c] cell array with specified scorers. Example:
-    %                            'Dose', 'LETd'
-    % primaryMass            [f] mass of the primary ion (in Da). Default value for
-    %                             protons: 1.0727
-    % numOfNucleons          [i] number of nucleons. Default for protons: 1
+    %   HUclamping:            [b] allows for clamping of HU table. Default: true
+    %   HUtable:               [s] HU table name. Example: 'internal', 'matRad_default_FRED'
+    %   externalCalculation    [b/s] off (default): run FRED
+    %                                t/'write'  : Only write simulation parameter files
+    %                                'path'     : read simulation files from 'path'
+    %   sourceModel            [s] see AvailableSourceModels, {'gaussian', 'emittance', 'sigmaSqrModel'}
+    %   useGPU                 [b] trigger use of GPU (if available)
+    %   roomMaterial           [s] material of the patient surroundings. Example:
+    %                              'vacuum', 'Air'
+    %   printOutput            [b] 't: FRED output is mirrored to Matlab console, f: no output is printed'
+    %   numHistoriesDirect     [i]
+    %   numHistoriesPerBeamlet [i]
+    %   scorers                [c] cell array with specified scorers. Example:
+    %                              'Dose', 'LETd'
+    %   primaryMass            [f] mass of the primary ion (in Da). Default value for
+    %                              protons: 1.0727
+    %   numOfNucleons          [i] number of nucleons. Default for protons: 1
 
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %

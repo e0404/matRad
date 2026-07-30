@@ -163,7 +163,7 @@ During this process, the current objective function value is displayed:
 6. Sequencing
 -------------
 
-For photon IMRT the application of a multileaf collimator is necessary. By sequencing, the applicable dose distribution can be simulated. The fourth input of ``matRad_engelLeafSequencing(resultGUI,stf,dij,7)`` is the number of stratification levels. You can adjust this number to use the number of levels you want.
+For photon IMRT the application of a multileaf collimator is necessary. By sequencing, the applicable dose distribution can be simulated. ``matRad_sequencing(resultGUI,stf,pln,dij)`` decomposes the optimized fluence into deliverable apertures, using the algorithm selected with ``pln.propSeq.sequencer`` and the number of stratification levels given by ``pln.propSeq.numLevels``. You can adjust that number to use the number of levels you want. See :ref:`Sequencing, direct aperture optimization and VMAT <sequencing_dao>` for the available algorithms and for arc delivery.
 
 .. image:: /images/QuickStart_Script_sequencing.png
 

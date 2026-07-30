@@ -28,8 +28,10 @@ classdef matRad_FluenceVariance < FluenceObjectives.matRad_FluenceObjective
     %
     %   The per-beam denominator matters: normalizing by a mean square pooled
     %   over all beams would put the differences between the beam levels into
-    %   the denominator, since
-    %       sum_i w_i^2 = sum_b sum_{i in b} (w_i - m_b)^2 + sum_b n_b m_b^2 ,
+    %   the denominator, since::
+    %
+    %       sum_i w_i^2 = sum_b sum_{i in b} (w_i - m_b)^2 + sum_b n_b m_b^2
+    %
     %   so the objective could be lowered by driving the beams apart in
     %   intensity instead of by smoothing. On an arc that concentrates the
     %   plan on a few control points, which is the opposite of what this
