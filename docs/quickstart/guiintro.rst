@@ -14,7 +14,7 @@ If you prefer to use the :file:`matRad.m` script to execute matRad, check out th
 For more detailed information about the different features of the GUI you can take a look at :ref:`matRad GUI Overview <guioverview>`.
 
 Step 1: Open the matRad folder in MATLAB
-------------------------------------
+----------------------------------------
 
 To use matRad you need to open the matRad folder in MATLAB.
 Open MATLAB and navigate to the location of the files, if you have cloned the repository it is most likely located in your local Github folder.
@@ -134,10 +134,10 @@ You can choose between an intensity plot (for the coronal, sagittal and axial pl
 
 .. image:: /images/QuickStart_GUI_Profile_Depth.png
    :width: 50%
-      
+
 .. image:: /images/QuickStart_GUI_Profile_Lateral.png
    :width: 50%
- 
+
 
 Furthermore, you can have a look at your slice within a 3D model of your patient by clicking *Open 3D View*:
 

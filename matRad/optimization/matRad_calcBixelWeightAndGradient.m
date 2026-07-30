@@ -1,5 +1,4 @@
 function accum = matRad_calcBixelWeightAndGradient(calcOptions, mlcOptions, variables, vectorIndices, accum)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to calculate the bixel weights from the aperture vector,
 % and also the Jacobian matrix relating these two.
 %
@@ -11,7 +10,8 @@ function accum = matRad_calcBixelWeightAndGradient(calcOptions, mlcOptions, vari
 %   mlcOptions:     MLC geometry of the beam (leaf limits, bixel edges, maps)
 %   variables:      leaf positions, weights and times of the current shape
 %   vectorIndices:  where this shape's variables live in the aperture vector
-%   accum:          accumulators carried across the per-shape calls:
+%   accum:          accumulators carried across the per-shape calls::
+%
 %                     .w             bixel weight vector
 %                     .bixelJApVec   Jacobian triplets, fields .vec .i .j
 %                     .sumGradSq     squared gradient sum (Jacobi precond.)
@@ -25,8 +25,6 @@ function accum = matRad_calcBixelWeightAndGradient(calcOptions, mlcOptions, vari
 % References
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018-2026 the matRad development team.

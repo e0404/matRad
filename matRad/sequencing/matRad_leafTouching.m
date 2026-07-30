@@ -1,5 +1,4 @@
 function apertureInfo = matRad_leafTouching(apertureInfo)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad function to improve instances of leaf touching by moving leaves
 % from the centre to sweep with the non-touching leaves.
 %
@@ -33,8 +32,6 @@ function apertureInfo = matRad_leafTouching(apertureInfo)
 % References
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team.

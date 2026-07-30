@@ -9,40 +9,42 @@ function matRad_visApertureInfo(apertureInfo, mode, varargin)
 % input:
 %   apertureInfo: aperture weight and shape info struct
 %   mode:         view to show, either a single name or a cell array of
-%                 names. Default: 'auto'
-%                 'auto'       - 'perBeam' for static (IMRT/DAO) plans,
-%                                'grid' + 'trajectory' + 'metrics' for VMAT
-%                 'perBeam'    - one figure with one tab per beam, one
-%                                subplot per shape of that beam. Suited to
-%                                static delivery, where a beam carries many
-%                                segments
-%                 'grid'       - one (paginated) figure, one subplot per
-%                                control point. Suited to VMAT, where every
-%                                control point carries a single aperture
-%                 'animate'    - single-aperture player, started playing:
-%                                steps through all apertures in delivery
-%                                order, each shown for a time proportional
-%                                to its delivery time (VMAT) or weight. For
-%                                VMAT the leaves and the gantry angle are
-%                                interpolated between control points, so
-%                                the aperture moves the way it is delivered.
-%                                Playback holds the command line until it
-%                                reaches the end of the plan, is paused, or
-%                                the figure is closed
-%                 'interactive'- the same player, started paused, so that
-%                                the control point / shape sliders can be
-%                                scrubbed by hand. Pausing an 'animate'
-%                                figure leaves exactly this behind
-%                 'trajectory' - leaf position vs gantry angle (VMAT only)
-%                 'metrics'    - MU rate, gantry rotation speed and leaf
-%                                speed vs gantry angle, against the machine
-%                                delivery constraints (VMAT only)
+%                 names, default 'auto'::
 %
-%   Name-value pairs:
-%   'leafCoordinate': how to place the leaf pairs on the vertical axis of
-%                 the aperture plots, 'leafNum' (default) to label them by
-%                 leaf pair index, or 'physical' to draw them at their
-%                 physical coordinates
+%                   'auto'       - 'perBeam' for static (IMRT/DAO) plans,
+%                                  'grid' + 'trajectory' + 'metrics' for VMAT
+%                   'perBeam'    - one figure with one tab per beam, one
+%                                  subplot per shape of that beam. Suited to
+%                                  static delivery, where a beam carries many
+%                                  segments
+%                   'grid'       - one (paginated) figure, one subplot per
+%                                  control point. Suited to VMAT, where every
+%                                  control point carries a single aperture
+%                   'animate'    - single-aperture player, started playing:
+%                                  steps through all apertures in delivery
+%                                  order, each shown for a time proportional
+%                                  to its delivery time (VMAT) or weight. For
+%                                  VMAT the leaves and the gantry angle are
+%                                  interpolated between control points, so
+%                                  the aperture moves the way it is
+%                                  delivered. Playback holds the command
+%                                  line until it reaches the end of the
+%                                  plan, is paused, or the figure is closed
+%                   'interactive'- the same player, started paused, so that
+%                                  the control point / shape sliders can be
+%                                  scrubbed by hand. Pausing an 'animate'
+%                                  figure leaves exactly this behind
+%                   'trajectory' - leaf position vs gantry angle (VMAT only)
+%                   'metrics'    - MU rate, gantry rotation speed and leaf
+%                                  speed vs gantry angle, against the machine
+%                                  delivery constraints (VMAT only)
+%
+%   Name-value pairs::
+%
+%     'leafCoordinate'  how to place the leaf pairs on the vertical axis of
+%                       the aperture plots, 'leafNum' (default) to label
+%                       them by leaf pair index, or 'physical' to draw them
+%                       at their physical coordinates
 %
 % output:
 %   -

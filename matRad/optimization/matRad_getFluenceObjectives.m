@@ -3,7 +3,8 @@ function fluenceObjectives = matRad_getFluenceObjectives(pln, cst, dij)
 %
 % Fluence objectives (see matRad_FluenceOptimizationFunction) act on the
 % bixel weight vector directly instead of on the dose. They can be given in
-% two places:
+% two places::
+%
 %   pln.propOpt.fluenceObjectives   cell array (or single object) of
 %                                   objectives that are not tied to a
 %                                   particular structure - the usual place

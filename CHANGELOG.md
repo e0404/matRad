@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - VMC++ dose calculation did not run on Windows and used inconsistent coordinate conventions
 - The MCsquare Windows binary is called with an explicit path prefix, so it is found regardless of the current directory
 - `MatRad_Config.loadobj` merged saved structs using the wrong loop variable
+- The Sphinx documentation now builds without warnings: the parameter tables of several docstrings were malformed reStructuredText and rendered as run-together prose, five functions had a comment banner in place of their summary line, and three `.rst` files had a broken cross reference, a short title underline and a misindented list
 
 ### Changed
 

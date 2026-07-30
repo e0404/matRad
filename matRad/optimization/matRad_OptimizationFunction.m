@@ -5,7 +5,8 @@ classdef (Abstract) matRad_OptimizationFunction
     % of that quantity: the parameter description used by the GUI, struct
     % serialization and instantiation from a struct.
     %
-    % The quantity specific bases derive from it:
+    % The quantity specific bases derive from it::
+    %
     %   matRad_DoseOptimizationFunction     functions of the dose (adds the dose
     %                                       parameter accessors and robustness)
     %   matRad_FluenceOptimizationFunction  functions of the fluence vector

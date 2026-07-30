@@ -1,5 +1,4 @@
 function apertureInfo = matRad_preconditionFactors(apertureInfo)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Calculate preconditioning factors for DAO (only what Esther Wild called
 % the Jacobi preconditioner, not the dij scaled). Scale weights in vector
 % accordingly.
@@ -17,8 +16,6 @@ function apertureInfo = matRad_preconditionFactors(apertureInfo)
 % References
 %   [1] http://onlinelibrary.wiley.com/doi/10.1118/1.4914863/full
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team.

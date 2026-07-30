@@ -12,19 +12,21 @@ function resultGUI = matRad_calcDeliveryMetrics(resultGUI, stf)
 %               aperture plans)
 %
 % output
-%   resultGUI:  input struct with resultGUI.deliveryMetrics added:
-%               .planMU               total monitor units of the plan
-%               .planTime             total delivery time [s]
-%               .gantryAngle          gantry angle per DAO control point [deg]
-%               .time                 delivery time per DAO control point [s]
-%               .MURate               MU rate per DAO control point [MU/s]
-%               .gantryRotationSpeed  gantry speed per DAO control point [deg/s]
-%               .maxLeafSpeed         max leaf speed per DAO control point [mm/s]
-%               .leafSpeed            individual leaf speeds between control
-%                                     points [mm/s] (signed for continuous
-%                                     aperture delivery, absolute otherwise)
-%               .frac*                time fractions spent at the delivery
-%                                     constraint limits
+%   resultGUI:  input struct with resultGUI.deliveryMetrics added::
+%
+%                 .planMU               total monitor units of the plan
+%                 .planTime             total delivery time [s]
+%                 .gantryAngle          gantry angle per DAO control point [deg]
+%                 .time                 delivery time per DAO control point [s]
+%                 .MURate               MU rate per DAO control point [MU/s]
+%                 .gantryRotationSpeed  gantry speed per DAO control point [deg/s]
+%                 .maxLeafSpeed         max leaf speed per DAO control point [mm/s]
+%                 .leafSpeed            individual leaf speeds between control
+%                                       points [mm/s] (signed for continuous
+%                                       aperture delivery, absolute otherwise)
+%                 .frac*                time fractions spent at the delivery
+%                                       constraint limits
+%
 %               Continuous-aperture plans additionally get the leaf sweep
 %               direction statistics .fracForward/.fracBackward per FMO
 %               sector and their plan totals.

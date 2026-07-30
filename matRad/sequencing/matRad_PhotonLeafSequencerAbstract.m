@@ -526,7 +526,8 @@ classdef  (Abstract) matRad_PhotonLeafSequencerAbstract < matRad_SequencerBase
 
         function selection = availableApertureSelection()
             % Strategies for reducing the generated apertures of a beam to the
-            % number that can actually be delivered.
+            % number that can actually be delivered::
+            %
             %   doseAreaProduct  keep the apertures with the highest product of
             %                    open area and weight, and rescale them so that
             %                    the total dose-area product is maintained.

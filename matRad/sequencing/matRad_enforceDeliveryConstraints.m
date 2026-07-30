@@ -1,5 +1,4 @@
 function apertureInfo = matRad_enforceDeliveryConstraints(apertureInfo, fast)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad: make an arc plan deliverable within the machine limits
 %
 % Slows the gantry (and with it the dose rate) at each DAO control point
@@ -19,8 +18,6 @@ function apertureInfo = matRad_enforceDeliveryConstraints(apertureInfo, fast)
 %   apertureInfo:       aperture shape info struct
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016 the matRad development team.

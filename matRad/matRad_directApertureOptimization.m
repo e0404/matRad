@@ -11,19 +11,22 @@ function [resultGUI, optimizer] = matRad_directApertureOptimization(dij, cst, ap
 %   optResult:      resultGUI struct to which the output data will be added, if
 %                   this field is empty optResult struct will be created
 %
-%   pln:            matRad pln struct. Relevant optional settings:
-%                   pln.propOpt.runVMAT              optimize a VMAT arc instead
-%                                                    of static apertures
-%                   pln.propOpt.scaleToPrescription  scale the optimized plan
-%                                                    such that the target D95
-%                                                    reaches the prescription
-%                   pln.propOpt.prescribedDose       total prescribed dose over
-%                                                    all fractions [Gy]
-%                   pln.propOpt.prescriptionStructIx cst row indices of the
-%                                                    target structure(s) the
-%                                                    prescription refers to (the
-%                                                    worst D95 among them is
-%                                                    scaled to the prescription)
+%   pln:            matRad pln struct. Relevant optional settings::
+%
+%                     pln.propOpt.runVMAT              optimize a VMAT arc
+%                                                      instead of static
+%                                                      apertures
+%                     pln.propOpt.scaleToPrescription  scale the optimized plan
+%                                                      such that the target D95
+%                                                      reaches the prescription
+%                     pln.propOpt.prescribedDose       total prescribed dose over
+%                                                      all fractions [Gy]
+%                     pln.propOpt.prescriptionStructIx cst row indices of the
+%                                                      target structure(s) the
+%                                                      prescription refers to
+%                                                      (the worst D95 among them
+%                                                      is scaled to the
+%                                                      prescription)
 %
 % output:
 %   optResult:  struct containing optimized fluence vector, dose, and

@@ -1,5 +1,4 @@
 function apertureInfo = matRad_calcMaxLeafSpeed(apertureInfo)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad calculation of maximum leaf speed
 %
 % Records the leaf speed realized by an arc plan, per DAO control point and
@@ -18,8 +17,6 @@ function apertureInfo = matRad_calcMaxLeafSpeed(apertureInfo)
 %                   beam and on the struct itself
 %
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2015 the matRad development team.
