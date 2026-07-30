@@ -217,6 +217,118 @@ for i = 1:numel(stf)
     end
 end
 
+function helper_setSmoothing(sequencer, value)
+sequencer.arcFluenceSmoothing = value;
+
+function test_vmatArcFluenceSmoothingSelectsKernel
+[~, pln] = helper_getVmatStf();
+sequencer = helper_getSequencer(pln);
+
+assertEqual(sequencer.arcFluenceSmoothing, 'gaussian');
+assertTrue(all(ismember({'none', 'gaussian'}, sequencer.availableArcFluenceSmoothing())));
+assertExceptionThrown(@() helper_setSmoothing(sequencer, 'bilateral'));
+
+fluenceMx = zeros(5, 9);
+fluenceMx(3, 5) = 1;
+
+sequencer.arcFluenceSmoothing = 'none';
+assertEqual(sequencer.smoothFluenceForArc(fluenceMx), fluenceMx);
+
+sequencer.arcFluenceSmoothing = 'gaussian';
+smoothed = sequencer.smoothFluenceForArc(fluenceMx);
+
+% the kernel blurs along the direction of leaf motion only and, away from
+% the field edges, conserves the fluence
+assertElementsAlmostEqual(sum(smoothed(:)), 1);
+assertTrue(all(all(smoothed([1 2 4 5], :) == 0)));
+assertTrue(smoothed(3, 5) < 1);
+assertTrue(smoothed(3, 4) > 0 && smoothed(3, 6) > 0);
+
+function test_vmatFlatFluenceNeedsSmoothing
+% Regression: a fluence that is flat over its whole field decomposes into
+% exactly one aperture at any number of stratification levels, so the loop
+% that raises numLevels until every FMO beam yields one aperture per DAO
+% control point never terminated with arcFluenceSmoothing = 'none' - the
+% sequencer hung instead of failing. The loop is now bounded and reports
+% which setting to change.
+[stf, pln] = helper_getVmatStf();
+sequencer = helper_getSequencer(pln);
+w = ones(sum([stf.numOfRays]), 1);
+
+% the default kernel is what makes this flat fluence sequenceable at all
+apertureInfo = sequencer.sequence(w, stf).apertureInfo;
+assertEqual(apertureInfo.totalNumOfShapes, nnz(arrayfun(@(s) s.arc.isDAOBeam, stf)));
+
+sequencer.arcFluenceSmoothing = 'none';
+assertExceptionThrown(@() sequencer.sequence(w, stf));
+
+function beam = helper_apertureFixture()
+% six equally weighted apertures, as the stratification produces them:
+% three nested wide fields and three small spots
+shapes = zeros(6, 10, 6);
+shapes(:, 1:9, 1) = 1;
+shapes(:, 2:8, 2) = 1;
+shapes(:, 3:7, 3) = 1;
+shapes(1:2, 4:5, 4) = 1;
+shapes(5:6, 4:5, 5) = 1;
+shapes(3:4, 1:2, 6) = 1;
+
+beam.shapes = shapes;
+beam.shapesWeight = 0.2 * ones(6, 1);
+beam.numOfShapes = 6;
+
+function res = helper_reconstructionResidual(newBeam, beam)
+% how well the kept apertures reproduce the fluence of the full decomposition
+target = reshape(double(beam.shapes), [], beam.numOfShapes) * beam.shapesWeight(:);
+recon = reshape(double(newBeam.shapes), [], newBeam.numOfShapes) * newBeam.shapesWeight(:);
+res = norm(recon - target) / norm(target);
+
+function test_apertureSelectionLeastSquaresFitsBetter
+% The least squares selection refits the weights of the apertures it keeps,
+% so for the fluence of the full decomposition it must not do worse than the
+% dose-area-product heuristic, which keeps the widest apertures and rescales
+% them by a single factor.
+beam = helper_apertureFixture();
+
+for numToKeep = [2 3 4]
+    byDAP = matRad_PhotonSequencerAbstract.discardApertures(beam, numToKeep, 'doseAreaProduct');
+    byLS  = matRad_PhotonSequencerAbstract.discardApertures(beam, numToKeep, 'leastSquares');
+
+    assertEqual(byLS.numOfShapes, numToKeep);
+    assertTrue(all(byLS.shapesWeight >= 0), 'least squares produced a negative aperture weight');
+    assertTrue(helper_reconstructionResidual(byLS, beam) <= ...
+               helper_reconstructionResidual(byDAP, beam) + 1e-12, ...
+               sprintf('least squares fit is worse for %d apertures', numToKeep));
+end
+
+% keeping every aperture must reproduce the fluence exactly
+byLSAll = matRad_PhotonSequencerAbstract.discardApertures(beam, beam.numOfShapes, 'leastSquares');
+assertElementsAlmostEqual(helper_reconstructionResidual(byLSAll, beam), 0, 'absolute', 1e-10);
+
+function test_apertureSelectionDefaultIsUnchanged
+% Regression guard: the dose-area-product path is the default and still
+% preserves the total dose-area product.
+beam = helper_apertureFixture();
+
+byDefault  = matRad_PhotonSequencerAbstract.discardApertures(beam, 3);
+byExplicit = matRad_PhotonSequencerAbstract.discardApertures(beam, 3, 'doseAreaProduct');
+assertEqual(byDefault.shapes, byExplicit.shapes);
+assertEqual(byDefault.shapesWeight, byExplicit.shapesWeight);
+
+dapAll = sum(arrayfun(@(k) nnz(beam.shapes(:, :, k)) * beam.shapesWeight(k), 1:beam.numOfShapes));
+dapKept = sum(arrayfun(@(k) nnz(byDefault.shapes(:, :, k)) * byDefault.shapesWeight(k), 1:3));
+assertElementsAlmostEqual(dapKept, dapAll);
+
+[~, pln] = helper_getVmatStf();
+sequencer = helper_getSequencer(pln);
+assertEqual(sequencer.apertureSelection, 'doseAreaProduct');
+assertTrue(all(ismember({'doseAreaProduct', 'leastSquares'}, ...
+                        matRad_PhotonSequencerAbstract.availableApertureSelection())));
+assertExceptionThrown(@() helper_setApertureSelection(sequencer, 'randomPick'));
+
+function helper_setApertureSelection(sequencer, value)
+sequencer.apertureSelection = value;
+
 function test_siochiVMATPreconditionerRuns
 [stf, pln] = helper_getVmatStf();
 sequencer = helper_getSequencer(pln);

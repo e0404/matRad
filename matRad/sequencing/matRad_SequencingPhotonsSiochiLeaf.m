@@ -90,16 +90,18 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
 
         function sequence = sequenceDynamic(this, w, stf)
             % VMAT (dynamic/arc) sequencing: gates to FMO-anchor beams,
-            % smooths the fluence before decomposition, keeps re-decomposing
-            % at increasing numLevels until enough shapes exist for
-            % this beam's DAO-angle children, then spreads the result across
-            % those children and builds the VMAT apertureInfo. Ported from
-            % the former matRad_siochiLeafSequencing.m functional
-            % implementation.
+            % optionally smooths the fluence before decomposition (see
+            % arcFluenceSmoothing), keeps re-decomposing at increasing
+            % numLevels until enough shapes exist for this beam's DAO-angle
+            % children, then spreads the result across those children and
+            % builds the VMAT apertureInfo. Ported from the former
+            % matRad_siochiLeafSequencing.m functional implementation.
 
             matRad_cfg = MatRad_Config.instance();
-            matRad_cfg.dispInfo('VMAT sequencing (%s): stratifying %d FMO fluence maps, starting at %d levels\n', ...
-                                this.name, nnz(arrayfun(@(s) s.arc.isFMOBeam, stf)), this.numLevels);
+            matRad_cfg.dispInfo(['VMAT sequencing (%s): stratifying %d FMO fluence maps, starting at %d levels, ' ...
+                                 'fluence smoothing ''%s''\n'], ...
+                                this.name, nnz(arrayfun(@(s) s.arc.isFMOBeam, stf)), this.numLevels, ...
+                                this.arcFluenceSmoothing);
 
             seqStats = struct('numFMOBeams', 0, 'numEmptyBeams', 0, ...
                               'levelsUsed', [], 'shapesMade', [], 'shapesKept', []);
@@ -142,14 +144,20 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
                 indInFluenceMx = zPos + (xPos - 1) * dimOfFluenceMxZ;
                 fluenceMx(indInFluenceMx) = wOfCurrBeams;
 
-                % Gaussian fluence smoothing (VMAT only - would corrupt static
-                % IMRT fluence reproduction otherwise)
+                % optional fluence smoothing (VMAT only - would corrupt static
+                % IMRT fluence reproduction otherwise), see arcFluenceSmoothing
                 fluenceMx = this.smoothFluenceForArc(fluenceMx);
 
                 numOfLevels = this.numLevels;
                 notFinished = true;
 
                 if sum(wOfCurrBeams) > 0
+                    % A fluence that is flat over its whole field decomposes
+                    % into a single aperture at any number of stratification
+                    % levels, so the escalation below would never terminate -
+                    % bound it and report what to do instead of spinning.
+                    maxNumOfLevels = this.numLevels + 100;
+
                     while notFinished
                         % keep re-decomposing at an increasing number of
                         % levels until there are at least as many shapes as
@@ -168,6 +176,14 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
 
                         if numToKeep ~= 0 && k < numToKeep
                             numOfLevels = numOfLevels + 1;
+                            if numOfLevels > maxNumOfLevels
+                                matRad_cfg.dispError(['VMAT sequencing: FMO beam %d (%.4g deg) yields only %d ' ...
+                                                      'aperture(s) for its %d DAO control points, even stratified ' ...
+                                                      'at %d levels. Its fluence is too uniform to sequence - use ' ...
+                                                      'pln.propSeq.arcFluenceSmoothing = ''gaussian'' or fewer DAO ' ...
+                                                      'control points per FMO beam.'], ...
+                                                     i, stf(i).gantryAngle, k, numToKeep, maxNumOfLevels);
+                            end
                         else
                             notFinished = false;
                         end
@@ -198,7 +214,7 @@ classdef  matRad_SequencingPhotonsSiochiLeaf < matRad_PhotonSequencerVMATAbstrac
                 end
 
                 if numToKeep ~= 0
-                    sequence.beam(i) = this.discardApertures(sequence.beam(i), numToKeep);
+                    sequence.beam(i) = this.discardApertures(sequence.beam(i), numToKeep, this.apertureSelection);
                 end
 
                 sequence.beam(i).sum = zeros(dimOfFluenceMxZ, dimOfFluenceMxX);

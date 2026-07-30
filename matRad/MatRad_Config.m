@@ -249,6 +249,8 @@ classdef MatRad_Config < handle
             % Sequencing Options
             obj.defaults.propSeq.sequencer = {'siochi', 'IMPT'};
             obj.defaults.propSeq.numLevels = 5;
+            obj.defaults.propSeq.arcFluenceSmoothing = 'gaussian';
+            obj.defaults.propSeq.apertureSelection = 'doseAreaProduct';
 
             obj.disableGUI = false;
 

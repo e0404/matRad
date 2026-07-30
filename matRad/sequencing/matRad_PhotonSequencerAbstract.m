@@ -476,21 +476,25 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
             geometry.MLCWindow            = MLCWindow;
         end
 
-        function newBeam = discardApertures(beam, numToKeep)
+        function newBeam = discardApertures(beam, numToKeep, selection)
             % The sequencing algorithm generates an a priori unknown number
             % of apertures. We only want to keep a certain number of them
-            % (numToKeep) - the ones with the highest intensity-area product.
-            % The kept shapes are preserved and their weights are rescaled so
-            % the total dose-area product is maintained.
+            % (numToKeep), see availableApertureSelection for how they are
+            % picked. The kept shapes are preserved in their original
+            % trajectory order and get new weights.
             %
             % input:
             %   beam:       beam struct containing original shapes and intensities
             %   numToKeep:  number of apertures to keep
+            %   selection:  'doseAreaProduct' (default) or 'leastSquares'
             %
             % output:
             %   newBeam:    beam struct with shapes and re-scaled intensities
 
-            % Find the numToKeep apertures having the highest dose-area product
+            if nargin < 3 || isempty(selection)
+                selection = 'doseAreaProduct';
+            end
+
             numToKeep = min(numToKeep, beam.numOfShapes);
 
             newBeam = beam;
@@ -502,6 +506,42 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
                 return
             end
 
+            switch selection
+                case 'doseAreaProduct'
+                    [keepIx, weights] = matRad_PhotonSequencerAbstract.selectByDoseAreaProduct(beam, numToKeep);
+                case 'leastSquares'
+                    [keepIx, weights] = matRad_PhotonSequencerAbstract.selectByLeastSquares(beam, numToKeep);
+                otherwise
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Invalid aperture selection ''%s''!', selection);
+            end
+
+            % Assign into the preallocations so that the shape/class of the
+            % outputs does not depend on that of the inputs (shapes stay
+            % double even for a logical input, weights stay a column vector
+            % even for a row-vector input).
+            newBeam.shapes(:, :, :) = beam.shapes(:, :, keepIx);
+            newBeam.shapesWeight(:) = weights;
+        end
+
+        function selection = availableApertureSelection()
+            % Strategies for reducing the generated apertures of a beam to the
+            % number that can actually be delivered.
+            %   doseAreaProduct  keep the apertures with the highest product of
+            %                    open area and weight, and rescale them so that
+            %                    the total dose-area product is maintained.
+            %                    Since the stratification gives every segment
+            %                    the same weight, this ranks by open area.
+            %   leastSquares     keep the apertures that best reconstruct the
+            %                    fluence the full decomposition would deliver,
+            %                    with the weights refit to that fluence.
+            selection = {'doseAreaProduct', 'leastSquares'};
+        end
+
+        function [keepIx, weights] = selectByDoseAreaProduct(beam, numToKeep)
+            % Original selection: highest open-area x weight, rescaled to
+            % preserve the total dose-area product.
+
             DAP = zeros(beam.numOfShapes, 1);
             for shape = 1:beam.numOfShapes
                 DAP(shape) = nnz(beam.shapes(:, :, shape)) .* beam.shapesWeight(shape);
@@ -509,23 +549,107 @@ classdef  (Abstract) matRad_PhotonSequencerAbstract < matRad_SequencerBase
 
             [~, DAPSort] = sort(DAP, 'descend');
 
-            totDAP_all = sum(DAP(:));
+            totDAPAll = sum(DAP(:));
             keepIx = sort(DAPSort(1:numToKeep));
-            totDAP_keep = sum(DAP(keepIx));
+            totDAPKeep = sum(DAP(keepIx));
 
-            % Keep the selected apertures in their original trajectory order.
-            % Assign into the preallocations so that the shape/class of the
-            % outputs does not depend on that of the inputs (shapes stay
-            % double even for a logical input, weights stay a column vector
-            % even for a row-vector input).
-            newBeam.shapes(:, :, :) = beam.shapes(:, :, keepIx);
-            if totDAP_keep > 0
-                newBeam.shapesWeight(:) = beam.shapesWeight(keepIx) .* ...
-                    (totDAP_all ./ totDAP_keep);
+            if totDAPKeep > 0
+                weights = beam.shapesWeight(keepIx) .* (totDAPAll ./ totDAPKeep);
             else
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispWarning(['All %d kept apertures have zero dose-area product; ' ...
                                         'the beam is left with zero weight.'], numToKeep);
+                weights = zeros(numToKeep, 1);
+            end
+        end
+
+        function [keepIx, weights] = selectByLeastSquares(beam, numToKeep)
+            % Pick the subset of apertures that best reproduces the fluence the
+            % full decomposition delivers, and refit their weights to it.
+            %
+            % Forward stepwise selection: in each step try every aperture that
+            % is not selected yet, refit ALL weights by non-negative least
+            % squares, and keep the candidate with the smallest residual.
+            % Refitting before choosing matters - picking by the residual
+            % reduction of a single aperture (plain matching pursuit) commits
+            % to an aperture before the weights of the others can adapt, and
+            % then never recovers from overshooting.
+            %
+            % Cost is numToKeep x numOfShapes tiny least squares solves, which
+            % is nothing next to the decomposition itself.
+
+            numShapes = beam.numOfShapes;
+            shapeMx = reshape(double(beam.shapes(:, :, 1:numShapes)), [], numShapes);
+
+            % the fluence the beam would deliver if every aperture were kept
+            % (the weights may come in as a row vector)
+            allWeights = beam.shapesWeight(1:numShapes);
+            targetFluence = shapeMx * allWeights(:);
+
+            selected = zeros(numToKeep, 1);
+            weights = [];
+
+            for i = 1:numToKeep
+                bestResidual = inf;
+                for candidate = 1:numShapes
+                    if i > 1 && any(selected(1:i - 1) == candidate)
+                        continue
+                    end
+
+                    trialIx = [selected(1:i - 1); candidate];
+                    trialWeights = matRad_PhotonSequencerAbstract.solveNonNegativeLeastSquares( ...
+                                                                                               shapeMx(:, trialIx), targetFluence);
+                    residual = norm(targetFluence - shapeMx(:, trialIx) * trialWeights);
+
+                    if residual < bestResidual
+                        bestResidual = residual;
+                        selected(i) = candidate;
+                        weights = trialWeights;
+                    end
+                end
+            end
+
+            % Least squares fits the shape of the fluence but not its integral,
+            % so the kept apertures deliver systematically less than the full
+            % decomposition and the plan comes out underdosed. Rescale to the
+            % original dose-area product, as the heuristic does - for binary
+            % aperture maps that is the same as preserving the fluence
+            % integral, and it leaves the relative weights of the fit intact.
+            deliveredFluence = sum(shapeMx(:, selected) * weights);
+            if deliveredFluence > 0
+                weights = weights * (sum(targetFluence) / deliveredFluence);
+            end
+
+            % restore the original trajectory order of the kept apertures
+            [keepIx, order] = sort(selected);
+            weights = weights(order);
+        end
+
+        function x = solveNonNegativeLeastSquares(designMx, rhs)
+            % Minimal non-negative least squares for the handful of columns
+            % used here: solve unconstrained, drop the most negative
+            % coefficient, repeat. Not a full Lawson-Hanson (coefficients are
+            % never re-admitted), which is adequate for numToKeep columns.
+
+            numCols = size(designMx, 2);
+            x = zeros(numCols, 1);
+            active = true(numCols, 1);
+
+            for i = 1:numCols
+                ixActive = find(active);
+                xActive = designMx(:, active) \ rhs;
+
+                if all(xActive >= 0)
+                    x(active) = xActive;
+                    return
+                end
+
+                [~, worst] = min(xActive);
+                active(ixActive(worst)) = false;
+
+                if ~any(active)
+                    return
+                end
             end
         end
 

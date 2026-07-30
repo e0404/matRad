@@ -14,9 +14,11 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
     end
 
     properties
-        runVMAT = false             % toggle VMAT (dynamic/arc) delivery
-        continuousAperture = false  % interpolate leaf positions between DAO angles
-        weightToMU = 1              % bixel weight -> MU conversion factor (from dij.weightToMU)
+        runVMAT = false                % toggle VMAT (dynamic/arc) delivery
+        continuousAperture = false     % interpolate leaf positions between DAO angles
+        arcFluenceSmoothing = 'gaussian' % fluence smoothing kernel applied before stratification, see availableArcFluenceSmoothing
+        apertureSelection = 'doseAreaProduct' % how surplus apertures are discarded, see availableApertureSelection
+        weightToMU = 1                 % bixel weight -> MU conversion factor (from dij.weightToMU)
     end
 
     methods
@@ -28,21 +30,61 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
             this = this@matRad_PhotonSequencerAbstract(pln);
         end
 
-        function fluenceMx = smoothFluenceForArc(~, fluenceMx)
-            % Gaussian fluence smoothing prior to stratification. Only used
-            % for VMAT: applying this to static/IMRT sequencing would alter
-            % the fluence so the sequenced result no longer reproduces the
-            % optimized fluence.
-
-            sigma = 1;
-            kernel = exp(-((-2:2).^2) / (2 * sigma^2));
-            kernel = kernel / sum(kernel);
-
-            temp = zeros(size(fluenceMx));
-            for row = 1:size(fluenceMx, 1)
-                temp(row, :) = conv(fluenceMx(row, :), kernel, 'same');
+        function set.arcFluenceSmoothing(this, value)
+            matRad_cfg = MatRad_Config.instance();
+            if (ischar(value) || isstring(value)) && any(strcmp(value, this.availableArcFluenceSmoothing()))
+                this.arcFluenceSmoothing = char(value);
+            else
+                matRad_cfg.dispError('Invalid arc fluence smoothing ''%s''! Valid values are: %s', ...
+                                     char(value), strjoin(this.availableArcFluenceSmoothing(), ', '));
             end
-            fluenceMx = temp;
+        end
+
+        function set.apertureSelection(this, value)
+            matRad_cfg = MatRad_Config.instance();
+            if (ischar(value) || isstring(value)) && any(strcmp(value, this.availableApertureSelection()))
+                this.apertureSelection = char(value);
+            else
+                matRad_cfg.dispError('Invalid aperture selection ''%s''! Valid values are: %s', ...
+                                     char(value), strjoin(this.availableApertureSelection(), ', '));
+            end
+        end
+
+        function fluenceMx = smoothFluenceForArc(this, fluenceMx)
+            % Fluence smoothing prior to stratification, selected by the
+            % arcFluenceSmoothing property. Only applied for VMAT: it alters
+            % the fluence that is decomposed, so the sequenced result no
+            % longer reproduces the optimized fluence, which is exactly what
+            % static/IMRT sequencing relies on.
+            %
+            % It defaults to 'gaussian' because VMAT needs one aperture per
+            % DAO control point: the graded field rim the blur produces is
+            % what lets the stratification yield more apertures as the level
+            % count is raised. A perfectly flat fluence decomposes into a
+            % single aperture at any number of levels, which no amount of
+            % re-stratification can fix (see sequenceDynamic).
+
+            matRad_cfg = MatRad_Config.instance();
+
+            switch this.arcFluenceSmoothing
+                case 'none'
+                    % keep the optimized fluence as it is
+
+                case 'gaussian'
+                    % 5-tap Gaussian along the direction of leaf motion
+                    sigma = 1;
+                    kernel = exp(-((-2:2).^2) / (2 * sigma^2));
+                    kernel = kernel / sum(kernel);
+
+                    temp = zeros(size(fluenceMx));
+                    for row = 1:size(fluenceMx, 1)
+                        temp(row, :) = conv(fluenceMx(row, :), kernel, 'same');
+                    end
+                    fluenceMx = temp;
+
+                otherwise
+                    matRad_cfg.dispError('Invalid arc fluence smoothing ''%s''!', this.arcFluenceSmoothing);
+            end
         end
 
         function sequence = applyArcSequencing(this, sequence, stf)
@@ -454,6 +496,16 @@ classdef (Abstract) matRad_PhotonSequencerVMATAbstract < matRad_PhotonSequencerA
                                         'machine limit %.4g mm/s after slowing the gantry\n'], ...
                                        apertureInfo.maxLeafSpeed, leafSpeedLimit);
             end
+        end
+
+    end
+
+    methods (Static)
+
+        function smoothing = availableArcFluenceSmoothing()
+            % Fluence smoothing kernels a VMAT sequencer can apply before
+            % stratifying an FMO fluence map into apertures.
+            smoothing = {'none', 'gaussian'};
         end
 
     end
