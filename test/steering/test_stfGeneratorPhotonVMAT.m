@@ -43,7 +43,7 @@ assertTrue(all(ismember(find(isFMO), find(isDAO))), 'FMO beams must be DAO beams
 assertTrue(nnz(isFMO) >= 1 && nnz(isDAO) >= 1);
 
 % no two beams on the same physical gantry position (closed-arc endpoint)
-assertEqual(numel(gantryAngles), numel(unique(round(mod(gantryAngles, 360), 6))));
+assertEqual(numel(gantryAngles), numel(unique(matRad_roundCompat(mod(gantryAngles, 360), 6))));
 
 % realized spacings never exceed the requested maxima
 daoAngles = gantryAngles(isDAO);

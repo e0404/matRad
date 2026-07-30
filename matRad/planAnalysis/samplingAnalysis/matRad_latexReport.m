@@ -91,7 +91,7 @@ for i = 1:size(cst, 1)
 end
 
 if fillPrescription
-    dPres = round(dPres, 1);
+    dPres = matRad_roundCompat(dPres, 1);
     matRad_cfg.dispInfo('Estimated prescribed dose to be %f\n', dPres);
 end
 
@@ -148,7 +148,7 @@ line =  [line; '\newcommand{\patientID}{', patientInformation.patientID, '}'];
 line =  [line; '\newcommand{\operator}{', operator, '}'];
 
 line =  [line; '\newcommand{\reportGenerationDate}{\today}'];
-line =  [line; '\newcommand{\computationTime}{', num2str(round(computationTime / 3600, 2)), ' h}'];
+line =  [line; '\newcommand{\computationTime}{', num2str(matRad_roundCompat(computationTime / 3600, 2)), ' h}'];
 
 line =  [line; '\newcommand{\planGantryAngles}{', planInformation.gantryAngles, '}'];
 line =  [line; '\newcommand{\planCouchAngles}{', planInformation.couchAngles, '}'];
@@ -224,11 +224,11 @@ gammaWindow = [0 1.1 * max(doseStat.gammaAnalysis.gammaCube(:))];
 for plane = 1:3
     switch plane
         case 1
-            slice = round(pln.propStf.isoCenter(1, 2) / ct.resolution.x, 0);
+            slice = round(pln.propStf.isoCenter(1, 2) / ct.resolution.x);
         case 2
-            slice = round(pln.propStf.isoCenter(1, 1) / ct.resolution.y, 0);
+            slice = round(pln.propStf.isoCenter(1, 1) / ct.resolution.y);
         case 3
-            slice = round(pln.propStf.isoCenter(1, 3) / ct.resolution.z, 0);
+            slice = round(pln.propStf.isoCenter(1, 3) / ct.resolution.z);
     end
     colors = colorcube(size(cst, 1));
     for cubesToPlot = 1:3
@@ -289,7 +289,7 @@ end
 if exist('matRad_getGaussianOrbitSamples', 'file') == 2
     confidenceValue = 0.5;
 
-    slice = round(pln.propStf.isoCenter(1, plane) / ct.resolution.z, 0);
+    slice = round(pln.propStf.isoCenter(1, plane) / ct.resolution.z);
     framePath = fullfile(dataPath, 'frames');
     if isfield(nominalScenario, 'RBExDose')
         legendColorbar = 'RBExDose [Gy(RBE)]';

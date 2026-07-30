@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - The MCsquare Windows binary is called with an explicit path prefix, so it is found regardless of the current directory
 - `MatRad_Config.loadobj` merged saved structs using the wrong loop variable
 - The Sphinx documentation now builds without warnings: the parameter tables of several docstrings were malformed reStructuredText and rendered as run-together prose, five functions had a comment banner in place of their summary line, and three `.rst` files had a broken cross reference, a short title underline and a misindented list
+- Matlab's two-argument `round(x,n)` was used in VMAT steering information generation, the sampling report and the DVH band plot, which errors on Octave because its `round` takes the value alone. These now call the new `matRad_roundCompat`, and a test guards against reintroducing the two-argument form
 
 ### Changed
 

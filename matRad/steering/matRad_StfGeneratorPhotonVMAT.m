@@ -297,9 +297,9 @@ classdef matRad_StfGeneratorPhotonVMAT < matRad_StfGeneratorPhotonRayBixelAbstra
                                  '%d are interpolated from their neighbours\n'], ...
                                 numel(allDAOAngles), numel(allGantryAngles), ...
                                 numel(allGantryAngles) - numel(allDAOAngles));
-            matRad_cfg.dispDebug('VMAT dose angles: %s\n', mat2str(round(allGantryAngles, 4)));
-            matRad_cfg.dispDebug('VMAT DAO angles:  %s\n', mat2str(round(allDAOAngles, 4)));
-            matRad_cfg.dispDebug('VMAT FMO angles:  %s\n', mat2str(round(allFMOAngles, 4)));
+            matRad_cfg.dispDebug('VMAT dose angles: %s\n', mat2str(matRad_roundCompat(allGantryAngles, 4)));
+            matRad_cfg.dispDebug('VMAT DAO angles:  %s\n', mat2str(matRad_roundCompat(allDAOAngles, 4)));
+            matRad_cfg.dispDebug('VMAT FMO angles:  %s\n', mat2str(matRad_roundCompat(allFMOAngles, 4)));
 
             % Store arc extent boundaries for border calculations.
             % TODO: per-arc tracking when multi-arc is supported.

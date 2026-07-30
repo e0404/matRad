@@ -56,7 +56,7 @@ for j = 1:numOfConf
     lowerLimit = structureStat.dvhStat.percDVH(lIx, :);
     upperLimit = structureStat.dvhStat.percDVH(hIx, :);
     confIn = structureStat.percentiles(hIx) - structureStat.percentiles(lIx);
-    confName = ['C', num2str(round(confIn * 100, 0))];
+    confName = ['C', num2str(round(confIn * 100))];
     h(hIx) = matRad_shadowPlot(doseGrid, lowerLimit, upperLimit, colors(j, :), confName, alphaTrans);
 end
 
