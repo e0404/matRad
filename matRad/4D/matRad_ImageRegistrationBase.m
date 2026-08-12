@@ -5,6 +5,7 @@ classdef (Abstract) matRad_ImageRegistrationBase < handle
     %   propagate contours between them.
     %
     %   DVF conventions (compatible with matRad_doseAcc / matRad_addMovement):
+    %
     %   - ct.dvf{scen} has size [3 ct.cubeDim] with component order x,y,z,
     %     where x refers to the second cube dimension (columns), y to the
     %     first (rows) and z to the third (slices).

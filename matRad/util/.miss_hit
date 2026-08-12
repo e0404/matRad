@@ -1,0 +1,8 @@
+# matRad_visApertureInfo.m holds the aperture views and their player, which
+# share too much (aperture geometry, weight colouring, panel bookkeeping) to be
+# worth splitting into helpers nothing else would use. The file justifies the
+# file_length *metric* with an in-file pragma; mh_style has no such mechanism,
+# so its duplicate of that check is turned off here. The metric itself stays
+# enabled, so any other file in this directory still has to stay under the
+# limit or justify itself explicitly.
+suppress_rule: "file_length"

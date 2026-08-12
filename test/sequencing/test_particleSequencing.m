@@ -19,7 +19,7 @@ resultGUI = p.resultGUI;
 stf = p.stf;
 dij = p.dij;
 
-function test_particle_sequencing_keeps_dose_with_dij
+function test_particleSequencingKeepsDoseWithDij
 % Regression test: for particle plans the sequencer only derives the spot
 % delivery order/timing and does not modify the fluence. Passing dij must not
 % trigger a dose recomputation (which used to crash on the per-beam struct
@@ -48,7 +48,7 @@ for i = 1:numel(seq)
     assertTrue(isvector(seq(i).w));
 end
 
-function test_particle_sequencing_without_dij
+function test_particleSequencingWithoutDij
 % Sequencing without dij must also work and only attach the sequencing info.
 [resultGUI, stf, dij, pln] = helper_getTestData();
 
@@ -57,14 +57,14 @@ resultGUI_sequenced = matRad_sequencing(resultGUI, stf, pln);
 assertTrue(isstruct(resultGUI_sequenced.sequencing));
 assertEqual(numel(resultGUI_sequenced.sequencing), numel(stf));
 
-function test_particle_makePhaseMatrix
+function test_particleMakePhaseMatrix
 % Covers the spot-time based phase matrix generation used in 4D dose calc.
 [resultGUI, stf, dij, pln] = helper_getTestData();
 
 numOfPhases  = 4;
 motionPeriod = 5; % [s]
 
-sequencer = matRad_ParticleSequencer();
+sequencer = matRad_ParticleScanningSequencerSpill();
 sequence  = sequencer.sequence(resultGUI.w, stf);
 sequence  = sequencer.makePhaseMatrix(sequence, numOfPhases, motionPeriod);
 

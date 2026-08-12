@@ -42,9 +42,10 @@ We suggest to visit our `GitHub Discussion Forum <https://github.com/e0404/matRa
 
     This issue may be caused by conflicts between MATLAB and window-snapping apps on macOS (Rectangle, BetterTouchTool, Magnet etc.).
     May be remedied by quitting the app or disabling the "Window Snapping " feature then restarting MATLAB.
-    For further information refer to :
-        * `matRad Issue #550 <https://github.com/e0404/matRad/issues/550>`_
-        * `MATLAB Answers thread <https://de.mathworks.com/matlabcentral/answers/422244-why-do-buttons-apps-or-the-editor-in-matlab-respond-slowly-or-hang-on-macos>`_
+    For further information refer to:
+
+    * `matRad Issue #550 <https://github.com/e0404/matRad/issues/550>`_
+    * `MATLAB Answers thread <https://de.mathworks.com/matlabcentral/answers/422244-why-do-buttons-apps-or-the-editor-in-matlab-respond-slowly-or-hang-on-macos>`_
 
 .. admonition:: Why are my constraints not being met and coverage is always bad?
     :class: dropdown

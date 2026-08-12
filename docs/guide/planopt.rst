@@ -77,4 +77,5 @@ All optimization functionalities work equally for optimization processes based o
 Direct aperture optimization
 ----------------------------
 
-For photons, matRad also features an experimental direct aperture optimization that largely follows the implementation described in `Wild et al. (2015) <https://doi.org/10.1118/1.4914863>`_ which is based on `Bzdusek et al. (2009) <http://www.ncbi.nlm.nih.gov/pubmed/19610322>`_ and (with some modification) `Unkelbach & Cassioli (2012) <http://iopscience.iop.org/article/10.1088/0031-9155/58/2/301/meta;jsessionid=B918D167B0BD2950E5A559F03F6CC517.c2.iopscience.cld.iop.org>`_.
+For photons, the optimized fluence still has to be turned into deliverable multileaf collimator apertures, which can then be optimized themselves - as static fields, or along a rotating arc for VMAT.
+See :ref:`Sequencing, direct aperture optimization and VMAT <sequencing_dao>`.

@@ -64,7 +64,7 @@ classdef matRad_PlanWidget < matRad_Widget
             handles = this.handles;
 
             if matRad_cfg.eduMode
-                % Visisbility in Educational Mode
+                % Visibility in Educational Mode
                 eduHideHandles =   {handles.radiobutton3Dconf, ...
                                     handles.btnRunDAO};
                 eduDisableHandles = {handles.editCouchAngle, handles.popUpMachine};
@@ -483,7 +483,7 @@ classdef matRad_PlanWidget < matRad_Widget
                             'FontName', matRad_cfg.gui.fontName, ...
                             'FontWeight', matRad_cfg.gui.fontWeight);
 
-            % Popup menu selectin sequencing algorithm#
+            % Popup menu selecting sequencing algorithm#
             txt = sprintf('Choose a sequencing algorithm (siochi, xia or engel)');
             h41 = uicontrol( ...
                             'Parent', h12, ...
@@ -823,6 +823,10 @@ classdef matRad_PlanWidget < matRad_Widget
             selectedEngineIx = get(handles.popUpMenuDoseEngine, 'Value');
             selectedEngine = availableEngines(selectedEngineIx);
 
+            if ~isfield(pln, 'propStf') || ~isfield(pln.propStf, 'numOfBeams')
+                pln.propStf.numOfBeams = numel(stfGen.gantryAngles);
+            end
+
             if matRad_ispropCompat(stfGen, 'numOfBeams')
                 numOfBeams = stfGen.numOfBeams;
             else
@@ -944,7 +948,7 @@ classdef matRad_PlanWidget < matRad_Widget
             oldGantryAngles = [];
             oldCouchAngles = [];
 
-            % evalin pln (if existant) in order to decide whether isoCenter should be calculated
+            % evalin pln (if existent) in order to decide whether isoCenter should be calculated
             % automatically
             if evalin('base', 'exist(''pln'',''var'')')
                 pln = evalin('base', 'pln');
@@ -1057,7 +1061,7 @@ classdef matRad_PlanWidget < matRad_Widget
             end
             contents   = get(handles.popUpMenuSequencer, 'String');
             pln.propSeq.sequencer = contents{get(handles.popUpMenuSequencer, 'Value')};
-            pln.propSeq.sequencingLevel = this.parseStringAsNum(get(handles.editSequencingLevel, 'String'), false);
+            pln.propSeq.numLevels = this.parseStringAsNum(get(handles.editSequencingLevel, 'String'), false);
             pln.propOpt.conf3D = logical(get(handles.radiobutton3Dconf, 'Value'));
 
             if evalin('base', 'exist(''cst'')')
@@ -1353,7 +1357,7 @@ classdef matRad_PlanWidget < matRad_Widget
             % checkIsoCenter checkbox
             W = evalin('base', 'whos');
             doesPlnExist = ismember('pln', {W(:).name}) && evalin('base', 'exist(''cst'')') && evalin('base', 'exist(''ct'')');
-            % evalin pln (if existant) in order to decide whether isoCenter should be calculated
+            % evalin pln (if existent) in order to decide whether isoCenter should be calculated
             % automatically
             if doesPlnExist
                 pln = evalin('base', 'pln');
@@ -1676,7 +1680,7 @@ classdef matRad_PlanWidget < matRad_Widget
         % load Machine File
         function getMachines(this)
             % matRad_cfg = MatRad_Config.instance();
-            % seach for availabes machines
+            % search for available machines
             handles = this.handles;
             this.Machines = matRad_getAvailableMachines(this.modalities);
 

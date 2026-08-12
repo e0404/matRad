@@ -1,0 +1,18 @@
+# Relaxed rules for the legacy GUI code: the GUIDE-derived widgets use
+# *_Callback method names, UpperCamelCase attributes, degree signs in UI
+# strings, hardcoded colormap lines and monolithic classdef files.
+# Restructuring them is out of scope for commits that merely touch them;
+# new GUI code should still aim for the repo-wide rules.
+suppress_rule: "line_length"
+suppress_rule: "unicode"
+
+file_length: 2500
+metric "file_length": limit 2500
+metric "cyc": limit 60
+metric "cnest": limit 8
+
+# GUIDE-style callbacks (popMenuBioModel_Callback, tissueTable_CellEditCallback,
+# pushbutton_importFromBinary_Callback) and legacy UpperCamelCase
+# methods/attributes are grandfathered
+regex_method_name: "^((matRad_|test_|helper_)?([a-z][a-zA-Z0-9]*|[A-Z][a-zA-Z0-9]*)(_[A-Za-z][A-Za-z0-9]*){0,2})$"
+regex_attribute_name: "^([a-z][a-zA-Z0-9]*|[A-Z][a-zA-Z0-9]*)$"

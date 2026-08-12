@@ -1,10 +1,10 @@
-classdef matRad_ParticleSequencer < matRad_SequencerBase
-    % matRad_ParticleSequencer: Sequencer for scanned particle delivery.
+classdef matRad_ParticleScanningSequencerSpill < matRad_SequencerBase
+    % matRad_ParticleScanningSequencerSpill: Sequencer for scanned particle delivery.
     %   Computes the spot delivery order and timing (spill / lateral scanning
     %   model), e.g. for 4D dose calculation. It does not modify the fluence.
 
     properties (Constant)
-        name                    = 'Particle IMPT Scanning Sequencing'
+        name                    = 'Particle Spill Scanning Sequencer'
         shortName               = 'IMPT'
         possibleRadiationModes  = {'protons', 'helium', 'carbon', 'oxygen'}
         weightPencilBeam        = 1e6
@@ -20,7 +20,7 @@ classdef matRad_ParticleSequencer < matRad_SequencerBase
 
     methods
 
-        function this = matRad_ParticleSequencer(pln)
+        function this = matRad_ParticleScanningSequencerSpill(pln)
             % Constructor, forwards to the base class. An explicit constructor
             % chain is required so that property assignment from pln persists
             % under Octave.
@@ -110,7 +110,7 @@ classdef matRad_ParticleSequencer < matRad_SequencerBase
                         % in other words, number of bixels in the current row
                         ind_y = find(sequence(i).IES(e).y == y);
 
-                        % since backforth fasion is zig zag like, flip the order every
+                        % since backforth fashion is zig zag like, flip the order every
                         % second row
                         if ~rem(k, 2)
                             ind_y = fliplr(ind_y);
@@ -217,7 +217,8 @@ classdef matRad_ParticleSequencer < matRad_SequencerBase
             end
 
             % check modality
-            checkModality = any(strcmp(matRad_ParticleSequencer.possibleRadiationModes, machine.meta.radiationMode)) && any(strcmp(matRad_ParticleSequencer.possibleRadiationModes, pln.radiationMode));
+            checkModality = any(strcmp(matRad_ParticleScanningSequencerSpill.possibleRadiationModes, machine.meta.radiationMode)) && ...
+                            any(strcmp(matRad_ParticleScanningSequencerSpill.possibleRadiationModes, pln.radiationMode));
 
             % Sanity check compatibility
             if checkModality
@@ -257,7 +258,7 @@ classdef matRad_ParticleSequencer < matRad_SequencerBase
                     end
                 end
 
-                % permuatation of phaseMatrix from SS order to STF order
+                % permutation of phaseMatrix from SS order to STF order
                 sequence(i).phaseMatrix = sequence(i).phaseMatrix(sequence(i).orderToSTF, :);
                 sequence(i).phaseNum = find(sequence(i).phaseMatrix');
                 % inserting the fluence in phaseMatrix

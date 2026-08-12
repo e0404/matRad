@@ -24,6 +24,20 @@ Dose Engines
    :show-inheritance:
    :private-members:
 
+The base class of the engine hierarchy and the FRED engine live in class folders, which the directive above does not descend into:
+
+.. autoclass:: matRad.doseCalc.+DoseEngines.matRad_DoseEngineBase
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
+.. autoclass:: matRad.doseCalc.+DoseEngines.matRad_ParticleFREDEngine
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
 FRED
 ----
 

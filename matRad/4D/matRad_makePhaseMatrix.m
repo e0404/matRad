@@ -23,12 +23,12 @@ function timeSequence = matRad_makePhaseMatrix(timeSequence, numOfPhases, motion
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018-2026 the matRad development team.
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -36,7 +36,7 @@ function timeSequence = matRad_makePhaseMatrix(timeSequence, numOfPhases, motion
 matRad_cfg = MatRad_Config.instance();
 matRad_cfg.dispWarning('This function is Outdated use new SequencingClass');
 
-sequencer = matRad_ParticleSequencer();
+sequencer = matRad_ParticleScanningSequencerSpill();
 timeSequence = sequencer.makePhaseMatrix(timeSequence, numOfPhases, motionPeriod);
 
 end

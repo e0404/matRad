@@ -20,7 +20,7 @@ resultGUI = p.resultGUI;
 stf = p.stf;
 dij = p.dij;
 
-function test_run_sequencing_basic
+function test_runSequencingBasic
 [resultGUI, stf, dij, pln] = helper_getTestData();
 fn_old = fieldnames(resultGUI);
 
@@ -54,7 +54,7 @@ for levels = numOfLevels
         assertEqual(size(seq.beam(i).fluence, 2), size(seq.beam(i).shapes, 2));
     end
 
-    % ApertureInfo Sturct
+    % ApertureInfo Struct
     apInfo = resultGUI_sequenced.sequencing.apertureInfo;
     assertTrue(isscalar(apInfo.bixelWidth));
     assertTrue(isscalar(apInfo.numOfMLCLeafPairs));
@@ -68,12 +68,12 @@ for levels = numOfLevels
     assertTrue(numel(apInfo.beam) == numel(stf));
 end
 
-function test_slidingWindow_mode
+function test_slidingWindowMode
 % The Xia sequencer supports a sliding-window ('sw') mode in addition to the
 % default reducing-levels ('rl') mode - exercise the 'sw' branch.
 [resultGUI, stf, dij, pln] = helper_getTestData();
 
-seq = matRad_SequencingPhotonsXiaLeaf();
+seq = matRad_PhotonLeafSequencerXia();
 seq.mode = 'sw';
 sequence = seq.sequence(resultGUI.w, stf);
 
