@@ -73,17 +73,15 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
 
             matRad_cfg = MatRad_Config.instance();
-            this.omcFolder = [matRad_cfg.matRadRoot filesep 'thirdParty' filesep 'ompMC'];
+            this.omcFolder = DoseEngines.matRad_PhotonOmpMCEngine.getOmcFolder();
 
-            if ~matRad_checkMexFileExists('omc_matrad') % exist('matRad_ompInterface','file') ~= 3
-                matRad_cfg.dispWarning('Compiled mex interface not found. Trying to compile the ompMC interface on the fly!');
-                try
-                    this.compileOmpMCInterface(this.omcFolder);
-                catch MException
-                    matRad_cfg.dispError(['Could not find/generate mex interface for MC dose calculation.\n' ...
-                                          'Cause of error:\n%s\n Please compile it yourself ' ...
-                                          '(preferably with OpenMP support).'], MException.message);
-                end
+            % ompMC is licensed under the GPL and therefore not shipped with
+            % matRad. It is installed on demand, which is a decision for the
+            % user to make rather than something to do behind their back.
+            [installed, msg] = DoseEngines.matRad_PhotonOmpMCEngine.checkInstallation();
+
+            if ~installed
+                matRad_cfg.dispError('%s', msg);
             end
         end
 
@@ -186,12 +184,25 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     % interface issues
                     try
                         % If we ask for variance, a field in the dij will be filled
-                        if this.outputMCvariance
-                            [dij.physicalDose{ctScen, shiftScen, rangeShiftScen}, dij.physicalDose_MCvar{ctScen, shiftScen, rangeShiftScen}] = ...
-                                omc_matrad(this.cubeRho{ctScen}, this.cubeMatIx{ctScen}, this.ompMCgeo, this.ompMCsource, this.ompMCoptions);
+                        if this.calcDoseDirect
+                            % The forward mode weights the beamlets itself and
+                            % returns dense cubes. Its summary comes with the
+                            % uncertainty, which ompMC only scores on request.
+                            if this.outputMCvariance
+                                [doseCube, relUncertaintyCube, summary] = ...
+                                    omc_matrad(this.cubeRho{ctScen}, this.cubeMatIx{ctScen}, this.ompMCgeo, this.ompMCsource, this.ompMCoptions);
+                            else
+                                doseCube = ...
+                                    omc_matrad(this.cubeRho{ctScen}, this.cubeMatIx{ctScen}, this.ompMCgeo, this.ompMCsource, this.ompMCoptions);
+                            end
                         else
-                            [dij.physicalDose{ctScen, shiftScen, rangeShiftScen}] = ...
-                                omc_matrad(this.cubeRho{ctScen}, this.cubeMatIx{ctScen}, this.ompMCgeo, this.ompMCsource, this.ompMCoptions);
+                            if this.outputMCvariance
+                                [doseInfluence, doseInfluenceVariance] = ...
+                                    omc_matrad(this.cubeRho{ctScen}, this.cubeMatIx{ctScen}, this.ompMCgeo, this.ompMCsource, this.ompMCoptions);
+                            else
+                                doseInfluence = ...
+                                    omc_matrad(this.cubeRho{ctScen}, this.cubeMatIx{ctScen}, this.ompMCgeo, this.ompMCsource, this.ompMCoptions);
+                            end
                         end
                     catch ME
                         errorString = [ME.message '\nThis error was thrown by the MEX-interface of ompMC.\n' ...
@@ -201,19 +212,41 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
 
                     % Calibrate the dose with above factor
-                    dij.physicalDose{scenarioIx} = dij.physicalDose{scenarioIx} * calibrationFactor;
-                    if isfield(dij, 'physicalDose_MCvar')
-                        dij.physicalDose_MCvar{scenarioIx} = dij.physicalDose_MCvar{scenarioIx} * calibrationFactor^2;
-                    end
-
                     if this.calcDoseDirect
-                        dij.physicalDose{scenarioIx} = dij.physicalDose{scenarioIx} .* this.directWeights';
+                        % The cube is already the dose of the whole weighted
+                        % field, i.e. what dij*w would have been
+                        dij.physicalDose{ctScen, shiftScen, rangeShiftScen} = sparse(double(doseCube(:)) * calibrationFactor);
 
-                        if isfield(dij, 'physicalDose_MCvar')
-                            dij.physicalDose_MCvar{scenarioIx} = dij.physicalDose_MCvar{scenarioIx} .* (this.directWeights').^2;
+                        if this.outputMCvariance
+                            % The forward mode reports a relative uncertainty
+                            % per voxel, while the dij stores a variance
+                            standardDeviation = relUncertaintyCube(:) .* double(doseCube(:)) * calibrationFactor;
+                            dij.physicalDose_MCvar{ctScen, shiftScen, rangeShiftScen} = sparse(standardDeviation.^2);
+
+                            matRad_cfg.dispInfo('ompMC started %d of %d histories in the phantom and deposited %.2f%% of the incident energy.\n', ...
+                                                summary.nStarted, summary.nHistories, 100 * summary.energyFraction);
+                        end
+                    else
+                        dij.physicalDose{ctScen, shiftScen, rangeShiftScen} = doseInfluence * calibrationFactor;
+
+                        if this.outputMCvariance
+                            dij.physicalDose_MCvar{ctScen, shiftScen, rangeShiftScen} = doseInfluenceVariance * calibrationFactor^2;
                         end
                     end
                 end
+            end
+
+            if this.calcDoseDirect
+                % The forward calculation returns the dose of the whole plan in
+                % a single column, so there is only one "beamlet" left to keep
+                % book over
+                dij.numOfBeams        = 1;
+                dij.beamNum           = 1;
+                dij.bixelNum          = 1;
+                dij.rayNum            = 1;
+                dij.totalNumOfBixels  = 1;
+                dij.totalNumOfRays    = 1;
+                dij.numOfRaysPerBeam  = 1;
             end
         end
 
@@ -225,14 +258,6 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             dij.bixelNum = NaN * ones(dij.totalNumOfBixels, 1);
             dij.rayNum   = NaN * ones(dij.totalNumOfBixels, 1);
             dij.beamNum  = NaN * ones(dij.totalNumOfBixels, 1);
-
-            if this.calcDoseDirect
-                % Use ceil to avoid 0 when number of histories is small
-                this.numHistoriesPerBeamlet = ceil(this.numHistoriesDirect / dij.totalNumOfBixels);
-                matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispWarning(['The ompMC engine implements beamlet-wise calculation only at the moment, ' ...
-                                        'so we will set the histories per bemlet to numHistoriesDirect/numBeamlets: %d!']);
-            end
 
             dij.numHistoriesPerBeamlet = this.numHistoriesPerBeamlet;
 
@@ -264,10 +289,28 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_cfg = MatRad_Config.instance(); % Instance of matRad configuration class
 
             % display options
-            obj.ompMCoptions.verbose = matRad_cfg.logLevel - 1;
+            obj.ompMCoptions.verbose = max(matRad_cfg.logLevel - 1, 0);
+
+            % Report progress through matRad instead of ompMC's own waitbar
+            obj.ompMCoptions.progressCallback = @(progress) obj.progressUpdate(progress);
 
             % start MC control
-            obj.ompMCoptions.nHistories = obj.numHistoriesPerBeamlet;
+            if obj.calcDoseDirect
+                % One dense cube for the whole weighted field instead of one
+                % sparse column per beamlet. nHistories counts the whole
+                % calculation here, and the threshold prunes columns of a
+                % sparse matrix, of which there are none.
+                obj.ompMCoptions.mode = 'forward_beamlet';
+                obj.ompMCoptions.nHistories = obj.numHistoriesDirect;
+                obj.ompMCoptions.relDoseThreshold = 0;
+            else
+                obj.ompMCoptions.mode = 'dij';
+                obj.ompMCoptions.nHistories = obj.numHistoriesPerBeamlet;
+
+                % Relative Threshold for dose
+                obj.ompMCoptions.relDoseThreshold = 1 - obj.relativeDosimetricCutOff;
+            end
+
             obj.ompMCoptions.nSplit = 20;
             obj.ompMCoptions.nBatches = 10;
             obj.ompMCoptions.randomSeeds = [97 33];
@@ -286,9 +329,6 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             obj.ompMCoptions.global_ecut = 0.7;
             obj.ompMCoptions.global_pcut = 0.010;
-
-            % Relative Threshold for dose
-            obj.ompMCoptions.relDoseThreshold = 1 - obj.relativeDosimetricCutOff;
 
             % Output folders
             obj.ompMCoptions.outputFolder = [obj.omcFolder filesep 'output' filesep];
@@ -491,6 +531,12 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             obj.ompMCsource.ySide2 = bixelSide2(:, 1);
             obj.ompMCsource.zSide2 = bixelSide2(:, 3);
 
+            % In forward mode the fluence map is the collimation: a blocked
+            % beamlet gets 0, an open one its fluence
+            if obj.calcDoseDirect
+                obj.ompMCsource.bixelWeights = double(obj.directWeights(:));
+            end
+
             if obj.visBool
                 plot3(obj.ompMCsource.ySource, obj.ompMCsource.xSource, obj.ompMCsource.zSource, 'rx');
             end
@@ -530,118 +576,80 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             checkMeta = all(isfield(machine.meta, {'SAD', 'SCD'}));
 
-            if checkMeta
-                available = true;
-                msg = ['The ompMC machine is not representing the machine exactly and approximates it with a ' ...
-                       'virtual Gaussian source and generic primary fluence & 6 MV energy spectrum!'];
+            if ~checkMeta
+                return
+            end
+
+            % ompMC is not shipped with matRad, so an engine that has not been
+            % installed is not one that can be offered
+            [installed, installMsg] = DoseEngines.matRad_PhotonOmpMCEngine.checkInstallation();
+
+            if ~installed
+                msg = installMsg;
+                return
+            end
+
+            available = true;
+            msg = ['The ompMC machine is not representing the machine exactly and approximates it with a ' ...
+                   'virtual Gaussian source and generic primary fluence & 6 MV energy spectrum!'];
+        end
+
+        function omcFolder = getOmcFolder()
+            % Folder ompMC is installed to by matRad_installOmpMC
+
+            matRad_cfg = MatRad_Config.instance();
+            omcFolder = [matRad_cfg.matRadRoot filesep 'thirdParty' filesep 'ompMC'];
+        end
+
+        function [installed, msg] = checkInstallation()
+            % Checks whether ompMC is installed, i.e. whether the mex
+            % interface and the physics data it reads are where
+            % matRad_installOmpMC puts them
+            %
+            % call:
+            %   [installed,msg] = DoseEngines.matRad_PhotonOmpMCEngine.checkInstallation()
+            %
+            % output:
+            %   installed:  true if ompMC can be used
+            %   msg:        what is missing and how to get it, empty if
+            %               everything is in place
+
+            msg = '';
+
+            omcFolder = DoseEngines.matRad_PhotonOmpMCEngine.getOmcFolder();
+            binFolder = [omcFolder filesep 'bin'];
+
+            % Only the plain mex file is looked for: what was downloaded or
+            % built is the one for this system, so matRad's own extension
+            % scheme for shipped octave binaries has nothing to pick from
+            installed = matRad_checkMexFileExists('omc_matrad', false);
+
+            % The install folder only lands on the path on startup, so an ompMC
+            % installed since then is picked up here
+            if ~installed && exist(binFolder, 'dir') == 7
+                addpath(binFolder);
+                installed = matRad_checkMexFileExists('omc_matrad', false);
+            end
+
+            installed = installed && ...
+                        exist([omcFolder filesep 'data'], 'dir') == 7 && ...
+                        exist([omcFolder filesep 'pegs4'], 'dir') == 7 && ...
+                        exist([omcFolder filesep 'spectra'], 'dir') == 7;
+
+            if ~installed
+                msg = sprintf(['ompMC is not installed. It is licensed under the GPL and therefore not ' ...
+                               'shipped with matRad.\nRun matRad_installOmpMC to download or build it.']);
             end
         end
 
-        function compileOmpMCInterface(dest, omcFolder)
-            % Compiles the ompMC interface (integrated as submodule)
-            %
-            % call:
-            %   matRad_OmpConfig.compileOmpMCInterface()
-            %   matRad_OmpConfig.compileOmpMCInterface(dest)
-            %   matRad_OmpConfig.compileOmpMCInterface(dest,sourceFolder)
-            %
-            % if an object is instantiated, matRad_OmpConfig can be replaced by the
-            % object handle
-            %
-            % input:
-            %   dest:           (optional) destination for mex file. Default: location
-            %                   of this file
-            %   sourceFolder:   (optional) path to ompMC . Default assumes its checked
-            %                   out in the submodules folder of matRad
-            %
-            % References
-            %
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %
-            % Copyright 2020 the matRad development team.
-            %
-            % This file is part of the matRad project. It is subject to the license
-            % terms in the LICENSE file found in the top-level directory of this
-            % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
-            % of the matRad project, including this file, may be copied, modified,
-            % propagated, or distributed except according to the terms contained in the
-            % LICENSE file.
-            %
-            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function compileOmpMCInterface(varargin)
+            % Deprecated. Building the ompMC interface is one of the things
+            % matRad_installOmpMC does, and it is no longer done implicitly.
 
             matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispDeprecationWarning('compileOmpMCInterface is deprecated, use matRad_installOmpMC instead!');
 
-            env = matRad_getEnvironment();
-
-            % Our destination usually lies in the ompMC thirdPartyFolder
-            if nargin < 1
-                dest = [matRad_cfg.matRadRoot filesep 'thirdParty' filesep 'ompMC'];
-            end
-
-            % We can recompile form the submodules
-            if nargin < 2
-                omcFolder = [matRad_cfg.matRadRoot filesep 'submodules' filesep 'ompMC'];
-            end
-
-            sourceFolder = [omcFolder filesep 'src'];
-            interfaceFolder = [omcFolder filesep 'ucodes' filesep 'omc_matrad'];
-
-            mainFile = [interfaceFolder filesep 'omc_matrad.c'];
-
-            addFiles = {'ompmc.c', 'omc_utilities.c', 'omc_random.c'};
-            addFiles = cellfun(@(f) fullfile(sourceFolder, f), addFiles, 'UniformOutput', false);
-
-            addFiles = strjoin(addFiles, ' ');
-
-            if exist ('OCTAVE_VERSION', 'builtin')
-                ccName = evalc('mkoctfile -p CC');
-            else
-                myCCompiler = mex.getCompilerConfigurations('C', 'Selected');
-                ccName = myCCompiler.ShortName;
-            end
-
-            % These settings have only been tested for MSVC and g++. You may need to adapt for other compilers
-            if ~isempty(strfind(ccName, 'MSVC')) % Not use contains(...) because of octave
-                flags{1, 1} = 'COMPFLAGS';
-                flags{1, 2} = '/openmp';
-                flags{2, 1} = 'OPTIMFLAGS';
-                flags{2, 2} = '/O2';
-            else
-                flags{1, 1} = 'CFLAGS';
-                flags{1, 2} = '-std=gnu99 -fopenmp -O3';
-                flags{2, 1} = 'LDFLAGS';
-                flags{2, 2} = '-fopenmp';
-
-            end
-
-            includestring =  ['-I' sourceFolder];
-
-            flagstring = '';
-
-            % For Octave, the flags will be set in the environment, while they
-            % will be parsed as string arguments in MATLAB
-            for flag = 1:size(flags, 1)
-                if strcmp(env, 'OCTAVE')
-                    preFlagContent = evalc(['mkoctfile -p ' flags{flag, 1}]);
-                    if ~isempty(preFlagContent)
-                        preFlagContent = preFlagContent(1:end - 1); % Strip newline
-                    end
-                    newContent = [preFlagContent ' ' flags{flag, 2}];
-                    setenv(flags{flag, 1}, newContent);
-                    matRad_cfg.dispDebug('Set compiler flag %s to %s\n', flags{flag, 1}, newContent);
-                else
-                    flagstring = [flagstring flags{flag, 1} '="$' flags{flag, 1} ' ' flags{flag, 2} '" '];
-                end
-            end
-
-            mexCall = ['mex -largeArrayDims ' flagstring ' ' includestring ' ' mainFile ' ' addFiles];
-            matRad_cfg.dispDebug('Compiler call: %s\n', mexCall);
-
-            currDir = pwd;
-            cd(dest);
-            eval(mexCall);
-            cd(currDir);
+            matRad_installOmpMC('mode', 'build');
         end
 
     end
