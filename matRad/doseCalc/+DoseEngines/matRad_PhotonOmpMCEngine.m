@@ -639,7 +639,87 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             if ~installed
                 msg = sprintf(['ompMC is not installed. It is licensed under the GPL and therefore not ' ...
                                'shipped with matRad.\nRun matRad_installOmpMC to download or build it.']);
+                return
             end
+
+            % A mex file built for another environment carries the same name
+            % and would be found above, only to fail to load with something
+            % unhelpful, so what it was built for is recorded and checked
+            installedFor = DoseEngines.matRad_PhotonOmpMCEngine.readBinaryTag();
+            binaryTag = DoseEngines.matRad_PhotonOmpMCEngine.binaryTag();
+
+            if ~strcmp(installedFor, binaryTag)
+                installed = false;
+                msg = sprintf(['The installed ompMC was built for %s, but this is %s, which cannot load it.\n' ...
+                               'Run matRad_installOmpMC(''force'',true) to install the matching one.'], ...
+                              installedFor, binaryTag);
+            end
+        end
+
+        function tag = binaryTag()
+            % Names the compiled ompMC this environment is able to load, and
+            % thereby the release package it needs. Octave mex files only load
+            % in the major version they were built with, except from octave 10
+            % on, where they link against the stable liboctmex and stay
+            % compatible with every later version.
+
+            [env, envVer] = matRad_getEnvironment();
+
+            if ~strcmp(env, 'OCTAVE')
+                tag = 'matlab';
+                return
+            end
+
+            major = str2double(strtok(envVer, '.'));
+
+            if isnan(major)
+                tag = 'octave';
+            elseif major >= 10
+                tag = 'octave10';
+            else
+                tag = sprintf('octave%d', major);
+            end
+        end
+
+        function tag = readBinaryTag()
+            % What the installed ompMC was built for, as written by
+            % matRad_installOmpMC. Empty if nothing recorded it.
+
+            tag = '';
+
+            tagFile = [DoseEngines.matRad_PhotonOmpMCEngine.getOmcFolder() filesep 'bin' filesep 'builtFor.txt'];
+
+            if exist(tagFile, 'file') ~= 2
+                return
+            end
+
+            fid = fopen(tagFile, 'r');
+
+            if fid < 0
+                return
+            end
+
+            tag = strtrim(fgetl(fid));
+            fclose(fid);
+        end
+
+        function writeBinaryTag()
+            % Records what the installed ompMC was built for. Called by
+            % matRad_installOmpMC once the binary is in place.
+
+            matRad_cfg = MatRad_Config.instance();
+
+            tagFile = [DoseEngines.matRad_PhotonOmpMCEngine.getOmcFolder() filesep 'bin' filesep 'builtFor.txt'];
+
+            fid = fopen(tagFile, 'w');
+
+            if fid < 0
+                matRad_cfg.dispWarning('Could not write %s.', tagFile);
+                return
+            end
+
+            fprintf(fid, '%s\n', DoseEngines.matRad_PhotonOmpMCEngine.binaryTag());
+            fclose(fid);
         end
 
         function compileOmpMCInterface(varargin)

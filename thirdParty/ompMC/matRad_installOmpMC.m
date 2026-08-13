@@ -119,6 +119,10 @@ else
     matRad_ompMCbuild(release, p.Results.sourceFolder, installDir);
 end
 
+% So that a later session can tell whether it is able to load what is here -
+% a mex file for another octave has the same name and fails only when called
+DoseEngines.matRad_PhotonOmpMCEngine.writeBinaryTag();
+
 %% Finalize
 % ompMC writes its own diagnostics here, and the release packages do not
 % carry the (empty) folder
@@ -175,25 +179,16 @@ function asset = matRad_ompMCassetForThisPlatform(release)
 % Picks the release asset for the running environment, or returns empty if
 % the release does not have one.
 
-[env, envVer] = matRad_getEnvironment();
-
 isArm = matRad_ompMCisArm();
 
-if strcmp(env, 'OCTAVE')
-    % Before Octave 10 a mex file only loads in the major version it was
-    % built with, from 10 on it links against the stable liboctmex and stays
-    % compatible upwards. ompMC packages one asset per such ABI bucket.
-    major = str2double(strtok(envVer, '.'));
+% ompMC packages one asset per ABI bucket, which is what the engine names to
+% decide whether it can load a given binary - the same question, asked before
+% rather than after the download
+platform = DoseEngines.matRad_PhotonOmpMCEngine.binaryTag();
 
-    if isnan(major)
-        platform = '';
-    elseif major >= 10
-        platform = sprintf('octave%d', 10);
-    else
-        platform = sprintf('octave%d', major);
-    end
-
-    if isempty(platform)
+if ~strcmp(platform, 'matlab')
+    if strcmp(platform, 'octave')
+        % an octave whose version did not parse
         asset = '';
         return
     end
@@ -291,17 +286,22 @@ function matRad_ompMCdownload(release, asset, installDir)
 
 matRad_cfg = MatRad_Config.instance();
 
-tmpDir = tempname;
+% Unpacked next to where it is going rather than in the system temp folder,
+% so that moving it into place stays within one volume - see
+% matRad_ompMCmoveContent. Nothing below installDir is tracked, and it is
+% removed either way.
+tmpDir = fullfile(installDir, 'download');
+matRad_ompMCrmdir(tmpDir);
 mkdir(tmpDir);
 
-cleanTmp = onCleanup(@() matRad_ompMCrmdir(tmpDir));
+cleanTmp = onCleanup(@() matRad_ompMCrmdir(tmpDir)); %#ok<NASGU>
 
 zipFile = fullfile(tmpDir, asset.name);
 
 matRad_cfg.dispInfo('Downloading %s...\n', asset.url);
 
 try
-    websave(zipFile, asset.url);
+    matRad_ompMCfetch(asset.url, zipFile);
 catch ME
     matRad_cfg.dispError('Could not download ompMC from %s:\n%s', asset.url, ME.message);
 end
@@ -309,7 +309,7 @@ end
 matRad_ompMCverifyChecksum(zipFile, asset.sha256);
 
 matRad_cfg.dispInfo('Unpacking...\n');
-unzip(zipFile, tmpDir);
+matRad_ompMCunzip(zipFile, tmpDir);
 
 % The archive holds a single folder named like itself, whose content is what
 % we want in the install folder
@@ -327,12 +327,76 @@ matRad_ompMCmoveContent(contentDir, installDir);
 licenseUrl = sprintf('%s/raw/%s/LICENSE', release.repoUrl, release.tag);
 
 try
-    websave(fullfile(installDir, 'LICENSE'), licenseUrl);
+    matRad_ompMCfetch(licenseUrl, fullfile(installDir, 'LICENSE'));
 catch
     matRad_cfg.dispWarning('Could not download the ompMC license text from %s.', licenseUrl);
 end
 
 matRad_ompMCwriteOrigin(installDir, release, sprintf('pre-compiled release asset %s (sha256 %s)', asset.name, asset.sha256));
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCunzip(zipFile, destDir)
+% Unpacks a zip archive. Octave's unzip hands the work to an unzip program
+% that a Windows machine does not usually have, so where the built-in one
+% cannot do it, the system is asked directly - through bsdtar, which reads
+% zip files and comes with Windows, or through unzip everywhere else.
+
+try
+    unzip(zipFile, destDir);
+    return
+catch ME
+    builtinError = ME.message;
+end
+
+if ispc
+    unpackCall = sprintf('tar -xf "%s" -C "%s"', zipFile, destDir);
+else
+    unpackCall = sprintf('unzip -o -q "%s" -d "%s"', zipFile, destDir);
+end
+
+[status, msg] = system(unpackCall);
+
+if status ~= 0
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispError('Could not unpack %s.\nBuilt-in unzip said: %s\n%s said: %s', ...
+                         zipFile, builtinError, unpackCall, msg);
+end
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCfetch(url, target)
+% Downloads a file with whatever the environment has. MATLAB has websave;
+% octave has urlwrite, but from octave 11 on that gives up after five
+% seconds, which a release package does not download in, so where weboptions
+% can lift the limit webread is asked instead. It hands the bytes back as
+% char, one per byte - and if that ever stopped being true, the checksum the
+% caller verifies afterwards is what would say so.
+
+if exist('websave', 'file') == 2 || exist('websave', 'builtin') == 5
+    websave(target, url);
+    return
+end
+
+if exist('weboptions', 'file') == 2 || exist('weboptions', 'builtin') == 5
+    data = webread(url, weboptions('Timeout', 300));
+
+    fid = fopen(target, 'wb');
+
+    if fid < 0
+        error('matRad:ompMC:download', 'Could not write %s.', target);
+    end
+
+    fwrite(fid, data, 'uint8');
+    fclose(fid);
+    return
+end
+
+[~, success, msg] = urlwrite(url, target);
+
+if ~success
+    error('matRad:ompMC:download', '%s', msg);
+end
 end
 
 %% ------------------------------------------------------------------------
@@ -364,7 +428,7 @@ function sha = matRad_ompMCsha256(fileName)
 
 sha = '';
 
-fid = fopen(fileName, 'r');
+fid = fopen(fileName, 'rb');
 
 if fid < 0
     return
@@ -405,14 +469,20 @@ end
 
 mexFile = '';
 
-if matRad_ompMChasCMake()
+% An octave mex file has to be built with the toolchain octave itself was
+% built with, which is precisely what mkoctfile is. On Windows that is MinGW,
+% while CMake picks up MSVC and ompMC then refuses to build the octave target
+% at all - so there it is mkoctfile's job from the start.
+useCMake = matRad_ompMChasCMake() && ~(matRad_cfg.isOctave && ispc);
+
+if useCMake
     try
         mexFile = matRad_ompMCbuildWithCMake(sourceFolder);
     catch ME
         matRad_cfg.dispWarning('Building ompMC with CMake failed (%s), falling back to a plain mex call.', ME.message);
     end
 else
-    matRad_cfg.dispInfo('CMake was not found, building ompMC with a plain mex call instead.\n');
+    matRad_cfg.dispInfo('Building ompMC with a plain mex call.\n');
 end
 
 if isempty(mexFile)
@@ -431,12 +501,47 @@ for dataFolder = {'data', 'pegs4', 'spectra'}
         matRad_cfg.dispError('The ompMC sources in %s do not contain the %s folder.', sourceFolder, dataFolder{1});
     end
 
-    copyfile(src, fullfile(installDir, dataFolder{1}));
+    matRad_ompMCcopyDir(src, fullfile(installDir, dataFolder{1}));
 end
 
 copyfile(fullfile(sourceFolder, 'LICENSE'), installDir);
 
 matRad_ompMCwriteOrigin(installDir, release, sprintf('built from the sources in %s', sourceFolder));
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCcopyDir(fromDir, toDir)
+% Copies a directory's content, one entry at a time into a destination that
+% exists. Copying a directory onto a name that does not exist yet leaves
+% octave's copyfile asking Windows whether that name means a file, and a
+% wildcard is passed on literally rather than expanded.
+
+matRad_cfg = MatRad_Config.instance();
+
+if ~exist(toDir, 'dir')
+    mkdir(toDir);
+end
+
+entries = dir(fromDir);
+
+for i = 1:numel(entries)
+    if any(strcmp(entries(i).name, {'.', '..'}))
+        continue
+    end
+
+    from = fullfile(fromDir, entries(i).name);
+
+    if entries(i).isdir
+        matRad_ompMCcopyDir(from, fullfile(toDir, entries(i).name));
+        continue
+    end
+
+    [success, msg] = copyfile(from, toDir);
+
+    if ~success
+        matRad_cfg.dispError('Could not copy %s into %s: %s', from, toDir, msg);
+    end
+end
 end
 
 %% ------------------------------------------------------------------------
@@ -459,7 +564,11 @@ mkdir(buildDir);
 configureCall = sprintf('cmake -S "%s" -B "%s" -DCMAKE_BUILD_TYPE=Release -DOMPMC_BUILD_DOSXYZ=OFF', sourceFolder, buildDir);
 
 if strcmp(matRad_getEnvironment(), 'OCTAVE')
-    configureCall = [configureCall ' -DOMPMC_BUILD_MATRAD_MEX=OFF -DOMPMC_BUILD_MATRAD_OCT=ON'];
+    % Point it at the octave that is running, the way MATLAB is pointed at
+    % below - CMake finds octave through octave-config on the PATH, which an
+    % octave started by its full path is not on
+    configureCall = sprintf('%s -DOMPMC_BUILD_MATRAD_MEX=OFF -DOMPMC_BUILD_MATRAD_OCT=ON -DOctave_ROOT="%s"', ...
+                            configureCall, OCTAVE_HOME());
 else
     % Build against the MATLAB that is running, not whichever one CMake finds
     configureCall = sprintf('%s -DOMPMC_BUILD_MATRAD_MEX=ON -DOMPMC_BUILD_MATRAD_OCT=OFF -DMatlab_ROOT_DIR="%s"', configureCall, matlabroot);
@@ -513,9 +622,12 @@ mkdir(generatedDir);
 
 matRad_ompMCwriteVersionHeader(sourceFolder, generatedDir);
 
+% Everything in src/ is what ompMC's own build makes its core library from,
+% and src/compat is not globbed because only the command line user code needs
+% it. mex is called in function form, so none of these need quoting.
 sourceFiles = dir(fullfile(srcDir, '*.c'));
-sourceFiles = cellfun(@(f) ['"' fullfile(srcDir, f) '"'], {sourceFiles.name}, 'UniformOutput', false);
-sourceFiles = [{['"' fullfile(ucodeDir, 'omc_matrad.c') '"']} sourceFiles];
+sourceFiles = cellfun(@(f) fullfile(srcDir, f), {sourceFiles.name}, 'UniformOutput', false);
+sourceFiles = [{fullfile(ucodeDir, 'omc_matrad.c')} sourceFiles];
 
 % These settings have only been tested for MSVC and gcc. You may need to
 % adapt them for other compilers
@@ -528,14 +640,20 @@ end
 
 if ~isempty(strfind(ccName, 'MSVC')) %#ok<STREMP> - contains() does not exist in Octave
     flags = {'COMPFLAGS', '/openmp'; 'OPTIMFLAGS', '/O2'};
+elseif strcmp(env, 'OCTAVE')
+    % Only CFLAGS, which mkoctfile also passes when it links. Its LDFLAGS
+    % carry octave's own library paths, and appending to those means handing
+    % them back unquoted - which breaks every octave installed somewhere like
+    % C:\Program Files.
+    flags = {'CFLAGS', '-std=gnu99 -fopenmp -O3'};
 else
     flags = {'CFLAGS', '-std=gnu99 -fopenmp -O3'; 'LDFLAGS', '-fopenmp'};
 end
 
-flagString = '';
+mexArgs = {'-largeArrayDims', ['-I' srcDir], ['-I' generatedDir]};
 
 % For Octave the flags are set in the environment, while MATLAB parses them
-% as string arguments
+% as arguments
 for flag = 1:size(flags, 1)
     if strcmp(env, 'OCTAVE')
         preFlagContent = evalc(['mkoctfile -p ' flags{flag, 1}]);
@@ -548,18 +666,17 @@ for flag = 1:size(flags, 1)
         setenv(flags{flag, 1}, newContent);
         matRad_cfg.dispDebug('Set compiler flag %s to %s\n', flags{flag, 1}, newContent);
     else
-        flagString = [flagString flags{flag, 1} '="$' flags{flag, 1} ' ' flags{flag, 2} '" ']; %#ok<AGROW>
+        mexArgs{end + 1} = sprintf('%s="$%s %s"', flags{flag, 1}, flags{flag, 1}, flags{flag, 2}); %#ok<AGROW>
     end
 end
+
+mexArgs = [mexArgs, sourceFiles];
 
 outDir = fullfile(tempname, 'ompMC-mex');
 mkdir(outDir);
 
-mexCall = sprintf('mex -largeArrayDims %s -I"%s" -I"%s" %s', ...
-                  flagString, srcDir, generatedDir, strjoin(sourceFiles, ' '));
-
 matRad_cfg.dispInfo('Building ompMC with mex...\n');
-matRad_cfg.dispDebug('Compiler call: %s\n', mexCall);
+matRad_cfg.dispDebug('Compiler call: mex %s\n', strjoin(mexArgs, ' '));
 
 % mex writes to the working directory, and -outdir is not understood by both
 % environments
@@ -567,7 +684,7 @@ currDir = pwd;
 returnToCurrDir = onCleanup(@() cd(currDir));
 cd(outDir);
 
-eval(mexCall);
+mex(mexArgs{:});
 
 clear returnToCurrDir;
 
@@ -650,7 +767,11 @@ end
 %% ------------------------------------------------------------------------
 function matRad_ompMCmoveContent(fromDir, toDir)
 % Moves everything in fromDir into toDir, which is how an unpacked release
-% becomes an installation
+% becomes an installation. Both are on the same volume by construction: on
+% Windows octave moves a directory by asking the system to, which it refuses
+% to do across drives.
+
+matRad_cfg = MatRad_Config.instance();
 
 if ~exist(toDir, 'dir')
     mkdir(toDir);
@@ -663,7 +784,11 @@ for i = 1:numel(entries)
         continue
     end
 
-    movefile(fullfile(fromDir, entries(i).name), fullfile(toDir, entries(i).name));
+    [success, msg] = movefile(fullfile(fromDir, entries(i).name), fullfile(toDir, entries(i).name));
+
+    if ~success
+        matRad_cfg.dispError('Could not move %s into %s: %s', entries(i).name, toDir, msg);
+    end
 end
 end
 
@@ -686,6 +811,13 @@ for i = 1:numel(entries)
     entryPath = fullfile(installDir, entries(i).name);
 
     if entries(i).isdir
+        % matRad adds everything under thirdParty to the path on startup, and
+        % octave complains about every folder that disappears underneath it
+        warnState = warning();
+        warning('off', 'all');
+        rmpath(entryPath);
+        warning(warnState);
+
         matRad_ompMCrmdir(entryPath);
     else
         delete(entryPath);
