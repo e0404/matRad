@@ -9,10 +9,12 @@
 [submodule "submodules/MCsquare"]
 	path = submodules/MCsquare
 	url = https://github.com/e0404/MCsquare.git
+; ompMC is licensed under the GPL and is therefore neither shipped with matRad
+; nor tracked on a branch. The gitlink is pinned to the release tag matRad is
+; built against, see thirdParty/ompMC/matRad_installOmpMC.m
 [submodule "submodules/ompMC"]
 	path = submodules/ompMC
 	url = https://github.com/e0404/ompMC
-	branch = dev_parallel
 [submodule "submodules/MOxUnit"]
 	path = submodules/MOxUnit
     url = https://github.com/e0404/MOxUnit

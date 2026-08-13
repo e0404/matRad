@@ -1,4 +1,9 @@
 thirdParty/MCsquare/bin/Materials/
+# ompMC is GPL licensed and thus not shipped with matRad. It is installed on
+# demand into thirdParty/ompMC by matRad_installOmpMC, and nothing it puts
+# there is tracked - only the installer itself is.
+thirdParty/ompMC/*
+!thirdParty/ompMC/*.m
 userdata/*
 testresults.xml
 coverage.xml
@@ -7,4 +12,3 @@ coverage.json
 .DS_Store
 build/
 .doc/
-

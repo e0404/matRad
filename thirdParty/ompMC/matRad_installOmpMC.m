@@ -1,0 +1,728 @@
+function installDir = matRad_installOmpMC(varargin)
+% matRad_installOmpMC installs the ompMC photon Monte Carlo engine
+%
+% ompMC is licensed under the GNU General Public License v3, matRad under the
+% 3-clause BSD license. matRad therefore does not ship ompMC - neither its
+% sources nor a compiled mex interface - and instead obtains it on demand, on
+% your machine, after you accepted the GPL. This function is that step.
+%
+% It either downloads the pre-compiled mex interface of a pinned ompMC release
+% matching your platform, or builds one from the ompMC sources in the
+% submodules folder. Everything ends up in thirdParty/ompMC, which is ignored
+% by git.
+%
+% call:
+%   matRad_installOmpMC()
+%   matRad_installOmpMC('acceptLicense',true)
+%   matRad_installOmpMC('mode','build')
+%   matRad_installOmpMC('uninstall',true)
+%
+% input (name-value pairs):
+%   acceptLicense:  accept the GPL of ompMC without being asked. Required for
+%                   non-interactive use. Default: false (you will be asked)
+%   mode:           'auto'     download a release if one exists for this
+%                              platform, build from source otherwise (default)
+%                   'download' download only, fail if there is no release
+%                   'build'    build from source only
+%   sourceFolder:   ompMC sources to build from.
+%                   Default: <matRadRoot>/submodules/ompMC
+%   force:          re-install even if ompMC is already installed.
+%                   Default: false
+%   uninstall:      remove an installed ompMC instead of installing it.
+%                   Default: false
+%
+% output:
+%   installDir:     folder ompMC was installed to (empty when uninstalling)
+%
+% References
+%   https://github.com/e0404/ompMC
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2026 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+matRad_cfg = MatRad_Config.instance();
+
+release = matRad_ompMCrelease();
+
+p = inputParser;
+p.addParameter('acceptLicense', false, @(x) islogical(x) || isnumeric(x));
+p.addParameter('mode', 'auto', @(x) any(strcmpi(x, {'auto', 'download', 'build'})));
+p.addParameter('sourceFolder', fullfile(matRad_cfg.matRadRoot, 'submodules', 'ompMC'), @ischar);
+p.addParameter('force', false, @(x) islogical(x) || isnumeric(x));
+p.addParameter('uninstall', false, @(x) islogical(x) || isnumeric(x));
+p.parse(varargin{:});
+
+installDir = fullfile(matRad_cfg.matRadRoot, 'thirdParty', 'ompMC');
+mode = lower(p.Results.mode);
+
+%% Uninstall
+if p.Results.uninstall
+    matRad_ompMCclean(installDir);
+    matRad_cfg.dispInfo('ompMC removed from %s.\n', installDir);
+    installDir = '';
+    return
+end
+
+%% Nothing to do?
+if matRad_ompMCisInstalled(installDir) && ~p.Results.force
+    matRad_cfg.dispInfo('ompMC is already installed in %s. Pass ''force'',true to re-install.\n', installDir);
+    return
+end
+
+% A mex file that has been called once cannot be overwritten while it is
+% loaded - ompMC locks itself in memory because an OpenMP mex file cannot
+% safely be unloaded once a parallel region has run.
+if matRad_ompMCisLoaded()
+    matRad_cfg.dispError(['ompMC has already been loaded in this session and cannot be replaced. ' ...
+                          'Please restart %s and run matRad_installOmpMC again.'], matRad_getEnvironment());
+end
+
+%% License
+if ~all(p.Results.acceptLicense)
+    matRad_ompMCaskForLicense(release);
+end
+
+%% Install
+asset = matRad_ompMCassetForThisPlatform(release);
+
+switch mode
+    case 'download'
+        if isempty(asset)
+            matRad_cfg.dispError(['ompMC %s has no pre-compiled release for this platform. ' ...
+                                  'Use matRad_installOmpMC(''mode'',''build'') to build it from source.'], release.tag);
+        end
+        doDownload = true;
+    case 'build'
+        doDownload = false;
+    otherwise
+        doDownload = ~isempty(asset);
+        if ~doDownload
+            matRad_cfg.dispInfo('No pre-compiled ompMC release for this platform, building from source instead.\n');
+        end
+end
+
+matRad_ompMCclean(installDir);
+
+if doDownload
+    matRad_ompMCdownload(release, asset, installDir);
+else
+    matRad_ompMCbuild(release, p.Results.sourceFolder, installDir);
+end
+
+%% Finalize
+% ompMC writes its own diagnostics here, and the release packages do not
+% carry the (empty) folder
+outputDir = fullfile(installDir, 'output');
+if ~exist(outputDir, 'dir')
+    mkdir(outputDir);
+end
+
+% The mex file sits in bin/, which is only on the path from the next matRad_rc
+% on, so this session gets it now
+binDir = fullfile(installDir, 'bin');
+addpath(binDir);
+rehash;
+
+matRad_cfg.dispInfo('ompMC installed in %s\n', installDir);
+
+try
+    installedVersion = omc_matrad('version');
+    matRad_cfg.dispInfo('ompMC reports version %s.\n', installedVersion);
+catch ME
+    matRad_cfg.dispError(['ompMC was installed to %s, but the mex interface could not be called: %s\n' ...
+                          'If this is a pre-compiled release, try matRad_installOmpMC(''mode'',''build'',''force'',true).'], ...
+                         installDir, ME.message);
+end
+
+end
+
+%% ------------------------------------------------------------------------
+function release = matRad_ompMCrelease()
+% The ompMC release matRad is built against. Everything that has to change
+% when it is bumped lives here: the tag, and the SHA-256 of every asset as
+% published with the release.
+
+release.tag     = 'v0.3.0';
+release.version = '0.3.0';
+release.repoUrl = 'https://github.com/e0404/ompMC';
+
+% platform (as in the asset name), SHA-256 of ompmc-<version>-<platform>.zip
+release.assets = { ...
+                  'linux-arm64',             '609933e4a7ac9426e8afe7165e13eecc9a5c0d9d21a05a5662d81a5279760455'; ...
+                  'linux-x64',               '3fabb7b059373a5125c92afc09e2cdd7400a46323e85884deb30526e9c1571db'; ...
+                  'linux-x64-octave8',       '068090d7e9d382984495cc65a56645b216864ac9a0148ca5f21a96623b592aa8'; ...
+                  'macos-arm64',             'b5bcfc03e16b06bd4e07527d306dd4693baea5c2d262fcbbd9ee716d3efaf171'; ...
+                  'macos-x64',               'd86b391c4df6480cb085a5662d50dd1ac54ce57238c3870853cf228e4e90ba07'; ...
+                  'windows-x64-llvm-mingw',  '6bf446e6e0dc778a3e7ebd34ae15adc324113a50f070eb9892693b63c1ef8bfe'; ...
+                  'windows-x64-mingw',       '80c7be21c9702a9bc797b2dc8f3d3cd35fc9b510e8bd8ceb0c021ab0b756e861'; ...
+                  'windows-x64-msvc',        'ccb6cbc2cd607a3f3fa87afd9058a70c8205c067ae76aebc4f186ca01e07567c'; ...
+                  'windows-x64-octave8',     '426ab6d9c3d065f5e3c7d38ebba702e054e6aa4a8e3d7d4fb7325b5480cff4e4'; ...
+                  'windows-x64-octave10',    '93a27f3542c3f7cb8f19bffb30467da884ffcad41be2d1f2fab8c812b6f38707'};
+end
+
+%% ------------------------------------------------------------------------
+function asset = matRad_ompMCassetForThisPlatform(release)
+% Picks the release asset for the running environment, or returns empty if
+% the release does not have one.
+
+[env, envVer] = matRad_getEnvironment();
+
+isArm = matRad_ompMCisArm();
+
+if strcmp(env, 'OCTAVE')
+    % Before Octave 10 a mex file only loads in the major version it was
+    % built with, from 10 on it links against the stable liboctmex and stays
+    % compatible upwards. ompMC packages one asset per such ABI bucket.
+    major = str2double(strtok(envVer, '.'));
+
+    if isnan(major)
+        platform = '';
+    elseif major >= 10
+        platform = sprintf('octave%d', 10);
+    else
+        platform = sprintf('octave%d', major);
+    end
+
+    if isempty(platform)
+        asset = '';
+        return
+    end
+
+    if ispc
+        platform = ['windows-x64-' platform];
+    elseif ismac || isArm
+        % no macOS and no arm64 Octave packages so far
+        platform = '';
+    else
+        platform = ['linux-x64-' platform];
+    end
+else
+    if ispc
+        % The MinGW builds carry their own runtime dlls, the MSVC one only
+        % needs the Visual C++ redistributable, which any machine running
+        % MATLAB has
+        platform = 'windows-x64-msvc';
+    elseif ismac && isArm
+        platform = 'macos-arm64';
+    elseif ismac
+        platform = 'macos-x64';
+    elseif isArm
+        platform = 'linux-arm64';
+    else
+        platform = 'linux-x64';
+    end
+end
+
+asset = '';
+
+if isempty(platform)
+    return
+end
+
+ix = find(strcmp(release.assets(:, 1), platform), 1);
+
+if ~isempty(ix)
+    asset.platform = platform;
+    asset.name     = sprintf('ompmc-%s-%s.zip', release.version, platform);
+    asset.sha256   = release.assets{ix, 2};
+    asset.url      = sprintf('%s/releases/download/%s/%s', release.repoUrl, release.tag, asset.name);
+end
+end
+
+%% ------------------------------------------------------------------------
+function isArm = matRad_ompMCisArm()
+% Both environments spell the architecture differently, and neither spells
+% it the same way on every system
+
+arch = lower(computer());
+
+isArm = ~isempty(strfind(arch, 'arm')) || ~isempty(strfind(arch, 'aarch64')) || strcmp(arch, 'maca64'); %#ok<STREMP>
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCaskForLicense(release)
+% Obtains the user's consent to the GPL of ompMC. Skipped by passing
+% 'acceptLicense', which is how a script says the same thing.
+
+matRad_cfg = MatRad_Config.instance();
+
+fprintf('\n');
+fprintf('  ompMC %s\n', release.tag);
+fprintf('  An OpenMP parallel implementation for Monte Carlo particle transport\n');
+fprintf('  simulations, by Edgardo Doerner and contributors.\n\n');
+fprintf('  ompMC is free software licensed under the GNU General Public License,\n');
+fprintf('  version 3 or later - NOT under the 3-clause BSD license of matRad. It is\n');
+fprintf('  therefore not part of matRad and not distributed with it. What follows is\n');
+fprintf('  a download from, or a build of, a separate work:\n\n');
+fprintf('      %s\n', release.repoUrl);
+fprintf('      %s/blob/%s/LICENSE\n\n', release.repoUrl, release.tag);
+fprintf('  Installing it here combines it with matRad on this machine. That is your\n');
+fprintf('  right to do; passing the result on to anyone else means passing on the\n');
+fprintf('  terms of the GPL with it.\n\n');
+
+try
+    answer = input('  Do you accept the GNU General Public License v3 for ompMC? [y/N] ', 's');
+catch
+    answer = '';
+end
+
+fprintf('\n');
+
+if ~any(strcmpi(strtrim(answer), {'y', 'yes'}))
+    matRad_cfg.dispError(['ompMC was not installed because its license was not accepted. ' ...
+                          'In a non-interactive session, accept it with ' ...
+                          'matRad_installOmpMC(''acceptLicense'',true).']);
+end
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCdownload(release, asset, installDir)
+% Downloads and unpacks a pre-compiled ompMC release
+
+matRad_cfg = MatRad_Config.instance();
+
+tmpDir = tempname;
+mkdir(tmpDir);
+
+cleanTmp = onCleanup(@() matRad_ompMCrmdir(tmpDir));
+
+zipFile = fullfile(tmpDir, asset.name);
+
+matRad_cfg.dispInfo('Downloading %s...\n', asset.url);
+
+try
+    websave(zipFile, asset.url);
+catch ME
+    matRad_cfg.dispError('Could not download ompMC from %s:\n%s', asset.url, ME.message);
+end
+
+matRad_ompMCverifyChecksum(zipFile, asset.sha256);
+
+matRad_cfg.dispInfo('Unpacking...\n');
+unzip(zipFile, tmpDir);
+
+% The archive holds a single folder named like itself, whose content is what
+% we want in the install folder
+[~, assetBase] = fileparts(asset.name);
+contentDir = fullfile(tmpDir, assetBase);
+
+if ~exist(contentDir, 'dir')
+    matRad_cfg.dispError('Unexpected layout in %s: no folder %s.', asset.name, assetBase);
+end
+
+matRad_ompMCmoveContent(contentDir, installDir);
+
+% The release packages do not carry the license text, so it is fetched from
+% the tag the binaries were built from
+licenseUrl = sprintf('%s/raw/%s/LICENSE', release.repoUrl, release.tag);
+
+try
+    websave(fullfile(installDir, 'LICENSE'), licenseUrl);
+catch
+    matRad_cfg.dispWarning('Could not download the ompMC license text from %s.', licenseUrl);
+end
+
+matRad_ompMCwriteOrigin(installDir, release, sprintf('pre-compiled release asset %s (sha256 %s)', asset.name, asset.sha256));
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCverifyChecksum(fileName, expected)
+
+matRad_cfg = MatRad_Config.instance();
+
+actual = matRad_ompMCsha256(fileName);
+
+if isempty(actual)
+    matRad_cfg.dispWarning(['Could not compute a SHA-256 checksum in this environment, ' ...
+                            'the downloaded ompMC release was not verified.']);
+    return
+end
+
+if ~strcmpi(actual, expected)
+    matRad_cfg.dispError(['Checksum mismatch for %s.\nexpected: %s\nfound:    %s\n' ...
+                          'The download is corrupt or does not come from the pinned ompMC release, ' ...
+                          'and was not installed.'], fileName, expected, actual);
+end
+
+matRad_cfg.dispDebug('Checksum of %s verified.\n', fileName);
+end
+
+%% ------------------------------------------------------------------------
+function sha = matRad_ompMCsha256(fileName)
+% SHA-256 of a file. Returns empty if neither environment offers one, which
+% only happens for MATLAB started without a JVM.
+
+sha = '';
+
+fid = fopen(fileName, 'r');
+
+if fid < 0
+    return
+end
+
+bytes = fread(fid, inf, '*uint8');
+fclose(fid);
+
+if strcmp(matRad_getEnvironment(), 'OCTAVE')
+    sha = hash('SHA256', char(bytes'));
+    return
+end
+
+if ~usejava('jvm')
+    return
+end
+
+digest = java.security.MessageDigest.getInstance('SHA-256');
+digest.update(bytes);
+
+% digest() gives signed bytes, which have to be read as unsigned before they
+% can be printed as the usual hex string
+sha = lower(reshape(dec2hex(typecast(digest.digest(), 'uint8'), 2).', 1, []));
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCbuild(release, sourceFolder, installDir)
+% Builds the ompMC mex interface from source, preferring CMake - which is how
+% ompMC builds itself - and falling back to a plain mex call.
+
+matRad_cfg = MatRad_Config.instance();
+
+if ~exist(fullfile(sourceFolder, 'CMakeLists.txt'), 'file')
+    matRad_cfg.dispError(['No ompMC sources in %s. Check out the submodule with\n' ...
+                          '    git submodule update --init submodules/ompMC\n' ...
+                          'or point matRad_installOmpMC at a source folder with ''sourceFolder''.'], sourceFolder);
+end
+
+mexFile = '';
+
+if matRad_ompMChasCMake()
+    try
+        mexFile = matRad_ompMCbuildWithCMake(sourceFolder);
+    catch ME
+        matRad_cfg.dispWarning('Building ompMC with CMake failed (%s), falling back to a plain mex call.', ME.message);
+    end
+else
+    matRad_cfg.dispInfo('CMake was not found, building ompMC with a plain mex call instead.\n');
+end
+
+if isempty(mexFile)
+    mexFile = matRad_ompMCbuildWithMex(sourceFolder);
+end
+
+% Assemble the same layout a release package has
+binDir = fullfile(installDir, 'bin');
+mkdir(binDir);
+copyfile(mexFile, binDir);
+
+for dataFolder = {'data', 'pegs4', 'spectra'}
+    src = fullfile(sourceFolder, dataFolder{1});
+
+    if ~exist(src, 'dir')
+        matRad_cfg.dispError('The ompMC sources in %s do not contain the %s folder.', sourceFolder, dataFolder{1});
+    end
+
+    copyfile(src, fullfile(installDir, dataFolder{1}));
+end
+
+copyfile(fullfile(sourceFolder, 'LICENSE'), installDir);
+
+matRad_ompMCwriteOrigin(installDir, release, sprintf('built from the sources in %s', sourceFolder));
+end
+
+%% ------------------------------------------------------------------------
+function tf = matRad_ompMChasCMake()
+
+[status, ~] = system('cmake --version');
+tf = (status == 0);
+end
+
+%% ------------------------------------------------------------------------
+function mexFile = matRad_ompMCbuildWithCMake(sourceFolder)
+% Builds through ompMC's own CMake project, which is the configuration its
+% releases are built in
+
+matRad_cfg = MatRad_Config.instance();
+
+buildDir = fullfile(tempname, 'ompMC-build');
+mkdir(buildDir);
+
+configureCall = sprintf('cmake -S "%s" -B "%s" -DCMAKE_BUILD_TYPE=Release -DOMPMC_BUILD_DOSXYZ=OFF', sourceFolder, buildDir);
+
+if strcmp(matRad_getEnvironment(), 'OCTAVE')
+    configureCall = [configureCall ' -DOMPMC_BUILD_MATRAD_MEX=OFF -DOMPMC_BUILD_MATRAD_OCT=ON'];
+else
+    % Build against the MATLAB that is running, not whichever one CMake finds
+    configureCall = sprintf('%s -DOMPMC_BUILD_MATRAD_MEX=ON -DOMPMC_BUILD_MATRAD_OCT=OFF -DMatlab_ROOT_DIR="%s"', configureCall, matlabroot);
+end
+
+matRad_cfg.dispInfo('Configuring ompMC...\n');
+matRad_cfg.dispDebug('%s\n', configureCall);
+[status, msg] = system(configureCall);
+
+if status ~= 0
+    error('cmake configure failed:\n%s', msg);
+end
+
+buildCall = sprintf('cmake --build "%s" --config Release --parallel', buildDir);
+
+matRad_cfg.dispInfo('Building ompMC...\n');
+matRad_cfg.dispDebug('%s\n', buildCall);
+[status, msg] = system(buildCall);
+
+if status ~= 0
+    error('cmake build failed:\n%s', msg);
+end
+
+mexFile = matRad_ompMCfindMexFile(fullfile(buildDir, 'bin'));
+
+if isempty(mexFile)
+    error('the build produced no omc_matrad mex file in %s', fullfile(buildDir, 'bin'));
+end
+end
+
+%% ------------------------------------------------------------------------
+function mexFile = matRad_ompMCbuildWithMex(sourceFolder)
+% Fallback for machines without CMake: hand the whole core library and the
+% matRad user code to mex in one call.
+%
+% ompMC's own build generates omc_version.h from the version in its
+% CMakeLists, so that is done here as well. What CMake compiles conditionally
+% - the Octave SOVERSION marker, which mkoctfile emits by itself, the MSVC
+% export definition, which mex handles, and the Intel OpenMP shim - is left
+% out.
+
+matRad_cfg = MatRad_Config.instance();
+
+env = matRad_getEnvironment();
+
+srcDir       = fullfile(sourceFolder, 'src');
+ucodeDir     = fullfile(sourceFolder, 'ucodes', 'omc_matrad');
+generatedDir = fullfile(tempname, 'ompMC-generated');
+
+mkdir(generatedDir);
+
+matRad_ompMCwriteVersionHeader(sourceFolder, generatedDir);
+
+sourceFiles = dir(fullfile(srcDir, '*.c'));
+sourceFiles = cellfun(@(f) ['"' fullfile(srcDir, f) '"'], {sourceFiles.name}, 'UniformOutput', false);
+sourceFiles = [{['"' fullfile(ucodeDir, 'omc_matrad.c') '"']} sourceFiles];
+
+% These settings have only been tested for MSVC and gcc. You may need to
+% adapt them for other compilers
+if strcmp(env, 'OCTAVE')
+    ccName = evalc('mkoctfile -p CC');
+else
+    myCCompiler = mex.getCompilerConfigurations('C', 'Selected');
+    ccName = myCCompiler.ShortName;
+end
+
+if ~isempty(strfind(ccName, 'MSVC')) %#ok<STREMP> - contains() does not exist in Octave
+    flags = {'COMPFLAGS', '/openmp'; 'OPTIMFLAGS', '/O2'};
+else
+    flags = {'CFLAGS', '-std=gnu99 -fopenmp -O3'; 'LDFLAGS', '-fopenmp'};
+end
+
+flagString = '';
+
+% For Octave the flags are set in the environment, while MATLAB parses them
+% as string arguments
+for flag = 1:size(flags, 1)
+    if strcmp(env, 'OCTAVE')
+        preFlagContent = evalc(['mkoctfile -p ' flags{flag, 1}]);
+
+        if ~isempty(preFlagContent)
+            preFlagContent = preFlagContent(1:end - 1); % Strip newline
+        end
+
+        newContent = [preFlagContent ' ' flags{flag, 2}];
+        setenv(flags{flag, 1}, newContent);
+        matRad_cfg.dispDebug('Set compiler flag %s to %s\n', flags{flag, 1}, newContent);
+    else
+        flagString = [flagString flags{flag, 1} '="$' flags{flag, 1} ' ' flags{flag, 2} '" ']; %#ok<AGROW>
+    end
+end
+
+outDir = fullfile(tempname, 'ompMC-mex');
+mkdir(outDir);
+
+mexCall = sprintf('mex -largeArrayDims %s -I"%s" -I"%s" %s', ...
+                  flagString, srcDir, generatedDir, strjoin(sourceFiles, ' '));
+
+matRad_cfg.dispInfo('Building ompMC with mex...\n');
+matRad_cfg.dispDebug('Compiler call: %s\n', mexCall);
+
+% mex writes to the working directory, and -outdir is not understood by both
+% environments
+currDir = pwd;
+returnToCurrDir = onCleanup(@() cd(currDir));
+cd(outDir);
+
+eval(mexCall);
+
+clear returnToCurrDir;
+
+mexFile = matRad_ompMCfindMexFile(outDir);
+
+if isempty(mexFile)
+    matRad_cfg.dispError('The mex call produced no omc_matrad mex file in %s.', outDir);
+end
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCwriteVersionHeader(sourceFolder, generatedDir)
+% Fills in src/omc_version.h.in the way CMake would, taking the version from
+% the project() call that ompMC keeps it in
+
+matRad_cfg = MatRad_Config.instance();
+
+cmakeLists = fileread(fullfile(sourceFolder, 'CMakeLists.txt'));
+versionToken = regexp(cmakeLists, 'project\s*\(\s*ompMC\s+VERSION\s+(\d+)\.(\d+)\.(\d+)', 'tokens', 'once');
+
+if isempty(versionToken)
+    matRad_cfg.dispError('Could not read the ompMC version from %s.', fullfile(sourceFolder, 'CMakeLists.txt'));
+end
+
+template = fileread(fullfile(sourceFolder, 'src', 'omc_version.h.in'));
+
+replacements = { ...
+                '@PROJECT_VERSION_MAJOR@', versionToken{1}; ...
+                '@PROJECT_VERSION_MINOR@', versionToken{2}; ...
+                '@PROJECT_VERSION_PATCH@', versionToken{3}; ...
+                '@PROJECT_VERSION@',       strjoin(versionToken, '.')};
+
+for i = 1:size(replacements, 1)
+    template = strrep(template, replacements{i, 1}, replacements{i, 2});
+end
+
+fid = fopen(fullfile(generatedDir, 'omc_version.h'), 'w');
+
+if fid < 0
+    matRad_cfg.dispError('Could not write %s.', fullfile(generatedDir, 'omc_version.h'));
+end
+
+fprintf(fid, '%s', template);
+fclose(fid);
+end
+
+%% ------------------------------------------------------------------------
+function mexFile = matRad_ompMCfindMexFile(folder)
+% The extension differs per platform and environment, so the file is looked
+% up by name rather than constructed
+
+mexFile = '';
+
+candidates = dir(fullfile(folder, ['omc_matrad.' mexext]));
+
+if ~isempty(candidates)
+    mexFile = fullfile(folder, candidates(1).name);
+end
+end
+
+%% ------------------------------------------------------------------------
+function tf = matRad_ompMCisInstalled(installDir)
+
+tf = ~isempty(matRad_ompMCfindMexFile(fullfile(installDir, 'bin'))) && ...
+     exist(fullfile(installDir, 'data'), 'dir') == 7 && ...
+     exist(fullfile(installDir, 'pegs4'), 'dir') == 7 && ...
+     exist(fullfile(installDir, 'spectra'), 'dir') == 7;
+end
+
+%% ------------------------------------------------------------------------
+function tf = matRad_ompMCisLoaded()
+
+try
+    tf = any(strcmp(inmem('-mex'), 'omc_matrad'));
+catch
+    tf = false;
+end
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCmoveContent(fromDir, toDir)
+% Moves everything in fromDir into toDir, which is how an unpacked release
+% becomes an installation
+
+if ~exist(toDir, 'dir')
+    mkdir(toDir);
+end
+
+entries = dir(fromDir);
+
+for i = 1:numel(entries)
+    if any(strcmp(entries(i).name, {'.', '..'}))
+        continue
+    end
+
+    movefile(fullfile(fromDir, entries(i).name), fullfile(toDir, entries(i).name));
+end
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCclean(installDir)
+% Removes an installation, keeping the installer itself - it is the only
+% tracked file in this folder
+
+if ~exist(installDir, 'dir')
+    return
+end
+
+entries = dir(installDir);
+
+for i = 1:numel(entries)
+    if any(strcmp(entries(i).name, {'.', '..'})) || ~isempty(regexp(entries(i).name, '\.m$', 'once'))
+        continue
+    end
+
+    entryPath = fullfile(installDir, entries(i).name);
+
+    if entries(i).isdir
+        matRad_ompMCrmdir(entryPath);
+    else
+        delete(entryPath);
+    end
+end
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCrmdir(folder)
+
+if exist(folder, 'dir')
+    [status, msg] = rmdir(folder, 's');
+
+    if status ~= 1
+        matRad_cfg = MatRad_Config.instance();
+        matRad_cfg.dispWarning('Could not remove %s: %s', folder, msg);
+    end
+end
+end
+
+%% ------------------------------------------------------------------------
+function matRad_ompMCwriteOrigin(installDir, release, how)
+% Records where this installation came from, next to the license it came
+% under - the folder is not tracked, so nothing else says so
+
+fid = fopen(fullfile(installDir, 'ORIGIN.txt'), 'w');
+
+if fid < 0
+    return
+end
+
+fprintf(fid, 'ompMC %s\n', release.tag);
+fprintf(fid, '%s\n\n', release.repoUrl);
+fprintf(fid, 'Installed by matRad_installOmpMC as %s.\n\n', how);
+fprintf(fid, 'ompMC is licensed under the GNU General Public License v3, see the LICENSE\n');
+fprintf(fid, 'file next to this one. It is not part of matRad, which is licensed under the\n');
+fprintf(fid, '3-clause BSD license, and it is not distributed with matRad - this folder was\n');
+fprintf(fid, 'populated on this machine and is not tracked by git.\n');
+fclose(fid);
+end
