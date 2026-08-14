@@ -68,7 +68,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             if this.enableGPU
                 matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispWarning('Set enableGPU ot true but MCsquare does not support GPU computation! Setting back to false!');
+                matRad_cfg.dispWarning('Set enableGPU to true but MCsquare does not support GPU computation! Setting back to false!');
                 this.enableGPU = false;
             end
 
@@ -186,8 +186,8 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             end
 
             % The offset of the dose grid of MCsquare
-            mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x / 2 dij.doseGrid.resolution.y / 2 dij.doseGrid.resolution.z / 2] ...
-                - [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
+            mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x / 2 dij.doseGrid.resolution.y / 2 dij.doseGrid.resolution.z / 2] - ...
+                [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
 
             % for MCsquare we explicitly downsample the ct to the dose grid (might not
             % be necessary in future MCsquare versions with separated grids)
@@ -204,8 +204,9 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
             plnFile = fullfile(this.workingDir, 'currBixels.txt');
             ctFile = fullfile(this.workingDir, 'MC2patientCT.mhd');
             outputDir = fullfile(this.workingDir, 'output');
-            HU_Density_Conversion_File  = fullfile(this.MCsquareFolder, 'Scanners', 'matRad_default', 'HU_Density_Conversion.txt');    % Name of the file containing HU to density conversion data. Default: HU_Density_Conversion.txt
-            HU_Material_Conversion_File = fullfile(this.MCsquareFolder, 'Scanners', 'matRad_default', 'HU_Material_Conversion.txt');   % Name of the filecontaining HU to material conversion data. Default: HU_Material_Conversion.txt
+            % Files containing the HU to density / HU to material conversion data
+            HU_Density_Conversion_File  = fullfile(this.MCsquareFolder, 'Scanners', 'matRad_default', 'HU_Density_Conversion.txt');
+            HU_Material_Conversion_File = fullfile(this.MCsquareFolder, 'Scanners', 'matRad_default', 'HU_Material_Conversion.txt');
 
             % Format paths to always have slashes
             if isequal(filesep, '\')
@@ -537,7 +538,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                             if status == 0
                                 matRad_cfg.dispInfo('MCsquare exited successfully with status %d!', status);
                             else
-                                matRad_cfg.dispInfo('MCsquare did not exit successfully with status %d! Results might be compromised!', status);
+                                matRad_cfg.dispWarning('MCsquare did not exit successfully with status %d! Results might be compromised!\nOutput: %s', status, cmdout);
                             end
                         otherwise
                             if isfolder(this.externalCalculation)
@@ -562,19 +563,15 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
                     % read sparse matrix
                     if ~this.calcDoseDirect
-                        dij.physicalDose{ctScen, shiftScen, rangeShiftScen} = finalResultWeight * matRad_sparseBeamletsReaderMCsquare ( ...
-                                                                                                                                       [this.config.Output_Directory filesep 'Sparse_Dose.bin'], ...
-                                                                                                                                       dij.doseGrid.dimensions, ...
-                                                                                                                                       dij.totalNumOfBixels, ...
-                                                                                                                                       mask);
+                        sparseDoseFile = [this.config.Output_Directory filesep 'Sparse_Dose.bin'];
+                        dij.physicalDose{ctScen, shiftScen, rangeShiftScen} = finalResultWeight * ...
+                            matRad_sparseBeamletsReaderMCsquare(sparseDoseFile, dij.doseGrid.dimensions, dij.totalNumOfBixels, mask);
 
                         % Read sparse LET
                         if this.calcLET
-                            dij.mLETDose{ctScen, shiftScen, rangeShiftScen} = dij.physicalDose{ctScen, shiftScen, rangeShiftScen} .* matRad_sparseBeamletsReaderMCsquare ( ...
-                                                                                                                                                                          [this.config.Output_Directory filesep 'Sparse_LET.bin'], ...
-                                                                                                                                                                          dij.doseGrid.dimensions, ...
-                                                                                                                                                                          dij.totalNumOfBixels, ...
-                                                                                                                                                                          mask);
+                            sparseLetFile = [this.config.Output_Directory filesep 'Sparse_LET.bin'];
+                            dij.mLETDose{ctScen, shiftScen, rangeShiftScen} = dij.physicalDose{ctScen, shiftScen, rangeShiftScen} .* ...
+                                matRad_sparseBeamletsReaderMCsquare(sparseLetFile, dij.doseGrid.dimensions, dij.totalNumOfBixels, mask);
                         end
 
                         % reorder influence matrix to comply with matRad default ordering
@@ -879,7 +876,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                         if obj.config.Beamlet_Mode
                             n = stf(i).energyLayer(j).numOfPrimaries(k);
                         else
-                            n = stf(i).energyLayer(j).numOfPrimaries(k) /  obj.mcSquare_magicFudge(stf(i).energies(j));
+                            n = stf(i).energyLayer(j).numOfPrimaries(k) /  obj.mcSquareMagicFudge(stf(i).energies(j));
                         end
                         %}
                         n = stf(i).energyLayer(j).numOfPrimaries(k);
@@ -1005,7 +1002,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
     methods (Access = private)
 
-        function gain = mcSquare_magicFudge(~, energy)
+        function gain = mcSquareMagicFudge(~, energy)
             % mcSquare will scale the spot intensities in
             % https://gitlab.com/openmcsquare/MCsquare/blob/master/src/data_beam_model.c#L906
             % by this factor so we need to divide up front to make things work. The
@@ -1049,7 +1046,11 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
                 if exist('MCSquare_windows.exe', 'file') ~= 2
                     matRad_cfg.dispWarning('Could not find MCsquare binary.\n');
                 else
-                    binaryFile = 'MCSquare_windows.exe';
+                    % explicit .\ prefix: the binary is called from within its
+                    % folder, and bare executable names are not resolved
+                    % against the current directory on Windows systems with
+                    % the NoDefaultCurrentDirectoryInExePath hardening set
+                    binaryFile = '.\MCSquare_windows.exe';
                 end
             elseif ismac
                 if exist('MCsquare_mac', 'file') ~= 2

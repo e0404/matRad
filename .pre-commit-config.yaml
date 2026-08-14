@@ -16,7 +16,12 @@ repos:
     hooks:
     - id: rstcheck
       additional_dependencies: ['rstcheck[sphinx,toml]']
-      args: [--ignore-languages=matlab, '--ignore-directives=automodule,autoclass,autofunction,autodata,autoevent,autointerface,autolabel,autosectionlabel,autostatus,autotoclabel']
+      # report-level: rstcheck sees one file at a time, so cross-file :ref:
+      # labels look like unreferenced hyperlink targets and repeated section
+      # titles look like duplicate implicit targets. Both are INFO in docutils.
+      # ignore-roles: scpt is the MATLAB domain's script role - rstcheck does
+      # not load third-party sphinx extensions, so it cannot know it.
+      args: [--report-level=warning, --ignore-languages=matlab, --ignore-roles=scpt, '--ignore-directives=automodule,autoclass,autofunction,autodata,autoevent,autointerface,autolabel,autosectionlabel,autostatus,autotoclabel']
 
 
   - repo: https://github.com/codespell-project/codespell

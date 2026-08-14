@@ -54,7 +54,7 @@ for levels = numOfLevels
         assertEqual(size(seq.beam(i).fluence, 2), size(seq.beam(i).shapes, 2));
     end
 
-    % ApertureInfo Sturct
+    % ApertureInfo Struct
     apInfo = resultGUI_sequenced.sequencing.apertureInfo;
     assertTrue(isscalar(apInfo.bixelWidth));
     assertTrue(isscalar(apInfo.numOfMLCLeafPairs));

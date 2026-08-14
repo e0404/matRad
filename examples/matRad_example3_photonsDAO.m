@@ -20,6 +20,10 @@
 % (iv) how to apply a sequencing algorithm
 % (v) how to run a direct aperture optimization
 % (iv) how to visually and quantitatively evaluate the result
+%
+% This example uses static (step-and-shoot) delivery. For the rotational
+% counterpart, where the apertures are optimized along a gantry arc, see
+% matRad_example22_photonsVMAT.
 
 %% set matRad runtime configuration
 matRad_rc; % If this throws an error, run it from the parent directory first to set the paths

@@ -91,9 +91,9 @@ Base data / Machine
 
 The necessary measured base data, namely the kernel functions as described by `Bortfeld et al. (1993) Medical Physics <http://scitation.aip.org/content/aapm/journal/medphys/20/2/10.1118/1.597070>`_ are supplied for a 6MV LINAC and stored in `photons_Generic.mat <https://github.com/e0404/matRad/blob/master/matRad/basedata/photons_Generic.mat>`_ as tabulated kernels.
 
-For the machine file format, see :ref:`here <_basedata_photons>`.
+For the machine file format, see :ref:`here <basedata_photons>`.
 
-matRad's photon dose engine is calibrated such that a bixel intensity of all ones, i.e., ``w = ones(stf.totalNumOfBixels,1)``, yields a dose of roughly 1Gy in 5cm depth for a 5cm by 5cm field at SSD = 900mm. 
+matRad's photon dose engine is calibrated such that a bixel intensity of all ones, i.e., ``w = ones(stf.totalNumOfBixels,1)``, yields a dose of roughly 1Gy in 5cm depth for a 5cm by 5cm field at SSD = 900mm.
 If you want to reproduce this, matRad contains a script ``matRad_photonDosimetry.m`` within the tools folder to reproduce the calibration.
 
 Approximations

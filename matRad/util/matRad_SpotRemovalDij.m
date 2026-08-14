@@ -18,26 +18,25 @@ classdef matRad_SpotRemovalDij < handle
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties
 
-        matRad_cfg = MatRad_Config.instance();
+        removalMode = 'relative'  % 'relative' is the only mode for now
+        propSpotRemoval
 
-        removalMode = 'relative'; % 'relative' is the only mode for now
-        propSpotRemoval;
+        dij
+        cst
+        pln
+        stf
 
-        dij;
-        cst;
-        pln;
-        stf;
+        weights
+        newSpots
+        newWeights
 
-        weights;
-        newSpots;
-        newWeights;
-
-        numOfRemovedSpots;
+        numOfRemovedSpots
 
     end
 
     methods
-        function obj = matRad_SpotRemovalDij(dij,w)
+
+        function obj = matRad_SpotRemovalDij(dij, w)
 
             obj.reset();
 
@@ -47,14 +46,12 @@ classdef matRad_SpotRemovalDij < handle
 
         end
 
-
         function reset(obj)
 
-            %Set all default properties for spot removal
+            % Set all default properties for spot removal
             obj.setDefaultProperties();
 
         end
-
 
         function obj = setDefaultProperties(obj)
 
@@ -63,13 +60,12 @@ classdef matRad_SpotRemovalDij < handle
 
         end
 
+        function resultGUI = reoptimize(obj, cst, pln)
 
-        function resultGUI = reoptimize(obj,cst,pln)
-
-            if isempty(obj.cst) || exist('cst','var')
+            if isempty(obj.cst) || exist('cst', 'var')
                 obj.cst = cst;
             end
-            if isempty(obj.pln) || exist('pln','var')
+            if isempty(obj.pln) || exist('pln', 'var')
                 obj.pln = pln;
             end
 
@@ -77,22 +73,25 @@ classdef matRad_SpotRemovalDij < handle
                 obj.calcNewSpots();
             end
 
-            resultGUI = matRad_fluenceOptimization(obj.getDij,obj.cst,obj.pln,obj.newWeights);
+            resultGUI = matRad_fluenceOptimization(obj.getDij, obj.cst, obj.pln, obj.newWeights);
 
         end
 
-
         function obj = calcNewSpots(obj)
+
+            matRad_cfg = MatRad_Config.instance();
 
             switch obj.removalMode
                 case 'relative'
                     obj.newSpots = obj.weights > obj.propSpotRemoval.relativeThreshold * mean(obj.weights);
-                    obj.matRad_cfg.dispInfo([num2str(sum(~obj.newSpots)),'/',num2str(numel(obj.newSpots)) ,' spots have been removed below ',num2str(100*obj.propSpotRemoval.relativeThreshold),'% of the mean weight.\n'])
+                    matRad_cfg.dispInfo('%d/%d spots have been removed below %g%% of the mean weight.\n', ...
+                                        sum(~obj.newSpots), numel(obj.newSpots), 100 * obj.propSpotRemoval.relativeThreshold);
                 case 'absolute'
                     obj.newSpots = obj.weights > obj.propSpotRemoval.absoluteThreshold;
-                    obj.matRad_cfg.dispInfo([num2str(sum(~obj.newSpots)),'/',num2str(numel(obj.newSpots)) ,' spots have been removed below thres=',num2str(obj.propSpotRemoval.absoluteThreshold),'.\n'])
+                    matRad_cfg.dispInfo('%d/%d spots have been removed below thres=%g.\n', ...
+                                        sum(~obj.newSpots), numel(obj.newSpots), obj.propSpotRemoval.absoluteThreshold);
                 otherwise
-                    obj.matRad_cfg.dispWarning(['Removal mode ' obj.removalMode ' not implemented, no spots have been removed.']);
+                    matRad_cfg.dispWarning(['Removal mode ' obj.removalMode ' not implemented, no spots have been removed.']);
             end
 
             obj.numOfRemovedSpots = sum(~obj.newSpots);
@@ -100,32 +99,31 @@ classdef matRad_SpotRemovalDij < handle
 
         end
 
+        function stf = getStf(obj, stf)
 
-        function stf = getStf(obj,stf)
-
-            if isempty(obj.stf) || exist('stf','var')
+            if isempty(obj.stf) || exist('stf', 'var')
                 obj.stf = stf;
             end
 
             if ~isempty(obj.newWeights) && ~isempty(obj.stf)
                 stf = obj.stf;
-                [~,beamNumIdx] = unique(obj.dij.beamNum);
-                beamNumIdx = [0;beamNumIdx(2:end)-1;obj.dij.totalNumOfBixels];
+                [~, beamNumIdx] = unique(obj.dij.beamNum);
+                beamNumIdx = [0; beamNumIdx(2:end) - 1; obj.dij.totalNumOfBixels];
 
                 for b = 1:obj.dij.numOfBeams
-                    currRaysInBeam = obj.dij.rayNum(beamNumIdx(b)+1:beamNumIdx(b+1));
-                    currBixelsInRay = obj.dij.bixelNum(beamNumIdx(b)+1:beamNumIdx(b+1));
-                    [rayCnt,rayIdx] = unique(currRaysInBeam);
+                    currRaysInBeam = obj.dij.rayNum(beamNumIdx(b) + 1:beamNumIdx(b + 1));
+                    currBixelsInRay = obj.dij.bixelNum(beamNumIdx(b) + 1:beamNumIdx(b + 1));
+                    [rayCnt, rayIdx] = unique(currRaysInBeam);
 
                     numOfBixelsPerRay = groupcounts(currRaysInBeam);
-                    cutRays = ismember([1:obj.dij.numOfRaysPerBeam(b)]',rayCnt);
+                    cutRays = ismember([1:obj.dij.numOfRaysPerBeam(b)]', rayCnt);
                     if any(~cutRays)
                         stf(b).ray = stf(b).ray(cutRays);
                         stf(b).numOfRays = sum(cutRays);
                     end
-                    bixelCurrRay = cell(1,stf(b).numOfRays);
+                    bixelCurrRay = cell(1, stf(b).numOfRays);
                     for i = 1:stf(b).numOfRays
-                        bixelCurrRay{i} = currBixelsInRay(rayIdx(i):rayIdx(i)+numOfBixelsPerRay(i)-1);
+                        bixelCurrRay{i} = currBixelsInRay(rayIdx(i):rayIdx(i) + numOfBixelsPerRay(i) - 1);
                     end
                     for f = 1:stf(b).numOfRays
                         stf(b).ray(f).energy = stf(b).ray(f).energy(bixelCurrRay{f});
@@ -138,7 +136,6 @@ classdef matRad_SpotRemovalDij < handle
             end
 
         end
-
 
         function dij = getDij(obj)
 
@@ -155,20 +152,20 @@ classdef matRad_SpotRemovalDij < handle
                 dij.beamNum = dij.beamNum(obj.newSpots);
                 dij.totalNumOfBixels = sum(obj.newSpots);
 
-                dij.physicalDose{1} = dij.physicalDose{1}(:,obj.newSpots);
-                if isfield(dij,'mAlphaDose')
-                    dij.mAlphaDose{1} = dij.mAlphaDose{1}(:,obj.newSpots);
-                    dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1}(:,obj.newSpots);
+                dij.physicalDose{1} = dij.physicalDose{1}(:, obj.newSpots);
+                if isfield(dij, 'mAlphaDose')
+                    dij.mAlphaDose{1} = dij.mAlphaDose{1}(:, obj.newSpots);
+                    dij.mSqrtBetaDose{1} = dij.mSqrtBetaDose{1}(:, obj.newSpots);
                 end
-                if isfield(dij,'mLETDose')
-                    dij.mLETDose{1} = dij.mLETDose{1}(:,obj.newSpots);
+                if isfield(dij, 'mLETDose')
+                    dij.mLETDose{1} = dij.mLETDose{1}(:, obj.newSpots);
                 end
-                [~,beamNumIdx] = unique(dij.beamNum);
-                beamNumIdx = [0;beamNumIdx(2:end)-1;dij.totalNumOfBixels];
+                [~, beamNumIdx] = unique(dij.beamNum);
+                beamNumIdx = [0; beamNumIdx(2:end) - 1; dij.totalNumOfBixels];
 
                 for b = 1:dij.numOfBeams
-                    currRaysInBeam = dij.rayNum(beamNumIdx(b)+1:beamNumIdx(b+1));
-                    [rayCnt,~] = unique(currRaysInBeam);
+                    currRaysInBeam = dij.rayNum(beamNumIdx(b) + 1:beamNumIdx(b + 1));
+                    [rayCnt, ~] = unique(currRaysInBeam);
 
                     dij.numOfRaysPerBeam(b) = numel(rayCnt);
                 end
@@ -178,7 +175,6 @@ classdef matRad_SpotRemovalDij < handle
             end
 
         end
-
 
         function weights = getWeights(obj)
 
@@ -190,7 +186,6 @@ classdef matRad_SpotRemovalDij < handle
             end
 
         end
-
 
         function weightsLogic = getLogical(obj)
 
@@ -205,5 +200,3 @@ classdef matRad_SpotRemovalDij < handle
 
     end
 end
-
-

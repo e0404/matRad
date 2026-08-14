@@ -1,0 +1,9 @@
+# Relaxed metric limits for the dose engine package: the legacy Monte Carlo
+# engine wrappers (MCsquare, TOPAS) are grandfathered monoliths that exceed
+# the repo-wide limits; restructuring them is out of scope for commits that
+# merely touch them. New engines should still aim for the repo-wide limits.
+metric "file_length": limit 3000
+metric "cyc": limit 80
+metric "cnest": limit 10
+line_length: 220
+file_length: 3000

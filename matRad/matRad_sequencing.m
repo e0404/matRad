@@ -1,6 +1,6 @@
 function resultGUI = matRad_sequencing(resultGUI, stf, pln, dij, visMode)
 % matRad inverse planning wrapper function
-% 
+%
 % call:
 %   resultGUI = matRad_sequencing(resultGUI,stf,pln,dij)
 %   resultGUI = matRad_sequencing(resultGUI,stf,pln,dij,visMode)
@@ -24,12 +24,12 @@ function resultGUI = matRad_sequencing(resultGUI, stf, pln, dij, visMode)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2016-2026 the matRad development team.
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -41,40 +41,89 @@ matRad_cfg = MatRad_Config.instance();
 % the pln position holds a dij, the call uses the old order and the arguments
 % are swapped with a deprecation warning.
 if nargin >= 4 && isstruct(pln) && isfield(pln, 'doseGrid')
-    matRad_cfg.dispDeprecationWarning('The argument order of matRad_sequencing changed to matRad_sequencing(resultGUI, stf, pln, dij). Please update your call.');
+    matRad_cfg.dispDeprecationWarning(['The argument order of matRad_sequencing changed to ' ...
+                                       'matRad_sequencing(resultGUI, stf, pln, dij). Please update your call.']);
     [pln, dij] = deal(dij, pln);
 end
 
 sequencer = matRad_SequencerBase.getSequencerFromPln(pln);
 
 % Handle optional inputs
-if nargin == 5 && ~isempty(visMode)
+if nargin >= 5 && ~isempty(visMode)
     sequencer.visMode = visMode;
 end
 if nargin < 4 || isempty(dij)
     dij = [];
 end
 
-sequence = sequencer.sequence(resultGUI.w, stf);
+if strcmp(pln.radiationMode, 'photons')
+    % Photon (MLC leaf) sequencing goes through the class-based sequencers.
+    % The canonical sequencer configuration lives under pln.propSeq and was
+    % already auto-mapped onto the sequencer during its construction; here
+    % only the deprecated pln.propOpt locations are bridged (honored for one
+    % release) plus the settings that genuinely live outside propSeq.
 
-% Aperture-based (photon) sequencing modifies the fluence into deliverable
-% MLC segments, so the dose has to be recomputed from the sequenced fluence.
-% Particle sequencing only derives the spot delivery order/timing, leaves the
-% fluence unchanged and returns a per-beam struct array - the existing dose
-% cubes stay valid and must not be recomputed here.
-if isa(sequencer, 'matRad_PhotonSequencerAbstract')
+    if ~isfield(pln, 'propSeq')
+        pln.propSeq = struct();
+    end
+    if ~isfield(pln, 'propOpt')
+        pln.propOpt = struct();
+    end
+
+    if ~isfield(pln.propSeq, 'preconditioner') && isfield(pln.propOpt, 'preconditioner')
+        matRad_cfg.dispDeprecationWarning('pln.propOpt.preconditioner is deprecated. Use pln.propSeq.preconditioner instead!');
+        sequencer.preconditioner = pln.propOpt.preconditioner;
+    end
+
+    % pln.propOpt.runVMAT deliberately remains the canonical mode flag
+    % (like runDAO): optimization needs it first to select the problem
+    % class, so it is bridged here rather than moved to propSeq.
+    dynamic = matRad_getFieldOrDefault(pln.propOpt, 'runVMAT', false);
+
+    if isa(sequencer, 'matRad_PhotonLeafSequencerVMATAbstract')
+        sequencer.runVMAT = dynamic;
+        if ~isfield(pln.propSeq, 'continuousAperture') && isfield(pln.propOpt, 'continuousAperture')
+            matRad_cfg.dispDeprecationWarning('pln.propOpt.continuousAperture is deprecated. Use pln.propSeq.continuousAperture instead!');
+            sequencer.continuousAperture = pln.propOpt.continuousAperture;
+        end
+        if ~isempty(dij) && isfield(dij, 'weightToMU')
+            sequencer.weightToMU = dij.weightToMU;
+        end
+    elseif dynamic
+        matRad_cfg.dispError(['Sequencer ''%s'' does not support VMAT (dynamic) delivery. ' ...
+                              'Use ''siochi'' for VMAT plans.'], sequencer.shortName);
+    end
+
+    sequence = sequencer.sequence(resultGUI.w, stf);
     if ~isempty(dij)
-        resultGUI = matRad_calcCubes(sequence.w, dij);
+        % merge the computed dose cubes into resultGUI instead of overwriting
+        % it, so that pre-existing fields (e.g. from FMO) survive
+        resultGUI = matRad_mergeDoseCubes(resultGUI, matRad_calcCubes(sequence.w, dij));
     else
         matRad_cfg.dispWarning('Dose not recalculated with sequenced fluence');
     end
+    resultGUI.sequencing = sequence;
+    if isfield(sequence, 'apertureInfo')
+        resultGUI.apertureInfo = sequence.apertureInfo;
+    end
+else
+    % Non-photon (e.g. particle) sequencing goes through the new
+    % class-based sequencer, which only derives spot delivery order/timing
+    % and leaves the fluence - and thus the dose - unchanged.
+    sequence = sequencer.sequence(resultGUI.w, stf);
+    resultGUI.sequencing = sequence;
+    if isfield(sequence, 'apertureInfo')
+        resultGUI.apertureInfo = sequence.apertureInfo;
+    end
 end
-resultGUI.sequencing   = sequence;
 
-% keep a backward-compatible copy of the aperture info at the top level so
-% that legacy calls (e.g. matRad_directApertureOptimization) still work
-if isfield(sequence, 'apertureInfo')
-    resultGUI.apertureInfo = sequence.apertureInfo;
 end
 
+function resultGUI = matRad_mergeDoseCubes(resultGUI, doseCubes)
+% copy the dose cubes field-by-field into resultGUI, preserving any fields
+% (e.g. resultGUI.sequencing) that matRad_calcCubes does not produce
+fNames = fieldnames(doseCubes);
+for f = 1:numel(fNames)
+    resultGUI.(fNames{f}) = doseCubes.(fNames{f});
+end
 end

@@ -1,4 +1,4 @@
-function test_suite = test_xiaLeafSequencing
+function test_suite = test_siochiLeafSequencing
 % The output should always be test_suite, and the function name the same as
 % your file name
 
@@ -54,7 +54,7 @@ for levels = numOfLevels
         assertEqual(size(seq.beam(i).fluence, 2), size(seq.beam(i).shapes, 2));
     end
 
-    % ApertureInfo Sturct
+    % ApertureInfo Struct
     apInfo = resultGUI_sequenced.sequencing.apertureInfo;
     assertTrue(isscalar(apInfo.bixelWidth));
     assertTrue(isscalar(apInfo.numOfMLCLeafPairs));

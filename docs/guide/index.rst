@@ -24,6 +24,7 @@ Information about the individual modules is given in the following sections:
    plan
    gdosecalc
    planopt
+   sequencing
    visualization
 
 Global configuration with :ref:`MatRad_Config <config>`
@@ -32,7 +33,9 @@ Global configuration with :ref:`MatRad_Config <config>`
 
 :ref:`Dose influence matrix calculation <dosecalc_guide>`
 
-:ref:`Fluence optimization <plan_opt>` (potentiall followed by sequencing)
+:ref:`Fluence optimization <plan_opt>`
+
+:ref:`Sequencing, direct aperture optimization and VMAT <sequencing_dao>` (photons)
 
 :ref:`Visualization <visualization>`
 
