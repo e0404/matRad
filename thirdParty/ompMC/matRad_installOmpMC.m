@@ -11,6 +11,11 @@ function installDir = matRad_installOmpMC(varargin)
 % submodules folder. Everything ends up in thirdParty/ompMC, which is ignored
 % by git.
 %
+% Whichever way it got there, the interface is called once before the install
+% counts as done. A pre-compiled release that does not load - built against a
+% newer MATLAB than yours, say - is therefore not left behind as a broken
+% installation: it is replaced by one built here.
+%
 % call:
 %   matRad_installOmpMC()
 %   matRad_installOmpMC('acceptLicense',true)
@@ -21,8 +26,11 @@ function installDir = matRad_installOmpMC(varargin)
 %   acceptLicense:  accept the GPL of ompMC without being asked. Required for
 %                   non-interactive use. Default: false (you will be asked)
 %   mode:           'auto'     download a release if one exists for this
-%                              platform, build from source otherwise (default)
-%                   'download' download only, fail if there is no release
+%                              platform, and build from source if there is
+%                              none or if what was downloaded turns out not
+%                              to load here (default)
+%                   'download' download only, fail if there is no release or
+%                              if it does not load
 %                   'build'    build from source only
 %   sourceFolder:   ompMC sources to build from.
 %                   Default: <matRadRoot>/submodules/ompMC
@@ -113,43 +121,80 @@ switch mode
         end
 end
 
-matRad_ompMCclean(installDir);
-
 if doDownload
+    matRad_ompMCclean(installDir);
     matRad_ompMCdownload(release, asset, installDir);
-else
-    matRad_ompMCbuild(release, p.Results.sourceFolder, installDir);
+
+    loadError = matRad_ompMCfinalize(installDir);
+
+    if isempty(loadError)
+        return
+    end
+
+    % A package that does not load is not a package for this machine,
+    % whatever it was built for - too new a MATLAB is one way, and the
+    % message it fails with rarely says which. Building says it in terms of
+    % the compiler and the MATLAB that are actually here.
+    if strcmp(mode, 'download')
+        matRad_cfg.dispError(['The pre-compiled ompMC %s could not be loaded: %s\n' ...
+                              'Build it for this machine with matRad_installOmpMC(''mode'',''build'').'], ...
+                             asset.name, loadError);
+    end
+
+    matRad_cfg.dispWarning(['The pre-compiled ompMC %s could not be loaded (%s), ' ...
+                            'building it from source instead.'], asset.name, loadError);
 end
+
+matRad_ompMCclean(installDir);
+matRad_ompMCbuild(release, p.Results.sourceFolder, installDir);
+
+loadError = matRad_ompMCfinalize(installDir);
+
+if ~isempty(loadError)
+    matRad_cfg.dispError('ompMC was built in %s, but the mex interface could not be called: %s', ...
+                         installDir, loadError);
+end
+
+end
+
+%% ------------------------------------------------------------------------
+function loadError = matRad_ompMCfinalize(installDir)
+% Completes an installation and reports whether what it put there can
+% actually be called, as the message it failed with or empty if it can.
+
+matRad_cfg = MatRad_Config.instance();
 
 % So that a later session can tell whether it is able to load what is here -
 % a mex file for another octave has the same name and fails only when called
 DoseEngines.matRad_PhotonOmpMCEngine.writeBinaryTag();
 
-%% Finalize
 % ompMC writes its own diagnostics here, and the release packages do not
 % carry the (empty) folder
 outputDir = fullfile(installDir, 'output');
+
 if ~exist(outputDir, 'dir')
     mkdir(outputDir);
 end
 
-% The mex file sits in bin/, which is only on the path from the next matRad_rc
-% on, so this session gets it now
-binDir = fullfile(installDir, 'bin');
-addpath(binDir);
+% The mex file sits in bin/, which is only on the path from the next
+% matRad_rc on, so this session gets it now
+addpath(fullfile(installDir, 'bin'));
+
+% A mex file that failed to load once is remembered as broken, which would
+% hide a working one put in its place afterwards
+clear('omc_matrad');
 rehash;
 
-matRad_cfg.dispInfo('ompMC installed in %s\n', installDir);
+loadError = '';
 
 try
     installedVersion = omc_matrad('version');
-    matRad_cfg.dispInfo('ompMC reports version %s.\n', installedVersion);
 catch ME
-    matRad_cfg.dispError(['ompMC was installed to %s, but the mex interface could not be called: %s\n' ...
-                          'If this is a pre-compiled release, try matRad_installOmpMC(''mode'',''build'',''force'',true).'], ...
-                         installDir, ME.message);
+    loadError = ME.message;
+    return
 end
 
+matRad_cfg.dispInfo('ompMC %s installed in %s\n', installedVersion, installDir);
 end
 
 %% ------------------------------------------------------------------------
@@ -859,6 +904,16 @@ for i = 1:numel(entries)
     else
         delete(entryPath);
     end
+end
+
+% Windows does not let go of a mex file another session has loaded, and
+% installing over it would fail later with whatever the copy makes of that
+leftoverMex = matRad_ompMCfindMexFile(fullfile(installDir, 'bin'));
+
+if ~isempty(leftoverMex)
+    matRad_cfg = MatRad_Config.instance();
+    matRad_cfg.dispError(['%s could not be removed. It is most likely loaded by another ' ...
+                          'MATLAB or Octave session - close those and try again.'], leftoverMex);
 end
 end
 
