@@ -9,7 +9,7 @@ inputs:
 
 runs:
   using: 'composite'
-  steps:       
+  steps:
     # Install MATLAB
     - name: Install MATLAB
       uses: matlab-actions/setup-matlab@v3
@@ -17,12 +17,21 @@ runs:
         release: ${{ inputs.matlab-version }}
         products: Image_Processing_Toolbox Parallel_Computing_Toolbox Optimization_Toolbox Global_Optimization_Toolbox
 
+    # ompMC is GPL licensed and therefore not shipped with matRad, so the
+    # photon Monte Carlo example has nothing to run until it is installed.
+    # Accepting its license on behalf of the runner is what a person would
+    # otherwise be asked for interactively.
+    - name: Install ompMC
+      uses: matlab-actions/run-command@v3
+      with:
+        command: matRad_rc; matRad_installOmpMC('acceptLicense',true);
+
     # Runs test command
     - name: Run Tests
       uses: matlab-actions/run-command@v3
       with:
         command: matRad_runTests('test',true);
-    
+
     - name: Upload Test Results
       if: always()
       uses: actions/upload-artifact@v7
@@ -33,7 +42,7 @@ runs:
           coverage.xml
           coverage.json
 
-    
+
     - name: Publish Test Results
       uses: test-summary/action@v2
       if: success() || failure()
