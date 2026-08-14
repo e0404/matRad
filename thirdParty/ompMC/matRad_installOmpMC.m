@@ -74,7 +74,9 @@ if p.Results.uninstall
 end
 
 %% Nothing to do?
-if matRad_ompMCisInstalled(installDir) && ~p.Results.force
+% Asked of the engine rather than answered here, so that whatever it refuses
+% to load - a binary for another octave, say - counts as needing installing
+if DoseEngines.matRad_PhotonOmpMCEngine.checkInstallation() && ~p.Results.force
     matRad_cfg.dispInfo('ompMC is already installed in %s. Pass ''force'',true to re-install.\n', installDir);
     return
 end
@@ -246,37 +248,81 @@ end
 
 %% ------------------------------------------------------------------------
 function matRad_ompMCaskForLicense(release)
-% Obtains the user's consent to the GPL of ompMC. Skipped by passing
-% 'acceptLicense', which is how a script says the same thing.
+% Asks whether to install ompMC, which is also where its GPL is accepted -
+% one question rather than two, since the answer is the same one. Skipped by
+% passing 'acceptLicense', which is how a script says it in advance.
 
 matRad_cfg = MatRad_Config.instance();
 
-fprintf('\n');
-fprintf('  ompMC %s\n', release.tag);
-fprintf('  An OpenMP parallel implementation for Monte Carlo particle transport\n');
-fprintf('  simulations, by Edgardo Doerner and contributors.\n\n');
-fprintf('  ompMC is free software licensed under the GNU General Public License,\n');
-fprintf('  version 3 or later - NOT under the 3-clause BSD license of matRad. It is\n');
-fprintf('  therefore not part of matRad and not distributed with it. What follows is\n');
-fprintf('  a download from, or a build of, a separate work:\n\n');
-fprintf('      %s\n', release.repoUrl);
-fprintf('      %s/blob/%s/LICENSE\n\n', release.repoUrl, release.tag);
-fprintf('  Installing it here combines it with matRad on this machine. That is your\n');
-fprintf('  right to do; passing the result on to anyone else means passing on the\n');
-fprintf('  terms of the GPL with it.\n\n');
+notice = { ...
+          sprintf('ompMC %s is not part of matRad and is not distributed with it.', release.tag), ...
+          '', ...
+          'It is free software by Edgardo Doerner and contributors, licensed under', ...
+          'the GNU General Public License v3 - not under the 3-clause BSD license', ...
+          'of matRad. Installing it combines the two on this machine, which is your', ...
+          'right to do; passing the result on to anyone else means passing on the', ...
+          'terms of the GPL with it.', ...
+          '', ...
+          sprintf('    %s', release.repoUrl), ...
+          sprintf('    %s/blob/%s/LICENSE', release.repoUrl, release.tag), ...
+          '', ...
+          'Install ompMC now, accepting the GNU General Public License v3 for it?'};
 
-try
-    answer = input('  Do you accept the GNU General Public License v3 for ompMC? [y/N] ', 's');
-catch
-    answer = '';
+if matRad_ompMCcanShowDialog()
+    answer = questdlg(notice, sprintf('Install ompMC %s?', release.tag), ...
+                      'Accept and install', 'Cancel', 'Cancel');
+    accepted = strcmp(answer, 'Accept and install');
+else
+    fprintf('\n  %s\n\n', strjoin(notice, sprintf('\n  ')));
+
+    try
+        answer = input('  [y/N] ', 's');
+    catch
+        % a session that cannot be asked at all, e.g. matlab -batch
+        answer = '';
+    end
+
+    fprintf('\n');
+    accepted = any(strcmpi(strtrim(answer), {'y', 'yes'}));
 end
 
-fprintf('\n');
+if accepted
+    return
+end
 
-if ~any(strcmpi(strtrim(answer), {'y', 'yes'}))
+% Somebody who said no knows why this failed. An empty answer is the other
+% case: a session that could not be asked, which is worth telling how to
+% answer in advance.
+if isempty(strtrim(answer))
     matRad_cfg.dispError(['ompMC was not installed because its license was not accepted. ' ...
-                          'In a non-interactive session, accept it with ' ...
+                          'This session could not be asked - accept it beforehand with ' ...
                           'matRad_installOmpMC(''acceptLicense'',true).']);
+else
+    matRad_cfg.dispError('ompMC was not installed because its license was not accepted.');
+end
+end
+
+%% ------------------------------------------------------------------------
+function tf = matRad_ompMCcanShowDialog()
+% Whether this session can put a dialog in front of somebody. A session that
+% cannot is not necessarily one that cannot be asked at all - a console still
+% takes an answer - so this only decides how to ask, not whether to.
+
+matRad_cfg = MatRad_Config.instance();
+
+tf = false;
+
+if matRad_cfg.disableGUI
+    return
+end
+
+if matRad_cfg.isOctave
+    % true only with the octave GUI, not for octave-cli
+    tf = exist('isguirunning', 'builtin') == 5 && isguirunning();
+else
+    % false under -batch and -nodisplay, where a dialog would either fail or
+    % wait for a click that cannot come
+    tf = usejava('desktop');
 end
 end
 
@@ -743,15 +789,6 @@ candidates = dir(fullfile(folder, ['omc_matrad.' mexext]));
 if ~isempty(candidates)
     mexFile = fullfile(folder, candidates(1).name);
 end
-end
-
-%% ------------------------------------------------------------------------
-function tf = matRad_ompMCisInstalled(installDir)
-
-tf = ~isempty(matRad_ompMCfindMexFile(fullfile(installDir, 'bin'))) && ...
-     exist(fullfile(installDir, 'data'), 'dir') == 7 && ...
-     exist(fullfile(installDir, 'pegs4'), 'dir') == 7 && ...
-     exist(fullfile(installDir, 'spectra'), 'dir') == 7;
 end
 
 %% ------------------------------------------------------------------------

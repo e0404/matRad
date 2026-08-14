@@ -76,12 +76,14 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             this.omcFolder = DoseEngines.matRad_PhotonOmpMCEngine.getOmcFolder();
 
             % ompMC is licensed under the GPL and therefore not shipped with
-            % matRad. It is installed on demand, which is a decision for the
-            % user to make rather than something to do behind their back.
+            % matRad. Asking for this engine is the moment to offer getting
+            % it - the installer puts the decision, and the GPL that comes
+            % with it, to the user rather than acting on its own.
             [installed, msg] = DoseEngines.matRad_PhotonOmpMCEngine.checkInstallation();
 
             if ~installed
-                matRad_cfg.dispError('%s', msg);
+                matRad_cfg.dispInfo('%s\n', msg);
+                matRad_installOmpMC();
             end
         end
 
@@ -580,18 +582,19 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 return
             end
 
-            % ompMC is not shipped with matRad, so an engine that has not been
-            % installed is not one that can be offered
+            available = true;
+            msg = ['The ompMC machine is not representing the machine exactly and approximates it with a ' ...
+                   'virtual Gaussian source and generic primary fluence & 6 MV energy spectrum!'];
+
+            % Being installable counts as being available: ompMC is not
+            % shipped with matRad, and whoever picks it is asked whether to
+            % get it - hiding the engine instead would leave them with
+            % another one and no idea why
             [installed, installMsg] = DoseEngines.matRad_PhotonOmpMCEngine.checkInstallation();
 
             if ~installed
                 msg = installMsg;
-                return
             end
-
-            available = true;
-            msg = ['The ompMC machine is not representing the machine exactly and approximates it with a ' ...
-                   'virtual Gaussian source and generic primary fluence & 6 MV energy spectrum!'];
         end
 
         function omcFolder = getOmcFolder()
