@@ -45,6 +45,8 @@ function matRad_definePhysicsMCNP(fileID_C_rest, this, binIntervals, simPropMCNP
         %         fprintf(fileID_C_rest, 'CUT:A J 0.0009\n');
         %         fprintf(fileID_C_rest, 'CUT:# J 0.0009\n');           
         % else
+matRad_cfg = MatRad_Config.instance();
+
     fprintf(fileID_C_rest, 'MODE N P E H D T S A #\n');
     fprintf(fileID_C_rest, 'PHYS:N 100 0 0 J J J 4 -1 1 J J 0 0\n');
     fprintf(fileID_C_rest, 'PHYS:P 100 0 0 1 0 J 0\n');
@@ -112,7 +114,7 @@ switch simPropMCNP.geometryOption
 
         
     otherwise
-        error('Geometry option not supported.')
+        matRad_cfg.dispError('Geometry option not supported.');
 end
 
 fprintf(fileID_C_rest, ['NPS' ' ' num2str(this.config.Num_Primaries) '\n']);

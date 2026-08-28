@@ -18,11 +18,13 @@ function cstBodyIndex = matRad_findBodyStructureCST(cst, bodyStructureName)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 cstBodyIndex = 1;
 
 while ~strcmpi(cst{cstBodyIndex,2}, bodyStructureName)
     cstBodyIndex = cstBodyIndex +1;
     if cstBodyIndex > size(cst,1)
-        error('No body structure contoured or structure not found! Note: Body structure has to be named BODY (case insensitive).')
+        matRad_cfg.dispError('No body structure contoured or structure not found! Note: Body structure has to be named BODY (case insensitive).');
     end
 end

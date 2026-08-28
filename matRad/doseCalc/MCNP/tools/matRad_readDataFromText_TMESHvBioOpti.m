@@ -1,5 +1,7 @@
 function tallyData = matRad_readDataFromText_TMESHvBioOpti(fileName, tallyIdentifier, numberOfColumns)
 
+matRad_cfg = MatRad_Config.instance();
+
 if strcmpi(tallyIdentifier, 'TMESH3')
     content = fileread(fileName) ;
     
@@ -10,10 +12,10 @@ if strcmpi(tallyIdentifier, 'TMESH3')
     
     if ~isempty(dataEnd)        
         if ~(dataBegin(end-1)<dataBegin_tally)||~(dataBegin(end)>dataBegin_tally)
-            error('TMESH data location does not match expected location at end of tally file.')
+            matRad_cfg.dispError('TMESH data location does not match expected location at end of tally file.');
         end
     elseif isempty(dataEnd)
-        disp('No MCNP tally for RBE calculation.')
+        matRad_cfg.dispInfo('No MCNP tally for RBE calculation.\n');
     end
     
     tallyData = sscanf(content(dataBegin(end):end), '%f');
@@ -22,20 +24,20 @@ if strcmpi(tallyIdentifier, 'TMESH3')
     if exist('numberOfColumns')
         switch numberOfColumns
             case 1
-                disp('Data output given in one column.')
+                matRad_cfg.dispInfo('Data output given in one column.\n');
             case 2
                 if ~mod(length(tallyData),2)
                     tallyData = reshape(tallyData, 2, length(tallyData)/2);
-                    disp('Data output given in two columns.')
+                    matRad_cfg.dispInfo('Data output given in two columns.\n');
                 elseif mod(length(tallyData),2)
-                    disp('Number of values does not match wished number of columns, reordering not possible!')
+                    matRad_cfg.dispInfo('Number of values does not match wished number of columns, reordering not possible!\n');
                 end
             case 3
                 if ~mod(length(tallyData),3)
                     tallyData = reshape(tallyData, 3, length(tallyData)/3);
-                    disp('Data output given in three column.')
+                    matRad_cfg.dispInfo('Data output given in three column.\n');
                 elseif mod(length(tallyData),3)
-                    disp('Number of values does not match wished number of columns, reordering not possible!')
+                    matRad_cfg.dispInfo('Number of values does not match wished number of columns, reordering not possible!\n');
                 end
         end
     end
@@ -81,20 +83,20 @@ elseif strcmpi(tallyIdentifier, 'F6heating4RBEcalc')
         if exist('numberOfColumns')
             switch numberOfColumns
                 case 1
-                    disp('Data output given in one column.')
+                    matRad_cfg.dispInfo('Data output given in one column.\n');
                 case 2
                     if ~mod(length(tallyData.(['tally', int2str(f6TallyList(indexTallyData((counter))))])),2)
                         tallyData.(['tally', int2str(f6TallyList(indexTallyData((counter))))]) = reshape(tallyData.(['tally', int2str(f6TallyList(indexTallyData((counter))))]), 2, length(tallyData.(['tally', int2str(f6TallyList(indexTallyData((counter))))]))/2);
-                        disp('Data output given in two columns.')
+                        matRad_cfg.dispInfo('Data output given in two columns.\n');
                     elseif mod(length(tallyData.(['tally', int2str(f6TallyList(indexTallyData((counter))))])),2)
-                        disp('Number of values does not match wished number of columns, reordering not possible!')
+                        matRad_cfg.dispInfo('Number of values does not match wished number of columns, reordering not possible!\n');
                     end
                 case 3
                     if ~mod(length(tallyData.(['tally', int2str(f6TallyList(indexTallyData((counter))))])),3)
                         tallyData.(['tally', int2str(f6TallyList(indexTallyData((counter))))]) = reshape(tallyData.(['tally', int2str(f6TallyList(indexTallyData((counter))))]), 3, length(tallyData.(['tally', int2str(f6TallyList(indexTallyData((counter))))]))/3);
-                        disp('Data output given in three column.')
+                        matRad_cfg.dispInfo('Data output given in three column.\n');
                     elseif mod(length(tallyData.(['tally', int2str(f6TallyList(indexTallyData((counter))))])),3)
-                        disp('Number of values does not match wished number of columns, reordering not possible!')
+                        matRad_cfg.dispInfo('Number of values does not match wished number of columns, reordering not possible!\n');
                     end
             end
         end

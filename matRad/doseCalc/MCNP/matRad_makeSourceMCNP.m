@@ -84,15 +84,15 @@ elseif strcmp(this.machine.meta.radiationMode,'neutrons') ...
         && isfield(this.machine.data,'neutronMonoEn') ...
         && ~isfield(this.machine.data, 'neutronSpec')
     if counterField==1 && counterRay==1
-    disp('*****\n')
-    disp('Monoenergetic neutrons used for simulation.\n')
-    disp('*****\n')
+    matRad_cfg.dispInfo('*****\n');
+    matRad_cfg.dispInfo('Monoenergetic neutrons used for simulation.\n');
+    matRad_cfg.dispInfo('*****\n');
     end
     makeSource_monoenN(stf, varHelper, pathRunfiles, counterField, counterRay, this.machine)
     control_makeSourceMCNP = 1;
 
 else
-    error('No valid energy input for particle energy!')
+    matRad_cfg.dispError('No valid energy input for particle energy!');
 end
 
 %% Define functions here
@@ -440,11 +440,11 @@ end
             % system origin, and trafo matrices
             % Case-by-cas definition:
             if length(pln.propStf.gantryAngles)~=1 || length(pln.propStf.couchAngles)~=1
-                error('Simulation of only one predefined field using RSSA file currently supported.')
+                matRad_cfg.dispError('Simulation of only one predefined field using RSSA file currently supported.');
             elseif (pln.propStf.gantryAngles~=90 && pln.propStf.gantryAngles~=270)
-                error('For simulation of irradiation at FRM 2 only gantry angles of 90 and 270 are allowed.')
+                matRad_cfg.dispError('For simulation of irradiation at FRM 2 only gantry angles of 90 and 270 are allowed.');
             elseif pln.propStf.couchAngles > 180
-                error('For simulation of irradiation at FRM 2 only couch angles of 0 to 180 are allowed. Consider opposing gantry angle.')
+                matRad_cfg.dispError('For simulation of irradiation at FRM 2 only couch angles of 0 to 180 are allowed. Consider opposing gantry angle.');
             elseif pln.propStf.gantryAngles==90 && pln.propStf.couchAngles <= 90
                 % Define position of surface for RSSA positioning
                 pos_tr1 = [cosd(pln.propStf.couchAngles)*stf.SAD, 0, -sind(pln.propStf.couchAngles)*stf.SAD];
@@ -519,7 +519,7 @@ end
             % Close blockC_source file
             fclose(fileID_C);
         else
-            error('No RSSA file exist for this bixel width/radiation field. Please generate one...')
+            matRad_cfg.dispError('No RSSA file exist for this bixel width/radiation field. Please generate one...');
         end
     end
 

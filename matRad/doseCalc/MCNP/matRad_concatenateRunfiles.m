@@ -18,6 +18,8 @@ function matRad_concatenateRunfiles(varHelper, pathRunfiles)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 oldPath = cd(pathRunfiles);
 restoreDir = onCleanup(@() cd(oldPath));
 
@@ -42,5 +44,5 @@ elseif ispc
         system(['type blockC_rest >> ', dummy_nameRunfile]);
     end
 else
-    disp('Platform not supported but you can concatenate the blocks to one runfile by hand.')
+    matRad_cfg.dispInfo('Platform not supported but you can concatenate the blocks to one runfile by hand.\n');
 end

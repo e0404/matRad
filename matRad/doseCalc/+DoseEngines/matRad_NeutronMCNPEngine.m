@@ -27,11 +27,12 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         config;             %Holds an instance of all configurable parameters
 
         %Other Dose Calculation Properties
-        externalCalculation = true;
-        
-        % Question dialogs avoided
-        useDICOMinfoRescale = true;
-        useLungQuestionDialog = false;
+        externalCalculation = 'write';  % 'off': run MCNP locally, 'write': only write run files, <folder>: read results from folder
+
+        useDICOMinfoRescale = true;     % rescale HU with DICOM slope/intercept (otherwise +1000 offset)
+        bodyStructureName = 'Body';     % name of the body structure in cst (case insensitive)
+        lungStructureName = 'Lung';     % name of the lung structure in cst (case insensitive)
+        autoSegmentLung = false;        % segment the lung from HU if no lung structure is found
         
         calcBioDose = false;            % RBE-weighted dose via secondary particle spectra (MCDS/RMF model)
         calcRMFparameters = false;
@@ -132,7 +133,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % For MCNP TMESH calculations the ct grid has to be downsampled to the dose grid
             for s = 1:dij.numOfScenarios
                 if s>1
-                    error('Multiple scenarios not yet implemented for MCNP dose calculations.')
+                    matRad_cfg.dispError('Multiple scenarios not yet implemented for MCNP dose calculations.');
                 end
                 ct.doseGridCT.HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
                     dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
@@ -163,7 +164,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %% Process CT data
             % Check ct for MCNP Simulation
             if ct.resolution.x ~= ct.resolution.y
-                error('x- and y-resolution have to be equal for the simulation.')
+                matRad_cfg.dispError('x- and y-resolution have to be equal for the simulation.');
             end
 
             % Set HU outside body to air, i.e. neglect everything outside body for the
@@ -171,15 +172,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Note: body structure is the only normal tissue structure that
             % has to be contured
 
-            bodyStructureName = 'Body'; % Default name for body structure is 'Body'
-            try
-                cstBodyIndex = matRad_findBodyStructureCST(cst, bodyStructureName);
-            catch
-                prompt = {'Please enter body structure name:'};
-                dlgtitle = 'Find Body Structure';
-                bodyStructureName = inputdlg(prompt,dlgtitle);
-                cstBodyIndex = matRad_findBodyStructureCST(cst, bodyStructureName);
-            end
+            cstBodyIndex = matRad_findBodyStructureCST(cst, this.bodyStructureName);
 
             % Process HU values
             matRad_cfg.dispInfo('*****\n')
@@ -212,36 +205,14 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             ct.doseGridCT.HUcube{1}(maskNonBody_doseGrid>0) = min(ct.doseGridCT.HUcube{1}, [], 'all'); % Use minimum to ensure compatibility with rescaling below
 
 
-            if ~isprop(this, 'useDICOMinfoRescale')
-                matRad_cfg.dispInfo('Please use question dialog to decide how to convert to scaled HU.\n')
-                matRad_cfg.dispInfo('*****\n')
-                % DICOM rescaling
-                answer = questdlg('Would you like to use DICOM rescale slope and intercept? If not, an offset of 1000 will be added to the HU values to get re-scale HUs.', ...
-                    'Use DICOM Info', ...
-                    'Yes', 'No', 'No');
-
-                switch answer
-                    case 'Yes'
-                        matRad_cfg.dispInfo('*****\n')
-                        matRad_cfg.dispInfo('You decided to use the following parameters to re-scale (scaled) HU data given in ct.cubeHU to HU in ct.cube.\n')
-                        matRad_cfg.dispInfo(['Rescale HU: slope=', num2str(ct.dicomInfo.RescaleSlope), ' intercept=', num2str(ct.dicomInfo.RescaleIntercept),'\n'])
-                        matRad_cfg.dispInfo('*****\n')
-                        ct.doseGridCT.HUcube{1} = ct.doseGridCT.HUcube{1}.*ct.dicomInfo.RescaleSlope + abs(ct.dicomInfo.RescaleIntercept);
-                    case 'No'
-                        matRad_cfg.dispInfo('*****\n')
-                        matRad_cfg.dispInfo('You decided not to use DICOM rescale slope and intercept.\n')
-                        matRad_cfg.dispInfo('*****\n')
-                        ct.doseGridCT.HUcube{1} = ct.doseGridCT.HUcube{1} + 1000;
-                end
-                clear answer
-            elseif this.useDICOMinfoRescale
+            if this.useDICOMinfoRescale
                 matRad_cfg.dispInfo('*****\n')
                 matRad_cfg.dispInfo('Re-scaling of (scaled) HU data given in ct.cubeHU to HU in ct.cube selected according to property useDICOMinfoRescale.\n')
                 matRad_cfg.dispInfo('DICOM rescale slope and intercept are used to re-scale.\n')
                 matRad_cfg.dispInfo(['Rescale HU: slope=', num2str(ct.dicomInfo.RescaleSlope), ' intercept=', num2str(ct.dicomInfo.RescaleIntercept),'\n'])
                 matRad_cfg.dispInfo('*****\n')
                 ct.doseGridCT.HUcube{1} = ct.doseGridCT.HUcube{1}.*ct.dicomInfo.RescaleSlope + abs(ct.dicomInfo.RescaleIntercept);
-            elseif ~this.useDICOMinfoRescale
+            else
                 matRad_cfg.dispInfo('*****\n')
                 matRad_cfg.dispInfo('Re-scaling of (scaled) HU data given in ct.cubeHU to HU in ct.cube selected according to property useDICOMinfoRescale.\n')
                 matRad_cfg.dispInfo('You decided not to use DICOM rescale slope and intercept. An offset of +1000 is added.\n')
@@ -272,7 +243,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
             matRad_cfg.dispInfo('*****\n')
 
-            [cst_doseGrid, ct.doseGridCT.tissueBin] = matRad_segmentationCTscan(ct.doseGridCT.HUcube{1}, dij.doseGrid.resolution, binIntervals, cst_doseGrid, cstBodyIndex, cstTargetIndex, this.useLungQuestionDialog);
+            [cst_doseGrid, ct.doseGridCT.tissueBin] = matRad_segmentationCTscan(ct.doseGridCT.HUcube{1}, dij.doseGrid.resolution, binIntervals, cst_doseGrid, cstBodyIndex, cstTargetIndex, this.lungStructureName, this.autoSegmentLung);
             ct.doseGridCT.cubeDim = dij.doseGrid.dimensions;
 
             % Calculate density for CT voxels and resize afterwards -> caution: step-
@@ -376,11 +347,24 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             %% Concatenate all blocks to one runfile for each ray
             matRad_concatenateRunfiles(varHelper, pathRunfiles);
 
-            %% Run MCNP calculation
-            matRad_bixelDoseCalculatorMCNP(this);
+            %% Run MCNP calculation (or only write the run files)
+            if ischar(this.externalCalculation) && isfolder(this.externalCalculation)
+                resultFolder = this.externalCalculation;
+                matRad_cfg.dispInfo('Trying to load MCNP results from folder: %s\n', resultFolder);
+            else
+                matRad_bixelDoseCalculatorMCNP(this);
+                resultFolder = pathRunfiles;
+            end
+
+            if strcmp(this.externalCalculation, 'write')
+                % Run files written, results have to be evaluated later by
+                % setting externalCalculation to the folder with the results
+                dij.physicalDose{1} = spalloc(dij.doseGrid.numOfVoxels, dij.totalNumOfBixels, 1);
+                return;
+            end
 
             %% Evaluate MCNP results
-            dij = matRad_evaluateTallyMCNP(dij, cst, ct, pathRunfiles);
+            dij = matRad_evaluateTallyMCNP(dij, cst, ct, resultFolder);
             
         end
 
@@ -690,26 +674,19 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         function binaryFound = checkBinaries()
             % checkBinaries check if MCNP is installed on the machine and
             % path variables are properly set to run MCNP in matRad
-            matRad_cfg = MatRad_Config.instance();                       
 
-            if ispc
+            matRad_cfg = MatRad_Config.instance();
+
+            binaryFound = false;
+            try
                 [~,cmdout] = system('mcnp6');
-                if strcmp(cmdout(2:5), 'mcnp')
-                    binaryFound = true;
-                else
-                    matRad_cfg.dispWarning('Could not test MCNP. Please check installation and path variables.\n');
-                end
-            elseif ismac
-                matRad_cfg.dispWarning('Check for MCNP installation not yet implemented. Check set to false.\n');
-                binaryFound = false;
-            elseif isunix
-                matRad_cfg.dispWarning('Check for MCNP installation not yet implemented. Check set to false.\n');
-                binaryFound = false;
-
-            else
-                binaryFound = false;
+                binaryFound = ~isempty(strfind(lower(cmdout),'mcnp'));
+            catch
             end
 
+            if ~binaryFound
+                matRad_cfg.dispWarning('Could not find MCNP (mcnp6) on the system path. Only writing of run files (externalCalculation = ''write'') is possible.');
+            end
         end
 
         function [available,msg] = isAvailable(pln,machine)

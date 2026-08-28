@@ -16,9 +16,11 @@ function matRad_makeTallyMCNP(this, ct, fileID_C_rest, binIntervals)
 % Author: Lucas Sommer (Lucas.Sommer@tum.de), 11/2018
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-disp('*****')
-disp('Tally type: TMESH3...')
-disp('*****')
+matRad_cfg = MatRad_Config.instance();
+
+matRad_cfg.dispInfo('*****\n');
+matRad_cfg.dispInfo('Tally type: TMESH3...\n');
+matRad_cfg.dispInfo('*****\n');
 meshTally.typeCard = 'TMESH\n';
 meshTally.geometry = 'RMESH3 %s\n';
 meshTally.corA = 'CORA3 %.4f %dI %.4f\n';

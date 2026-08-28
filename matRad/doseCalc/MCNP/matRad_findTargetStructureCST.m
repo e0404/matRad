@@ -16,6 +16,8 @@ function cstTargetIndex = matRad_findTargetStructureCST(cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+matRad_cfg = MatRad_Config.instance();
+
 cstTargetIndex = [];
 
 for counter =1:size(cst,1)
@@ -25,5 +27,5 @@ for counter =1:size(cst,1)
 end
 
 if isempty(cstTargetIndex)
-    error('No target structure contoured or structure not found! Note: Target structure has to be set in matRad.')
+    matRad_cfg.dispError('No target structure contoured or structure not found! Note: Target structure has to be set in matRad.');
 end
