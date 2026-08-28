@@ -597,7 +597,7 @@ end
         switch particleType
             case 'neutronField'
                 % Get list of available tabulated neutron spectra
-                spectralInformation.pathLocation = fullfile(matRad_getMATRADdirectory_hardCoded,'MCNP', 'SpectralInformation', filesep);
+                spectralInformation.pathLocation = fullfile(MatRad_Config.instance().matRadSrcRoot, 'doseCalc', 'MCNP', 'SpectralInformation', filesep);
                 spectralInformation.neutronSpectrum = dir([spectralInformation.pathLocation, 'spectrum_neutrons_*']);
                 
                 % Check if there is more than one neutron spectrum available in
@@ -662,7 +662,7 @@ end
                 
             case 'photonField'
                 % Get list of available tabulated photon spectra
-                spectralInformation.pathLocation = fullfile(matRad_getMATRADdirectory_hardCoded,'MCNP', 'SpectralInformation', filesep);
+                spectralInformation.pathLocation = fullfile(MatRad_Config.instance().matRadSrcRoot, 'doseCalc', 'MCNP', 'SpectralInformation', filesep);
                 spectralInformation.photonSpectrum = dir([spectralInformation.pathLocation, 'spectrum_photons_*']);
                 
                 % Check if there is more than one photon spectra available in
@@ -727,7 +727,7 @@ end
                 
             case 'mixedField'
                 % Get list of available tabulated neutron spectra
-                spectralInformation.pathLocation = fullfile(matRad_getMATRADdirectory_hardCoded,'MCNP', 'SpectralInformation', filesep);
+                spectralInformation.pathLocation = fullfile(MatRad_Config.instance().matRadSrcRoot, 'doseCalc', 'MCNP', 'SpectralInformation', filesep);
                 spectralInformation.neutronSpectrum = dir([spectralInformation.pathLocation, 'spectrum_neutrons_*']);
                 spectralInformation.photonSpectrum = dir([spectralInformation.pathLocation, 'spectrum_photons_*']);
                 

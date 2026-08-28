@@ -32,14 +32,14 @@ function [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(this,stf, c
 matRad_cfg =  MatRad_Config.instance();
 
 %% Check source input and create source part of runfile
-pathRunfiles = fullfile(matRad_cfg.matRadRoot, 'MCNP', filesep, 'runfiles_tmp', filesep);
+pathRunfiles = fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'MCNP', 'runfiles_tmp', filesep);
 
 %% Reset isocenter coordinates to cube coodinates (and forget)
 stf(counterField).isoCenter = matRad_world2cubeCoords(stf(counterField).isoCenter, ct, 0);
 
 %% Option A: Predefined field using RSSA file
 if strcmp(num2str(stf(1).bixelWidth),'field')
-    pathRSSA = fullfile(matRad_cfg.matRadRoot, 'MCNP', filesep, 'RSSA_depot', filesep);
+    pathRSSA = fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'MCNP', 'RSSA_depot', filesep);
     makeSource_readRSSA(stf, varHelper, pathRunfiles, pathRSSA)
     control_makeSourceMCNP = 1;
 

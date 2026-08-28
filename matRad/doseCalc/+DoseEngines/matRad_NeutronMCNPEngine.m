@@ -97,7 +97,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             
             %Set Default MCNP path
             %Set folder
-            this.MCNPFolder = [matRad_cfg.matRadRoot filesep 'MCNP'];        
+            this.MCNPFolder = fullfile(matRad_cfg.matRadSrcRoot,'doseCalc','MCNP');        
         end
     end
 
@@ -343,7 +343,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % positioning can be done easily w/o wasting time on redundant writing of
             % the rest (like MODE and PHYS card) into a text file.
 
-            pathRunfiles = strcat(matRad_cfg.matRadRoot,filesep, 'MCNP', filesep, 'runfiles_tmp', filesep);
+            pathRunfiles = fullfile(this.MCNPFolder,'runfiles_tmp',filesep);
             fileID_C_rest = fopen(strcat(pathRunfiles,'blockC_rest'), 'w');
 
             % C.2 Physics and problem termination

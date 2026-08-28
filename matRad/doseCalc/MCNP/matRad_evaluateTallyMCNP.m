@@ -2,7 +2,7 @@ function dij = matRad_evaluateTallyMCNP(dij, cst, ct)
 %% Read output from MCNP calculation and generate dij matix
 %% Preparation and get list of mctal data
 matRad_cfg = MatRad_Config.instance();
-cd(strcat(matRad_cfg.matRadRoot, filesep, 'MCNP', filesep, 'runfiles_tmp'));
+cd(fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'MCNP', 'runfiles_tmp'));
 tallyDataList = dir('MCNPrunfile_*bixelm');
 % Re-organize list
 dummyList = struct;

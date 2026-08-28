@@ -63,7 +63,7 @@ fileNameIntraTrackvalues.heavyIons_anox = 'MCDS_heavyIonsIntraTrack_intraT_anoxi
 
 %% A.2 RBE values aerobic envirnment
 % Read data from file: RBE factors for DSB in aerobic envirnmoent
-RBEValues.pathLocation = fullfile(matRad_getMATRADdirectory, 'MCNP', 'RBEfactors', filesep);
+RBEValues.pathLocation = fullfile(MatRad_Config.instance().matRadSrcRoot, 'doseCalc', 'MCNP', 'RBEfactors', filesep);
 % Proton
 RBEValues.RBEValuesList = dir([RBEValues.pathLocation, fileNameRBEvalues.proton_aero]);
 fid_RBEVal = fopen([RBEValues.RBEValuesList.folder, filesep, RBEValues.RBEValuesList.name], 'r');
@@ -109,7 +109,7 @@ lithium.RBEValue_aero = RBEValue';
 fclose(fid_RBEVal);
 
 % Read data from file: Intra track term for RMF in aerobic envirnmoent
-intraTrackValues.pathLocation = fullfile(matRad_getMATRADdirectory, 'MCNP', 'RBEfactors', filesep);
+intraTrackValues.pathLocation = fullfile(MatRad_Config.instance().matRadSrcRoot, 'doseCalc', 'MCNP', 'RBEfactors', filesep);
 % Proton
 intraTrackValues.intraTrackValuesList = dir([intraTrackValues.pathLocation, fileNameIntraTrackvalues.proton_aero]);
 fid_intraTrackVal = fopen([intraTrackValues.intraTrackValuesList.folder, filesep, intraTrackValues.intraTrackValuesList.name], 'r');
@@ -162,7 +162,7 @@ fclose(fid_intraTrackVal);
 
 %% A.3 RBE values anoxic envirnment
 % Read data from file: RBE factors for DSB in anoxic envirnmoent
-RBEValues.pathLocation = fullfile(matRad_getMATRADdirectory, 'MCNP', 'RBEfactors', filesep);
+RBEValues.pathLocation = fullfile(MatRad_Config.instance().matRadSrcRoot, 'doseCalc', 'MCNP', 'RBEfactors', filesep);
 % Proton
 RBEValues.RBEValuesList = dir([RBEValues.pathLocation, fileNameRBEvalues.proton_anox]);
 fid_RBEVal = fopen([RBEValues.RBEValuesList.folder, filesep, RBEValues.RBEValuesList.name], 'r');
@@ -208,7 +208,7 @@ lithium.RBEValue_anox = RBEValue';
 fclose(fid_RBEVal);
 
 % Read data from file: Intra track term for RMF in anoxic envirnmoent
-intraTrackValues.pathLocation = fullfile(matRad_getMATRADdirectory, 'MCNP', 'RBEfactors', filesep);
+intraTrackValues.pathLocation = fullfile(MatRad_Config.instance().matRadSrcRoot, 'doseCalc', 'MCNP', 'RBEfactors', filesep);
 % Proton
 intraTrackValues.intraTrackValuesList = dir([intraTrackValues.pathLocation, fileNameIntraTrackvalues.proton_anox]);
 fid_intraTrackVal = fopen([intraTrackValues.intraTrackValuesList.folder, filesep, intraTrackValues.intraTrackValuesList.name], 'r');

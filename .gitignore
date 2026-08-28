@@ -6,8 +6,7 @@ coverage.json
 *.asv
 .DS_Store
 build/
-/MCNP/runfiles_tmp
-/MCNP/logFile
-MCNP/matRad_MCNPConfig.m
+matRad/doseCalc/MCNP/runfiles_tmp/
+matRad/doseCalc/MCNP/logFile/
 .doc/
 
