@@ -107,8 +107,8 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
             %Assign defaults from Config
             matRad_cfg = MatRad_Config.instance();
-            this.useCustomPrimaryNeutronFluence  = matRad_cfg.propDoseCalc.defaultUseCustomPrimaryNeutronFluence;
-            this.kernelCutOff                   = matRad_cfg.propDoseCalc.defaultKernelCutOff;
+            this.useCustomPrimaryNeutronFluence  = matRad_cfg.defaults.propDoseCalc.useCustomPrimaryNeutronFluence;
+            this.kernelCutOff                   = matRad_cfg.defaults.propDoseCalc.kernelCutOff;
             
             %dij sampling defaults                      
             this.dijSampling.relDoseThreshold = 0.01;
