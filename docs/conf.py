@@ -45,8 +45,30 @@ project = "matRad"
 copyright = "2026, e0404"
 author = "e0404"
 
-version = "3.2.3"
-release = "3.2.3"
+
+def _read_matrad_version() -> str:
+    """
+    Parse the hard-coded version numbers from matRad/matRad_version.m so the
+    documentation version follows the code without a second place to bump.
+    """
+    import re
+
+    version_file = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "matRad", "matRad_version.m"
+    )
+    with open(version_file, encoding="utf-8") as f:
+        source = f.read()
+    numbers = {}
+    for field in ("major", "minor", "patch"):
+        match = re.search(rf"^\s*matRadVer\.{field}\s*=\s*(\d+)\s*;", source, re.MULTILINE)
+        if match is None:
+            raise RuntimeError(f"Could not find matRadVer.{field} in {version_file}")
+        numbers[field] = match.group(1)
+    return "{major}.{minor}.{patch}".format(**numbers)
+
+
+version = _read_matrad_version()
+release = version
 
 html_theme = "sphinx_rtd_theme" #pip install sphinx-rtd-theme
 
