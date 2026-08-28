@@ -18,8 +18,8 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function timeArray = matRad_getTime4log
-uhrzeit = datestr(now,'HH:MM:SS');
-datum  =  datestr(now,'yyyy-mm-dd');
+uhrzeit = datestr(now, 'HH:MM:SS');
+datum  =  datestr(now, 'yyyy-mm-dd');
 
 timeArray = strcat(datum(1:4), datum(6:7), datum(9:10), 'd', uhrzeit(1:2), ...
-    uhrzeit(4:5), uhrzeit(7:8), 'h');
+                   uhrzeit(4:5), uhrzeit(7:8), 'h');

@@ -31,8 +31,8 @@ matRad_cfg = MatRad_Config.instance();
 
 cstTargetIndex = [];
 
-for counter =1:size(cst,1)
-    if strcmp(cst{counter,3}, 'TARGET')
+for counter = 1:size(cst, 1)
+    if strcmp(cst{counter, 3}, 'TARGET')
         cstTargetIndex = [cstTargetIndex, counter];
     end
 end

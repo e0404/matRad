@@ -22,58 +22,57 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)
-        possibleRadiationModes = {'neutrons'}; %constant which represent available radiation modes
-        name = 'SVD Pencil Beam';
-        shortName = 'SVDPB';
-        
-        %supportedQuantities = {'physicalDose'};
+        possibleRadiationModes = {'neutrons'}  % constant which represent available radiation modes
+        name = 'SVD Pencil Beam'
+        shortName = 'SVDPB'
+
+        % supportedQuantities = {'physicalDose'};
 
         % Define function_Di for beamlet calculation. Constant for use in
         % static computations
-        %func_Di = @(x,m,beta) beta/(beta-m) * (exp(-m*x) - exp(-beta*x));
-        %func_DiVec = @(x,m,betas) betas./(betas-m) .* (exp(-m*x) - exp(-betas.*x));
+        % func_Di = @(x,m,beta) beta/(beta-m) * (exp(-m*x) - exp(-beta*x));
+        % func_DiVec = @(x,m,betas) betas./(betas-m) .* (exp(-m*x) - exp(-betas.*x));
     end
 
     properties (SetAccess = public, GetAccess = public)
-        useCustomPrimaryNeutronFluence;  %boolean to control usage of the primary fluence during dose (influence matrix) computation
-        kernelCutOff;                   %cut off in [mm] of kernel values
-        randomSeed = 0;                 %for bixel sampling
-        intConvResolution = 0.5;        %resolution for kernel convolution [mm]
+        useCustomPrimaryNeutronFluence   % boolean to control usage of the primary fluence during dose (influence matrix) computation
+        kernelCutOff                    % cut off in [mm] of kernel values
+        randomSeed = 0                  % for bixel sampling
+        intConvResolution = 0.5         % resolution for kernel convolution [mm]
 
-        enableDijSampling = true;
-        dijSampling;                    %struct with lateral dij sampling parameters
-        ignoreInvalidValues = false;    %ignore negative, infinite or NaN values in bixel calculation
+        enableDijSampling = true
+        dijSampling                     % struct with lateral dij sampling parameters
+        ignoreInvalidValues = false     % ignore negative, infinite or NaN values in bixel calculation
     end
 
-    %Calculation variables
-    properties (SetAccess = protected,GetAccess = public)
-        isFieldBasedDoseCalc;           %Will be set
-        penumbraFWHM;                   %will be obtained from machine
-        fieldWidth;                     %Will be obtained during calculation
+    % Calculation variables
+    properties (SetAccess = protected, GetAccess = public)
+        isFieldBasedDoseCalc            % Will be set
+        penumbraFWHM                    % will be obtained from machine
+        fieldWidth                      % Will be obtained during calculation
 
-        %Kernel Grid for convolution
-        kernelConvSize;                 %size of the convolution kernel
-        kernelX;                        %meshgrid in X
-        kernelZ;                        %meshgrid in Z
-        kernelMxs;                      %cell array of kernel matrices
+        % Kernel Grid for convolution
+        kernelConvSize                  % size of the convolution kernel
+        kernelX                         % meshgrid in X
+        kernelZ                         % meshgrid in Z
+        kernelMxs                       % cell array of kernel matrices
 
-        gaussFilter;                    %two-dimensional gaussian filter to model penumbra
-        gaussConvSize;                  %size of the gaussian convolution kernel
+        gaussFilter                     % two-dimensional gaussian filter to model penumbra
+        gaussConvSize                   % size of the gaussian convolution kernel
 
-        convMx_X;                       %convolution meshgrid in X
-        convMx_Z;                       %convolution meshgrid in Z
+        convMx_X                        % convolution meshgrid in X
+        convMx_Z                        % convolution meshgrid in Z
 
-        F_X;                            %fluence meshgrid in X
-        F_Z;                            %fluence meshgrid in Z
+        F_X                             % fluence meshgrid in X
+        F_Z                             % fluence meshgrid in Z
 
-        Fpre;                           %precomputed fluence if uniform fluence used for calculation
-        interpKernelCache;              %Kernel interpolators (cached if precomputation per beam possible)
-        
-        collimation;                    %collimation structure from dicom import
+        Fpre                            % precomputed fluence if uniform fluence used for calculation
+        interpKernelCache               % Kernel interpolators (cached if precomputation per beam possible)
 
-        cubeKERMAcorr;                  %neutron KERMA correction factors relative to water (per ct scenario)
+        collimation                     % collimation structure from dicom import
+
+        cubeKERMAcorr                   % neutron KERMA correction factors relative to water (per ct scenario)
     end
-
 
     methods
 
@@ -88,25 +87,25 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
             %   cst:                        matRad cst struct
-            
+
             if nargin < 1
                 pln = [];
             end
 
             % create this from superclass
-            this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);            
+            this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);
 
-            %TODO: engines should not rely on reading properties from "propStf", we need to find another way to handle those two fields in the future.
-            if nargin > 0 && isfield(pln,'propStf') 
-                if isfield(pln.propStf,'bixelWidth')
+            % TODO: engines should not rely on reading properties from "propStf", we need to find another way to handle those two fields in the future.
+            if nargin > 0 && isfield(pln, 'propStf')
+                if isfield(pln.propStf, 'bixelWidth')
                     % 0 if field calc is bixel based, 1 if dose calc is field based
                     % num2str is only used to prevent failure of strcmp when bixelWidth
                     % contains a number and not a string
-                    this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth),'field');
+                    this.isFieldBasedDoseCalc = strcmp(num2str(pln.propStf.bixelWidth), 'field');
                 end
 
-                %Potentially stored collimation information
-                if isfield(pln.propStf,'collimation')
+                % Potentially stored collimation information
+                if isfield(pln.propStf, 'collimation')
                     this.collimation = pln.propStf.collimation;
                 end
             end
@@ -115,35 +114,36 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
         function setDefaults(this)
             setDefaults@DoseEngines.matRad_PencilBeamEngineAbstract(this);
 
-            %Assign defaults from Config
+            % Assign defaults from Config
             matRad_cfg = MatRad_Config.instance();
             this.useCustomPrimaryNeutronFluence  = matRad_cfg.defaults.propDoseCalc.useCustomPrimaryNeutronFluence;
             this.kernelCutOff                   = matRad_cfg.defaults.propDoseCalc.kernelCutOff;
-            
-            %dij sampling defaults                      
+
+            % dij sampling defaults
             this.dijSampling.relDoseThreshold = 0.01;
-            this.dijSampling.latCutOff        = 20; 
+            this.dijSampling.latCutOff        = 20;
             this.dijSampling.type             = 'radius';
             this.dijSampling.deltaRadDepth    = 5;
         end
+
     end
 
     methods (Access = protected)
 
-        function dij = initDoseCalc(this,ct,cst,stf)
+        function dij = initDoseCalc(this, ct, cst, stf)
             %% Assign parameters
             matRad_cfg = MatRad_Config.instance();
 
             % 0 if field calc is bixel based, 1 if dose calc is field based
             % num2str is only used to prevent failure of strcmp when bixelWidth
             % contains a number and not a string
-            this.isFieldBasedDoseCalc = any(arrayfun(@(s) strcmp(num2str(s.bixelWidth),'field'),stf));
+            this.isFieldBasedDoseCalc = any(arrayfun(@(s) strcmp(num2str(s.bixelWidth), 'field'), stf));
 
             %% Call Superclass init
-            dij = initDoseCalc@DoseEngines.matRad_PencilBeamEngineAbstract(this,ct,cst,stf);
+            dij = initDoseCalc@DoseEngines.matRad_PencilBeamEngineAbstract(this, ct, cst, stf);
 
             %% Validate some properties and machine file version
-            %Check machine file version
+            % Check machine file version
             if ~isfield(this.machine, 'version')
                 this.machine.version = 1;
             end
@@ -154,46 +154,45 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             % 1/mm^2, but 1/(0.5^2 mm^2) --> factor 4
             if this.machine.version < 2
                 kernelFn = fieldnames(this.machine.data.kernel);
-                nKernels = sum(strncmp('kernel',kernelFn,6));
+                nKernels = sum(strncmp('kernel', kernelFn, 6));
                 for i = 1:numel(this.machine.data.kernel)
                     for k = 1:nKernels
-                        %Correct kernel normalization to 1/mm^2
-                        this.machine.data.kernel(i).(sprintf('kernel%d',k)) = 4*this.machine.data.kernel(i).(sprintf('kernel%d',k));
+                        % Correct kernel normalization to 1/mm^2
+                        this.machine.data.kernel(i).(sprintf('kernel%d', k)) = 4 * this.machine.data.kernel(i).(sprintf('kernel%d', k));
                     end
                 end
             end
 
             % gaussian filter to model penumbra from (measured) machine output / see
             % diploma thesis siggel 4.1.2 -> https://github.com/e0404/matRad/wiki/Dose-influence-matrix-calculation
-            if isfield(this.machine.data,'penumbraFWHMatIso')
+            if isfield(this.machine.data, 'penumbraFWHMatIso')
                 this.penumbraFWHM = this.machine.data.penumbraFWHMatIso;
             else
                 this.penumbraFWHM = [];
                 matRad_cfg.dispWarning('Neutron machine file does not contain measured penumbra width in machine.data.penumbraFWHMatIso. Convolution with Gaussian to model penumbra from machine is switched off.');
             end
 
-            %Correct kernel cut off to base data limits if needed
+            % Correct kernel cut off to base data limits if needed
             if this.kernelCutOff > this.machine.data.kernelPos(end)
-                matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' larger than machine data range of ''%f mm''. Using ''%f mm''!',this.kernelCutOff,this.machine.data.kernelPos(end),this.machine.data.kernelPos(end));
+                matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' larger than machine data range of ''%f mm''. Using ''%f mm''!', this.kernelCutOff, this.machine.data.kernelPos(end), this.machine.data.kernelPos(end));
                 this.kernelCutOff = this.machine.data.kernelPos(end);
             end
 
             if this.kernelCutOff < this.geometricLateralCutOff
-                matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',this.kernelCutOff,this.geometricLateralCutOff,this.geometricLateralCutOff);
+                matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!', this.kernelCutOff, this.geometricLateralCutOff, this.geometricLateralCutOff);
                 this.kernelCutOff = this.geometricLateralCutOff;
             end
-            
+
             % TODO: calculate and add weightToMU for the generic neutron
             % machine. Typical calibration: 100 cGy/100 MU in a 10x10 cm^2
             % field, 100 cm SSD, depth of dose maximum for the given beam
             % quality.
-            if isfield(this.machine.data,'weightToMU')
+            if isfield(this.machine.data, 'weightToMU')
                 dij.weightToMU = this.machine.data.weightToMU;
             else
                 dij.weightToMU = 100;
-                matRad_cfg.dispWarning('Neutron machine file does not contain weight to MU scaling factor. Assuming %.1f.',dij.weightToMU);
+                matRad_cfg.dispWarning('Neutron machine file does not contain weight to MU scaling factor. Assuming %.1f.', dij.weightToMU);
             end
-
 
             %% Initiate KERMA correction for neutron dose calculation
             % machine.data.neutronKERMAcorr is a 2 x (nBins+1) matrix: first
@@ -203,23 +202,23 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             % the tissue classification) and then brought to the dose grid
             % with nearest neighbor interpolation, so that it can be indexed
             % with the dose grid voxel indices of the rays.
-            if ~isfield(this.machine.data,'neutronKERMAcorr')
+            if ~isfield(this.machine.data, 'neutronKERMAcorr')
                 matRad_cfg.dispWarning('No KERMA correction provided in machine data for neutron dose calculation.');
             end
-            this.cubeKERMAcorr = cell(1,ct.numOfCtScen);
+            this.cubeKERMAcorr = cell(1, ct.numOfCtScen);
             for s = 1:ct.numOfCtScen
-                cubeCorr = ones(ct.cubeDim,this.precision);
-                if isfield(this.machine.data,'neutronKERMAcorr')
+                cubeCorr = ones(ct.cubeDim, this.precision);
+                if isfield(this.machine.data, 'neutronKERMAcorr')
                     kermaCorr = this.machine.data.neutronKERMAcorr;
-                    for b = 1:size(kermaCorr,2)-1
-                        inBin = ct.cubeHU{s} >= kermaCorr(1,b) & ct.cubeHU{s} < kermaCorr(1,b+1);
-                        cubeCorr(inBin) = kermaCorr(2,b+1);
+                    for b = 1:size(kermaCorr, 2) - 1
+                        inBin = ct.cubeHU{s} >= kermaCorr(1, b) & ct.cubeHU{s} < kermaCorr(1, b + 1);
+                        cubeCorr(inBin) = kermaCorr(2, b + 1);
                     end
                 end
 
-                if ~isequal(dij.ctGrid.dimensions,dij.doseGrid.dimensions) || ~isequal(dij.ctGrid.resolution,dij.doseGrid.resolution)
-                    cubeCorr = matRad_interp3(dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,cubeCorr, ...
-                        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
+                if ~isequal(dij.ctGrid.dimensions, dij.doseGrid.dimensions) || ~isequal(dij.ctGrid.resolution, dij.doseGrid.resolution)
+                    cubeCorr = matRad_interp3(dij.ctGrid.x, dij.ctGrid.y', dij.ctGrid.z, cubeCorr, ...
+                                              dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'nearest');
                 end
                 this.cubeKERMAcorr{s} = cubeCorr;
             end
@@ -228,7 +227,7 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             % set up convolution grid
             if this.isFieldBasedDoseCalc
                 % get data from DICOM import
-                this.intConvResolution = this.collimation.convResolution; %overwrite default value from dicom
+                this.intConvResolution = this.collimation.convResolution; % overwrite default value from dicom
                 this.fieldWidth = this.collimation.fieldWidth;
             else
                 if numel(unique([stf.bixelWidth])) > 1
@@ -237,31 +236,29 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
                 this.fieldWidth = unique([stf.bixelWidth]);
             end
-            
+
             minKernelSpacing = min(diff(this.machine.data.kernelPos));
             if this.intConvResolution > minKernelSpacing
-                matRad_cfg.dispWarning('Chosen kernel convolution resolution of %f mm is larger than minimum kernel spacing of %f mm. This can strongly affect absolute dosimetry.',this.intConvResolution,minKernelSpacing);
+                matRad_cfg.dispWarning('Chosen kernel convolution resolution of %f mm is larger than minimum kernel spacing of %f mm. This can strongly affect absolute dosimetry.', this.intConvResolution, minKernelSpacing);
             end
 
             % calculate field size and distances
-            fieldLimit = cast(ceil(this.fieldWidth/(2*this.intConvResolution)),this.precision);
-            [this.F_X,this.F_Z] = meshgrid(-fieldLimit*this.intConvResolution: ...
-                this.intConvResolution: ...
-                (fieldLimit-1)*this.intConvResolution);
-
-
+            fieldLimit = cast(ceil(this.fieldWidth / (2 * this.intConvResolution)), this.precision);
+            [this.F_X, this.F_Z] = meshgrid(-fieldLimit * this.intConvResolution: ...
+                                           this.intConvResolution: ...
+                                           (fieldLimit - 1) * this.intConvResolution);
 
             if ~isempty(this.penumbraFWHM)
-                sigmaGauss = this.penumbraFWHM / sqrt(8*log(2)); % [mm]
+                sigmaGauss = this.penumbraFWHM / sqrt(8 * log(2)); % [mm]
                 % use 5 times sigma as the limits for the gaussian convolution
-                gaussLimit = cast(ceil(5*sigmaGauss/this.intConvResolution),this.precision);
-            [gaussFilterX,gaussFilterZ] = meshgrid(-gaussLimit*this.intConvResolution: ...
-                this.intConvResolution: ...
-                (gaussLimit-1)*this.intConvResolution);
-            %Scaling with intconvResolution^2 for correct convolution integral
-            %in mm units
-            this.gaussFilter =  this.intConvResolution^2 / (2*pi*sigmaGauss^2) * exp(-(gaussFilterX.^2+gaussFilterZ.^2)/(2*sigmaGauss^2) );
-            this.gaussConvSize = 2*(fieldLimit + gaussLimit);
+                gaussLimit = cast(ceil(5 * sigmaGauss / this.intConvResolution), this.precision);
+                [gaussFilterX, gaussFilterZ] = meshgrid(-gaussLimit * this.intConvResolution: ...
+                                                       this.intConvResolution: ...
+                                                       (gaussLimit - 1) * this.intConvResolution);
+                % Scaling with intconvResolution^2 for correct convolution integral
+                % in mm units
+                this.gaussFilter =  this.intConvResolution^2 / (2 * pi * sigmaGauss^2) * exp(-(gaussFilterX.^2 + gaussFilterZ.^2) / (2 * sigmaGauss^2));
+                this.gaussConvSize = 2 * (fieldLimit + gaussLimit);
             else
                 gaussLimit = 0;
                 this.gaussFilter = [];
@@ -270,33 +267,35 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
             % get kernel size and distances
 
-            kernelLimit = cast(ceil(this.kernelCutOff/this.intConvResolution),this.precision);
-            [this.kernelX, this.kernelZ] = meshgrid(-kernelLimit*this.intConvResolution: ...
-                this.intConvResolution: ...
-                (kernelLimit-1)*this.intConvResolution);
-
-            % precalculate convolved kernel size and distances
-            kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
-            [this.convMx_X, this.convMx_Z] = meshgrid(-kernelConvLimit*this.intConvResolution: ...
-                this.intConvResolution: ...
-                (kernelConvLimit-1)*this.intConvResolution);
-            % calculate also the total size and distance as we need this during convolution extensively
-            this.kernelConvSize = 2*kernelConvLimit;
+            kernelLimit = cast(ceil(this.kernelCutOff / this.intConvResolution), this.precision);
+            [this.kernelX, this.kernelZ] = meshgrid(-kernelLimit * this.intConvResolution: ...
+                                                    this.intConvResolution: ...
+                                                    (kernelLimit - 1) * this.intConvResolution);
 
             % define an effective lateral cutoff where dose will be calculated. note
             % that storage within the influence matrix may be subject to sampling
-            this.effectiveLateralCutOff = this.geometricLateralCutOff + this.fieldWidth/sqrt(2);
-            
+            this.effectiveLateralCutOff = this.geometricLateralCutOff + this.fieldWidth / sqrt(2);
 
-            % Check if we can precompute fluence and precompute kernel 
+            % precalculate convolved kernel size and distances. Without the
+            % penumbra convolution the grid is extended such that it covers the
+            % effective lateral cutoff (kernel interpolation returns NaN outside)
+            kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
+            kernelConvLimit = max(kernelConvLimit, cast(ceil(this.effectiveLateralCutOff / this.intConvResolution) + 1, this.precision));
+            [this.convMx_X, this.convMx_Z] = meshgrid(-kernelConvLimit * this.intConvResolution: ...
+                                                      this.intConvResolution: ...
+                                                      (kernelConvLimit - 1) * this.intConvResolution);
+            % calculate also the total size and distance as we need this during convolution extensively
+            this.kernelConvSize = 2 * kernelConvLimit;
+
+            % Check if we can precompute fluence and precompute kernel
             % convolution if we use a uniform fluence
             if ~this.isFieldBasedDoseCalc
                 % Create fluence matrix
-                this.Fpre = ones(floor(this.fieldWidth/this.intConvResolution),this.precision);
+                this.Fpre = ones(floor(this.fieldWidth / this.intConvResolution), this.precision);
 
                 if ~this.useCustomPrimaryNeutronFluence && ~isempty(this.gaussFilter)
                     % gaussian convolution of field to model penumbra
-                    this.Fpre = real(ifft2(fft2(this.Fpre,this.gaussConvSize,this.gaussConvSize).*fft2(this.gaussFilter,this.gaussConvSize,this.gaussConvSize)));
+                    this.Fpre = real(ifft2(fft2(this.Fpre, this.gaussConvSize, this.gaussConvSize) .* fft2(this.gaussFilter, this.gaussConvSize, this.gaussConvSize)));
                 end
             end
 
@@ -305,17 +304,17 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
             switch env
                 case 'MATLAB'
-                    rng(this.randomSeed); %Initializes Mersenne Twister with seed 0
+                    rng(this.randomSeed); % Initializes Mersenne Twister with seed 0
                 case 'OCTAVE'
-                    rand('state',this.randomSeed); %Initializes Mersenne Twister with state 0 (does not give similar random numbers as in Matlab)
+                    rand('state', this.randomSeed); % Initializes Mersenne Twister with state 0 (does not give similar random numbers as in Matlab)
                 otherwise
-                    rand('seed',this.randomSeed); %Fallback
-                    matRad_cfg.dispWarning('Environment %s not recognized!',env);
+                    rand('seed', this.randomSeed); % Fallback
+                    matRad_cfg.dispWarning('Environment %s not recognized!', env);
             end
 
         end
 
-        function currBeam = initBeam(this,currBeam,ct,cst,stf,i)
+        function currBeam = initBeam(this, currBeam, ct, cst, stf, i)
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
@@ -331,28 +330,28 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             % output:
             %   dij:                        updated dij struct
 
-            currBeam = initBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,ct,cst,stf,i);
-            
+            currBeam = initBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this, currBeam, ct, cst, stf, i);
+
             matRad_cfg = MatRad_Config.instance();
 
             % get index of central ray or closest to the central ray
-            [~,center] = min(sum(reshape([currBeam.ray.rayPos_bev],3,[]).^2));
+            [~, center] = min(sum(reshape([currBeam.ray.rayPos_bev], 3, []).^2));
 
             % get correct kernel for given SSD at central ray (nearest neighbor approximation)
-            [~,currSSDix] = min(abs([this.machine.data.kernel.SSD]-currBeam.ray(center).SSD));
+            [~, currSSDix] = min(abs([this.machine.data.kernel.SSD] - currBeam.ray(center).SSD));
             % Display console message.
-            matRad_cfg.dispInfo('\tSSD = %g mm ...\n',this.machine.data.kernel(currSSDix).SSD);
+            matRad_cfg.dispInfo('\tSSD = %g mm ...\n', this.machine.data.kernel(currSSDix).SSD);
 
-            %Hardcoded for now
-            useKernels = {'kernel1','kernel2','kernel3'};
+            % Hardcoded for now
+            useKernels = {'kernel1', 'kernel2', 'kernel3'};
 
             kernelPos = this.machine.data.kernelPos;
 
             for k = 1:length(useKernels)
                 kernel = this.machine.data.kernel(currSSDix).(useKernels{k});
-                %Kernel has units 1/mm^2, needs to be scaled with the
-                %convolution resolution to obtain correct normalization
-                this.kernelMxs{k} = this.intConvResolution^2 * interp1(kernelPos,kernel,sqrt(this.kernelX.^2+this.kernelZ.^2),'linear',0);
+                % Kernel has units 1/mm^2, needs to be scaled with the
+                % convolution resolution to obtain correct normalization
+                this.kernelMxs{k} = this.intConvResolution^2 * interp1(kernelPos, kernel, sqrt(this.kernelX.^2 + this.kernelZ.^2), 'linear', 0);
             end
 
             % convolution here if no custom primary fluence and no field based dose calc
@@ -366,35 +365,35 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             end
         end
 
-        function [bixel] = computeBixel(this,currRay,k)
+        function [bixel] = computeBixel(this, currRay, k)
             % matRad neutron dose calculation for an individual bixel
             %
             % call:
             %   bixel = this.computeBixel(currRay,k)
-            
+
             bixel = struct();
 
             if this.calcDoseDirect
                 bixel.weight = currRay.weight;
             end
 
-            if isfield(this.tmpMatrixContainers,'physicalDose')            
-                bixel.physicalDose = this.calcSingleBixel(currRay.SAD,...
-                    this.machine.data.m,...
-                    this.machine.data.betas,...
-                    currRay.interpKernels,...
-                    currRay.radDepths,...
-                    currRay.geoDepths,...
-                    currRay.isoLatDists(:,1),...
-                    currRay.isoLatDists(:,2),...
-                    this.ignoreInvalidValues);
+            if isfield(this.tmpMatrixContainers, 'physicalDose')
+                bixel.physicalDose = this.calcSingleBixel(currRay.SAD, ...
+                                                          this.machine.data.m, ...
+                                                          this.machine.data.betas, ...
+                                                          currRay.interpKernels, ...
+                                                          currRay.radDepths, ...
+                                                          currRay.geoDepths, ...
+                                                          currRay.isoLatDists(:, 1), ...
+                                                          currRay.isoLatDists(:, 2), ...
+                                                          this.ignoreInvalidValues);
 
                 % apply KERMA correction relative to water (dose grid, current ct scenario)
                 bixel.physicalDose = bixel.physicalDose .* currRay.kermaCorr;
 
                 % sample dose only for bixel based dose calculation
                 if this.enableDijSampling && ~this.isFieldBasedDoseCalc
-                    [bixel.ix,bixel.physicalDose] = this.sampleDij(currRay.ix,bixel.physicalDose,currRay.radDepths,currRay.radialDist_sq,currRay.bixelWidth);
+                    [bixel.ix, bixel.physicalDose] = this.sampleDij(currRay.ix, bixel.physicalDose, currRay.radDepths, currRay.radialDist_sq, currRay.bixelWidth);
                 else
                     bixel.ix = currRay.ix;
                 end
@@ -402,30 +401,30 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
                 bixel.ix = [];
             end
         end
-        
-        function interpKernels = getKernelInterpolators(this,Fx)
+
+        function interpKernels = getKernelInterpolators(this, Fx)
 
             matRad_cfg = MatRad_Config.instance();
 
             nKernels = length(this.kernelMxs);
-            interpKernels = cell(1,nKernels);
+            interpKernels = cell(1, nKernels);
 
             for ik = 1:nKernels
                 % 2D convolution of Fluence and Kernels in fourier domain
-                convMx = real( ifft2(fft2(Fx,this.kernelConvSize,this.kernelConvSize).* fft2(this.kernelMxs{ik},this.kernelConvSize,this.kernelConvSize)));
+                convMx = real(ifft2(fft2(Fx, this.kernelConvSize, this.kernelConvSize) .* fft2(this.kernelMxs{ik}, this.kernelConvSize, this.kernelConvSize)));
 
                 % Creates an interpolant for kernes from vectors position X and Z
                 if matRad_cfg.isMatlab
-                    interpKernels{ik} = griddedInterpolant(this.convMx_X',this.convMx_Z',convMx','linear','none');
+                    interpKernels{ik} = griddedInterpolant(this.convMx_X', this.convMx_Z', convMx', 'linear', 'none');
                 elseif matRad_cfg.isOctave
-                    %For some reason the use of interpn here is much faster
-                    %than using interp2 in Octave
-                    interpKernels{ik} = @(x,y) interpn(this.convMx_X(1,:),this.convMx_Z(:,1),convMx',x,y,'linear',NaN);
+                    % For some reason the use of interpn here is much faster
+                    % than using interp2 in Octave
+                    interpKernels{ik} = @(x, y) interpn(this.convMx_X(1, :), this.convMx_Z(:, 1), convMx', x, y, 'linear', NaN);
                 end
             end
         end
 
-        function [ixNew,bixelDoseNew] =  sampleDij(this,ix,bixelDose,radDepthV,rad_distancesSq,bixelWidth)
+        function [ixNew, bixelDoseNew] =  sampleDij(this, ix, bixelDose, radDepthV, rad_distancesSq, bixelWidth)
             % matRad dij sampling function
             % This function samples.
             %
@@ -470,9 +469,9 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
                 ix = find(ix);
             end
 
-            %Increase sample cut-off by bixel width if given
+            % Increase sample cut-off by bixel width if given
             if nargin == 6 && ~isempty(bixelWidth)
-                LatCutOff = LatCutOff + bixelWidth/sqrt(2); %use half of the bixel width diagonal as max. field size radius for sampling
+                LatCutOff = LatCutOff + bixelWidth / sqrt(2); % use half of the bixel width diagonal as max. field size radius for sampling
             end
 
             %% remember dose values inside the inner core
@@ -483,14 +482,14 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
                     ixCore      = bixelDose > relDoseThreshold * max(bixelDose); % get voxels indices having a greater dose than the thresholdDose
                 otherwise
                     matRad_cfg = MatRad_Config.instance();
-                    matRad_cfg.dispError('Dij Sampling mode ''%s'' not known!',Type);
+                    matRad_cfg.dispError('Dij Sampling mode ''%s'' not known!', Type);
             end
 
             bixelDoseCore = bixelDose(ixCore);                         % save dose values that are not affected by sampling
 
             if all(ixCore)
                 %% all bixels are in the core
-                %exit function with core dose only
+                % exit function with core dose only
                 ixNew = ix;
                 bixelDoseNew = bixelDoseCore;
             else
@@ -506,45 +505,44 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
                 % cluster radiological dephts to reduce computations
                 B_r                 = int32(ceil(radDepthTail));                 % cluster radiological depths;
                 maxRadDepth         = double(max(B_r));
-                C                   = int32(linspace(0,maxRadDepth,round(maxRadDepth)/deltaRadDepth));     % coarse clustering of rad depths
+                C                   = int32(linspace(0, maxRadDepth, round(maxRadDepth) / deltaRadDepth));     % coarse clustering of rad depths
 
-                ixNew               = zeros(numTail,1);                          % inizialize new index vector
-                bixelDoseNew        = zeros(numTail,1);                          % inizialize new dose vector
+                ixNew               = zeros(numTail, 1);                          % inizialize new index vector
+                bixelDoseNew        = zeros(numTail, 1);                          % inizialize new dose vector
                 linIx               = int32(1:1:numTail)';
                 IxCnt               = 1;
 
                 %% loop over clustered radiological depths
-                for i = 1:numel(C)-1
-                    ixTmp              = linIx(B_r >= C(i) & B_r < C(i+1));      % extracting sub indices
+                for i = 1:numel(C) - 1
+                    ixTmp              = linIx(B_r >= C(i) & B_r < C(i + 1));      % extracting sub indices
                     if isempty(ixTmp)
                         continue
                     end
                     subDose            = bixelDoseTail(ixTmp);                   % get tail dose in current cluster
                     subIx              = ixTail(ixTmp);                          % get indices in current cluster
                     thresholdDose      = max(subDose);
-                    r                  = rand(numel(subDose),1);                 % get random samples
-                    ixSamp             = r<=(subDose/thresholdDose);
+                    r                  = rand(numel(subDose), 1);                 % get random samples
+                    ixSamp             = r <= (subDose / thresholdDose);
                     NumSamples         = sum(ixSamp);
 
-                    ixNew(IxCnt:IxCnt+NumSamples-1,1)        = subIx(ixSamp);    % save new indices
-                    bixelDoseNew(IxCnt:IxCnt+NumSamples-1,1) = thresholdDose;    % set the dose
+                    ixNew(IxCnt:IxCnt + NumSamples - 1, 1)        = subIx(ixSamp);    % save new indices
+                    bixelDoseNew(IxCnt:IxCnt + NumSamples - 1, 1) = thresholdDose;    % set the dose
                     IxCnt = IxCnt + NumSamples;
                 end
 
-
                 % cut new vectors and add inner core values
-                ixNew        = [ix(ixCore);    ixNew(1:IxCnt-1)];
-                bixelDoseNew = [bixelDoseCore; bixelDoseNew(1:IxCnt-1)];
+                ixNew        = [ix(ixCore);    ixNew(1:IxCnt - 1)];
+                bixelDoseNew = [bixelDoseCore; bixelDoseNew(1:IxCnt - 1)];
             end
 
         end
-    
-        function [ray] = initRay(this,currBeam,j)
 
-            ray = initRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,j);
+        function [ray] = initRay(this, currBeam, j)
+
+            ray = initRay@DoseEngines.matRad_PencilBeamEngineAbstract(this, currBeam, j);
 
             % KERMA correction factors of the ray's voxels per ct scenario
-            ray.kermaCorr = cellfun(@(cube,ix) cube(ix),this.cubeKERMAcorr,ray.ix,'UniformOutput',false);
+            ray.kermaCorr = cellfun(@(cube, ix) cube(ix), this.cubeKERMAcorr, ray.ix, 'UniformOutput', false);
 
             % convolution here if custom primary fluence OR field based dose calc
             if this.useCustomPrimaryNeutronFluence || this.isFieldBasedDoseCalc
@@ -558,15 +556,15 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
                 % prepare primary fluence array
                 primaryFluence = this.machine.data.primaryFluence;
-                r     = sqrt( (this.F_X-ray.rayPos(1)).^2 + (this.F_Z-ray.rayPos(3)).^2 );
-                Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,'linear',0);
+                r     = sqrt((this.F_X - ray.rayPos(1)).^2 + (this.F_Z - ray.rayPos(3)).^2);
+                Psi   = interp1(primaryFluence(:, 1)', primaryFluence(:, 2)', r, 'linear', 0);
 
                 % apply the primary fluence to the field
                 Fx = F .* Psi;
 
                 % convolve with the gaussian
                 if ~isempty(this.gaussFilter)
-                    Fx = real( ifft2(fft2(Fx,this.gaussConvSize,this.gaussConvSize).* fft2(this.gaussFilter,this.gaussConvSize,this.gaussConvSize)) );
+                    Fx = real(ifft2(fft2(Fx, this.gaussConvSize, this.gaussConvSize) .* fft2(this.gaussFilter, this.gaussConvSize, this.gaussConvSize)));
                 end
 
                 % Get kernel interpolators
@@ -576,21 +574,21 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
                 ray.interpKernels = this.interpKernelCache;
             end
 
-            
-        end    
+        end
 
-        function scenRay = extractSingleScenarioRay(this,ray,scenIdx)
-            scenRay = extractSingleScenarioRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,ray,scenIdx);
+        function scenRay = extractSingleScenarioRay(this, ray, scenIdx)
+            scenRay = extractSingleScenarioRay@DoseEngines.matRad_PencilBeamEngineAbstract(this, ray, scenIdx);
 
             % select the KERMA correction of the scenario's ct
-            ctScen = this.multScen.linearMask(this.multScen.scenNum(scenIdx),1);
+            ctScen = this.multScen.linearMask(this.multScen.scenNum(scenIdx), 1);
             scenRay.kermaCorr = scenRay.kermaCorr{ctScen};
         end
+
     end
 
     methods (Static)
 
-        function [available,msg] = isAvailable(pln,machine)
+        function [available, msg] = isAvailable(pln, machine)
             % see superclass for information
 
             msg = [];
@@ -600,44 +598,43 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
                 machine = matRad_loadMachine(pln);
             end
 
-            %checkBasic
+            % checkBasic
             try
-                checkBasic = isfield(machine,'meta') && isfield(machine,'data');
+                checkBasic = isfield(machine, 'meta') && isfield(machine, 'data');
 
-                %check modality
+                % check modality
                 checkModality = any(strcmp(DoseEngines.matRad_NeutronPencilBeamSVDEngine.possibleRadiationModes, machine.meta.radiationMode));
 
                 preCheck = checkBasic && checkModality;
 
                 if ~preCheck
-                    return;
+                    return
                 end
             catch
                 msg = 'Your machine file is invalid and does not contain the basic field (meta/data/radiationMode)!';
-                return;
+                return
             end
 
-
-            %Basic check for information (does not check data integrity & subfields etc.)
-            checkData = all(isfield(machine.data,{'betas','energy','m','primaryFluence','kernel','kernelPos'}));
-            checkMeta = all(isfield(machine.meta,{'SAD','SCD'}));
+            % Basic check for information (does not check data integrity & subfields etc.)
+            checkData = all(isfield(machine.data, {'betas', 'energy', 'm', 'primaryFluence', 'kernel', 'kernelPos'}));
+            checkMeta = all(isfield(machine.meta, {'SAD', 'SCD'}));
 
             if checkData && checkMeta
                 available = true;
             else
                 available = false;
-                return;
+                return
             end
 
-            %Now check for optional fields that would be guessed otherwise
-            checkOptional = isfield(machine.data,'penumbraFWHMatIso');
+            % Now check for optional fields that would be guessed otherwise
+            checkOptional = isfield(machine.data, 'penumbraFWHMatIso');
             if checkOptional
                 msg = 'No penumbra given, generic value will be used!';
             end
         end
 
-        function bixelDose = calcSingleBixel(SAD,m,betas,interpKernels,...
-                radDepths,geoDists,isoLatDistsX,isoLatDistsZ,ignoreInvalidValues)
+        function bixelDose = calcSingleBixel(SAD, m, betas, interpKernels, ...
+                                             radDepths, geoDists, isoLatDistsX, isoLatDistsZ, ignoreInvalidValues)
             % matRad neutron dose calculation for an individual bixel
             %   This is defined as a static function so it can also be
             %   called individually for certain applications without having
@@ -675,39 +672,38 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
             % Compute depth dose components according to [1, eq. 2]: each
             % kernel has a two-term depth dose parameterization
-            func_Di = @(beta,x) beta(1)/(beta(2) - m) * (exp(-m*x) - exp(-beta(2)*x)) + ...
-                beta(3)/(beta(4) - m) * (exp(-m*x) - exp(-beta(4)*x));
+            func_Di = @(beta, x) beta(1) / (beta(2) - m) * (exp(-m * x) - exp(-beta(2) * x)) + ...
+                beta(3) / (beta(4) - m) * (exp(-m * x) - exp(-beta(4) * x));
 
-            doseComponent = zeros(numel(radDepths),length(interpKernels),'like',radDepths);
+            doseComponent = zeros(numel(radDepths), length(interpKernels), 'like', radDepths);
             for ik = 1:length(interpKernels)
-                doseComponent(:,ik) = func_Di(betas(ik,:),radDepths(:));
+                doseComponent(:, ik) = func_Di(betas(ik, :), radDepths(:));
             end
 
             % Multiply with lateral 2D-convolved kernels using
             % grid interpolation at lateral distances (summands in [1, eq.
             % 19] w/o inv sq corr)
             for ik = 1:length(interpKernels)
-                doseComponent(:,ik) = doseComponent(:,ik) .* interpKernels{ik}(isoLatDistsX,isoLatDistsZ);
+                doseComponent(:, ik) = doseComponent(:, ik) .* interpKernels{ik}(isoLatDistsX, isoLatDistsZ);
             end
 
             % now add everything together (eq 19 w/o inv sq corr -> see below)
-            bixelDose = sum(doseComponent,2);
+            bixelDose = sum(doseComponent, 2);
 
             % inverse square correction
-            bixelDose = bixelDose .* ((SAD)./geoDists(:)).^2;
+            bixelDose = bixelDose .* ((SAD) ./ geoDists(:)).^2;
 
             % check if we have valid dose values and adjust numerical instabilities
             % from fft convolution
             bixelDose(bixelDose < 0 & bixelDose > -1e-14) = 0;
-            if ~ignoreInvalidValues && any(isnan(bixelDose) | bixelDose<0)
+            if ~ignoreInvalidValues && any(isnan(bixelDose) | bixelDose < 0)
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispError([ ...
-                    'Invalid numerical values in neutron dose calculation.\n' ...
-                    'Check your kernel or set ignoreInvalidValues to true.']);
+                                      'Invalid numerical values in neutron dose calculation.\n' ...
+                                      'Check your kernel or set ignoreInvalidValues to true.']);
             end
         end
 
     end
 
 end
-

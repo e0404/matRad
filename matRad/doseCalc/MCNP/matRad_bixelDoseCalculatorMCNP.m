@@ -41,27 +41,27 @@ switch this.externalCalculation
         %% Run MCNP for every bixel in the run file directory
         if ~this.MCNPinstallationCheck
             matRad_cfg.dispError(['MCNP simulation requested but no MCNP installation found on this computer! ' ...
-                'Set externalCalculation to ''write'' to only generate the run files.']);
+                                  'Set externalCalculation to ''write'' to only generate the run files.']);
         end
 
         oldDir = cd(runDir);
         restoreDir = onCleanup(@() cd(oldDir));
 
-        parfor bixelCounter = 1:size(runFileList,1)
-            matRad_cfg.dispInfo('MCNP calculation of dose distribution for bixel %d of %d...\n', bixelCounter, size(runFileList,1));
+        parfor bixelCounter = 1:size(runFileList, 1)
+            matRad_cfg.dispInfo('MCNP calculation of dose distribution for bixel %d of %d...\n', bixelCounter, size(runFileList, 1));
             tic;
             if ispc
                 system(['mcnp6 I=', runFileList(bixelCounter).name, ...
-                    ' OUTP=', runFileList(bixelCounter).name, 'o ', ...
-                    ' RUNTPE=', runFileList(bixelCounter).name, 'r ', ...
-                    ' MCTAL=', runFileList(bixelCounter).name, 'm ', ...
-                    'MDATA= ', runFileList(bixelCounter).name, 'd']);
+                        ' OUTP=', runFileList(bixelCounter).name, 'o ', ...
+                        ' RUNTPE=', runFileList(bixelCounter).name, 'r ', ...
+                        ' MCTAL=', runFileList(bixelCounter).name, 'm ', ...
+                        'MDATA= ', runFileList(bixelCounter).name, 'd']);
             else
                 system(['mcnp6 I=', runFileList(bixelCounter).name, ...
-                    ' OUTP=', runFileList(bixelCounter).name, 'o ', ...
-                    ' RUNTPE=', runFileList(bixelCounter).name, 'r ', ...
-                    ' MCTAL=', runFileList(bixelCounter).name, 'm ', ...
-                    ' MESHTAL=', runFileList(bixelCounter).name, 'meshtal ']);
+                        ' OUTP=', runFileList(bixelCounter).name, 'o ', ...
+                        ' RUNTPE=', runFileList(bixelCounter).name, 'r ', ...
+                        ' MCTAL=', runFileList(bixelCounter).name, 'm ', ...
+                        ' MESHTAL=', runFileList(bixelCounter).name, 'meshtal ']);
             end
             delete(strcat(runFileList(bixelCounter).name, 'o'));
             delete(strcat(runFileList(bixelCounter).name, 'r'));
@@ -79,11 +79,11 @@ switch this.externalCalculation
         end
         commandMCNP = 'mpiexec -np %d mcnp6.mpi n=MCNPrunfile_%dbixel\n';
         fileID_runAll = fopen(scriptName, 'w');
-        for i = 1:size(runFileList,1)
+        for i = 1:size(runFileList, 1)
             fprintf(fileID_runAll, commandMCNP, cores, i);
         end
         fclose(fileID_runAll);
-        matRad_cfg.dispInfo('MCNP simulation skipped for external calculation.\nRun files and %s have been written to: "%s"\n', scriptName, strrep(runDir,'\','\\'));
+        matRad_cfg.dispInfo('MCNP simulation skipped for external calculation.\nRun files and %s have been written to: "%s"\n', scriptName, strrep(runDir, '\', '\\'));
 
     otherwise
         matRad_cfg.dispError('Unknown externalCalculation mode ''%s''! Use ''off'', ''write'' or a folder with existing results.', this.externalCalculation);

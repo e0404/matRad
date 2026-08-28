@@ -77,7 +77,8 @@ resultGUI = matRad_fluenceOptimization(dij, cst, pln);
 slice = round(ct.cubeDim(3) / 2);
 figure;
 imagesc(resultGUI.physicalDose(:, :, slice));
-axis equal tight; colorbar;
+axis equal tight;
+colorbar;
 title('Neutron dose [Gy] in the central slice');
 
 %% Export the plan for an MCNP calculation
