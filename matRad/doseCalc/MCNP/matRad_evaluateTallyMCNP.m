@@ -1,6 +1,19 @@
 function dij = matRad_evaluateTallyMCNP(dij, cst, ct, pathRunfiles)
 %% Read output from MCNP calculation and generate dij matix
 %% Preparation and get list of mctal data
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2018-2026 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matRad_cfg = MatRad_Config.instance();
 tallyDataList = dir(fullfile(pathRunfiles, 'MCNPrunfile_*bixelm'));
 % Re-organize list
@@ -105,14 +118,6 @@ for counterBeam = 1:dij.numOfBeams
             dij.relError_radioTherpyStruct(counterRTStruct,counterDijColumns).medianError = median(doseMatrixBixel.physicalDose_relError(cst{counterRTStruct,4}{1,1}));
         end
 
-        %% Calculate RMF parameters
-        % if isfield(pln.propOpt,'bioOptimization')
-        %     if strcmp(pln.propOpt.bioOptimization,'RBExSecPartDose_MCDS_RMFmodel')
-        %         [dij, cst] = matRad_getRMFmodelParameters4neutrons(dij, counterDijColumns, doseMatrixBixel, pln, ct, cst);
-        %     else
-        %         %                     error('Biological optimization mode unknown for neutrons.')
-        %     end
-        % end
 
 
     end

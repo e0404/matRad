@@ -6,11 +6,11 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2019 the matRad development team.
+    % Copyright 2019-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
-    % distribution and at https://github.com/e0404/matRad/LICENSES.txt. No part
+    % distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
     % of the matRad project, including this file, may be copied, modified,
     % propagated, or distributed except according to the terms contained in the
     % LICENSE file.
@@ -33,9 +33,6 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         bodyStructureName = 'Body';     % name of the body structure in cst (case insensitive)
         lungStructureName = 'Lung';     % name of the lung structure in cst (case insensitive)
         autoSegmentLung = false;        % segment the lung from HU if no lung structure is found
-        
-        calcBioDose = false;            % RBE-weighted dose via secondary particle spectra (MCDS/RMF model)
-        calcRMFparameters = false;
         MCNPinstallationCheck;
         MCNPFolder;         % Folder with the MCNP helper functions and data
         workingDir;         % Working directory for run files and logs
@@ -70,16 +67,11 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             this.config = matRad_MCNPConfig();
 
-            % check if bio optimization is needed and set the
-            % coresponding boolean accordingly
-            % TODO:
-            % This should not be handled here as an optimization property
-            % We should rather make optimization dependent on what we have
-            % decided to calculate here.
+            % constant RBE from the biological model; LQ-based models are not supported
             if nargin > 0 && isfield(pln, 'bioModel')
                 if isa(pln.bioModel, 'matRad_LQBasedModel')
-                    % RBE-weighted dose from secondary particle spectra (MCDS/RMF model)
-                    this.calcBioDose = true;
+                    matRad_cfg = MatRad_Config.instance();
+                    matRad_cfg.dispError('Biological dose calculation with LQ-based models is not implemented for the MCNP engine!');
                 elseif isa(pln.bioModel, 'matRad_ConstantRBE')
                     this.constantRBE = pln.bioModel.RBE;
                 end

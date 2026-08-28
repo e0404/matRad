@@ -45,6 +45,19 @@ function matRad_definePhysicsMCNP(fileID_C_rest, this, binIntervals, simPropMCNP
         %         fprintf(fileID_C_rest, 'CUT:A J 0.0009\n');
         %         fprintf(fileID_C_rest, 'CUT:# J 0.0009\n');           
         % else
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Copyright 2018-2026 the matRad development team.
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
+% LICENSE file.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 matRad_cfg = MatRad_Config.instance();
 
     fprintf(fileID_C_rest, 'MODE N P E H D T S A #\n');
