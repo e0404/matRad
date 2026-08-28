@@ -199,18 +199,29 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
             % machine.data.neutronKERMAcorr is a 2 x (nBins+1) matrix: first
             % row HU bin edges, second row correction factor (relative to
             % water) for the bin starting at the respective edge.
-            if ct.numOfCtScen ~= 1
-                matRad_cfg.dispError('Neutron dose calculation implemented only for 1 CT scenario!');
-            end
-            this.cubeKERMAcorr{1} = ones(ct.cubeDim,this.precision);
-            if isfield(this.machine.data,'neutronKERMAcorr')
-                kermaCorr = this.machine.data.neutronKERMAcorr;
-                for b = 1:size(kermaCorr,2)-1
-                    inBin = ct.cubeHU{1} >= kermaCorr(1,b) & ct.cubeHU{1} < kermaCorr(1,b+1);
-                    this.cubeKERMAcorr{1}(inBin) = kermaCorr(2,b+1);
-                end
-            else
+            % The correction is binned on the CT grid (native resolution of
+            % the tissue classification) and then brought to the dose grid
+            % with nearest neighbor interpolation, so that it can be indexed
+            % with the dose grid voxel indices of the rays.
+            if ~isfield(this.machine.data,'neutronKERMAcorr')
                 matRad_cfg.dispWarning('No KERMA correction provided in machine data for neutron dose calculation.');
+            end
+            this.cubeKERMAcorr = cell(1,ct.numOfCtScen);
+            for s = 1:ct.numOfCtScen
+                cubeCorr = ones(ct.cubeDim,this.precision);
+                if isfield(this.machine.data,'neutronKERMAcorr')
+                    kermaCorr = this.machine.data.neutronKERMAcorr;
+                    for b = 1:size(kermaCorr,2)-1
+                        inBin = ct.cubeHU{s} >= kermaCorr(1,b) & ct.cubeHU{s} < kermaCorr(1,b+1);
+                        cubeCorr(inBin) = kermaCorr(2,b+1);
+                    end
+                end
+
+                if ~isequal(dij.ctGrid.dimensions,dij.doseGrid.dimensions) || ~isequal(dij.ctGrid.resolution,dij.doseGrid.resolution)
+                    cubeCorr = matRad_interp3(dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,cubeCorr, ...
+                        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest');
+                end
+                this.cubeKERMAcorr{s} = cubeCorr;
             end
 
             %% kernel convolution
@@ -378,8 +389,8 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
                     currRay.isoLatDists(:,2),...
                     this.ignoreInvalidValues);
 
-                % apply KERMA correction relative to water
-                bixel.physicalDose = bixel.physicalDose .* this.cubeKERMAcorr{1}(currRay.ix);
+                % apply KERMA correction relative to water (dose grid, current ct scenario)
+                bixel.physicalDose = bixel.physicalDose .* currRay.kermaCorr;
 
                 % sample dose only for bixel based dose calculation
                 if this.enableDijSampling && ~this.isFieldBasedDoseCalc
@@ -532,6 +543,9 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
             ray = initRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,j);
 
+            % KERMA correction factors of the ray's voxels per ct scenario
+            ray.kermaCorr = cellfun(@(cube,ix) cube(ix),this.cubeKERMAcorr,ray.ix,'UniformOutput',false);
+
             % convolution here if custom primary fluence OR field based dose calc
             if this.useCustomPrimaryNeutronFluence || this.isFieldBasedDoseCalc
 
@@ -564,6 +578,14 @@ classdef matRad_NeutronPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngine
 
             
         end    
+
+        function scenRay = extractSingleScenarioRay(this,ray,scenIdx)
+            scenRay = extractSingleScenarioRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,ray,scenIdx);
+
+            % select the KERMA correction of the scenario's ct
+            ctScen = this.multScen.linearMask(this.multScen.scenNum(scenIdx),1);
+            scenRay.kermaCorr = scenRay.kermaCorr{ctScen};
+        end
     end
 
     methods (Static)
