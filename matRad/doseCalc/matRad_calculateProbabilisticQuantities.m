@@ -3,10 +3,10 @@ function [dij] = matRad_calculateProbabilisticQuantities(dij,cst,pln,mode4D)
 %   dose influence and variance omega matrices for probabilistic
 %   optimization
 %
-% call
+% call:
 %   [dij,cst] = matRad_calculateProbabilisticQuantities(dij,cst,pln)
 %
-% input
+% input:
 %   dij:        matRad dij struct
 %   cst:        matRad cst struct (in dose grid resolution)
 %   pln:        matRad pln struct
@@ -14,7 +14,7 @@ function [dij] = matRad_calculateProbabilisticQuantities(dij,cst,pln,mode4D)
 %               - 'all'   : include 4D scen in statistic
 %               - 'phase' : create statistics per phase (default)
 %
-% output
+% output:
 %   dij:        dij with added probabilistic quantities
 %
 % References
@@ -22,7 +22,7 @@ function [dij] = matRad_calculateProbabilisticQuantities(dij,cst,pln,mode4D)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2020 the matRad development team.
+% Copyright 2020-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

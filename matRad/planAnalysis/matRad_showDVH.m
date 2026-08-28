@@ -1,13 +1,13 @@
 function matRad_showDVH(dvh,cst,varargin)
 % matRad dvh visualizaion
 % 
-% call
+% call:
 %   matRad_showDVH(dvh,cst)
 %   matRad_showDVH(dvh,cst,pln)
 %   matRad_showDVH(dvh,cst,Name,Value)
 %   matRad_showDVH(dvh,cst,pln,Name,Value)
 %
-% input
+% input:
 %   dvh:                result struct from fluence optimization/sequencing
 %   cst:                matRad cst struct
 %   pln:                (now optional) matRad pln struct,
@@ -16,7 +16,7 @@ function matRad_showDVH(dvh,cst,varargin)
 %                       (hint: use different lineStyles to overlay
 %                       different dvhs)
 %
-% output
+% output:
 %   graphical display of DVH   
 %
 % References
@@ -24,7 +24,7 @@ function matRad_showDVH(dvh,cst,varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

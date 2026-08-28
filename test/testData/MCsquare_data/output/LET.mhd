@@ -1,0 +1,7 @@
+ObjectType = Image
+NDims = 3
+DimSize = 10 20 10
+ElementSpacing = 10.000000 10.000000 10.000000
+ElementType = MET_FLOAT
+ElementByteOrderMSB = False
+ElementDataFile = LET.raw

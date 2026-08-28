@@ -2,28 +2,27 @@ function [DistanceMatrix,DistanceVector] = matRad_getDistanceMatrix(seedPoints,d
 % matRad_getDistanceMatrix gets (seedpoint x dosepoint) matrix of relative
 % distances
 %
-% call
-%   [DistanceMatrix,DistanceVector] = getDistanceMatrix(seedPoints,...
-%       dosePoints)
+% call:
+%   [DistanceMatrix,DistanceVector] = getDistanceMatrix(seedPoints, dosePoints)
 %   normally called within matRad_getBrachyDose
 %
-% input
+%
+% input:
 %   seedPoints:     struct with fields x,y,z
 %   dosePoints:     struct with fields x,y,z
 %
-% output
+% output:
 %   distance matrix:    rows: index of dosepoint 
 %                       columns: index of deedpoint
 %                       entry: distance of seedpoints and dosepoint in mm
-%                       |
-%                       | DistanceMatrix.x/y/z:   x/y/z component of 
-%                           distance(needed for theta calc)
-%                       | DistanceMatrix.dist: eucledian distance
+%                       DistanceMatrix.x/y/z:   x/y/z component of
+%                       distance(needed for theta calc)
+%                       DistanceMatrix.dist: eucledian distance
 %   distance vector:    column vector of DistanceMatrix.dist entries
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2021 the matRad development team. 
+% Copyright 2021-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

@@ -27,9 +27,6 @@ function test_suite = test_SVDPB
         assertTrue(DoseEngines.matRad_PhotonPencilBeamSVDEngine.isAvailable(testData.pln));
 
         testData.pln.propDoseCalc.engine = 'SVDPB';
-        testData.pln.propDoseCalc.dosimetricLateralCutOff = 0.995;
-        testData.pln.propDoseCalc.geometricLateralCutOff = 50;
-        testData.pln.propDoseCalc.kernelCutOff = Inf;
         if moxunit_util_platform_is_octave()
           %The random number generator is not consistent between octave and matlab
           testData.pln.propDoseCalc.enableDijSampling = false;

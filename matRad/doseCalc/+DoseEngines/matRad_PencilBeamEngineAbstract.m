@@ -1,13 +1,13 @@
 classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEngineBase
     % matRad_PencilBeamEngineAbstract: abstract superclass for all dose calculation engines which are based on
     %   analytical pencil beam calculation
-    %   for more informations see superclass
+    %   for more information see superclass
     %   DoseEngines.matRad_DoseEngine
     %   MatRad_Config MatRad Configuration class
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2019 the matRad development team.
+    % Copyright 2019-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -25,14 +25,15 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         dosimetricLateralCutOff; %relative dosimetric cut-off (in fraction of values calculated)
 
         ssdDensityThreshold;        % Threshold for SSD computation
-        useGivenEqDensityCube;      % Use the given density cube ct.cube and omit conversion from cubeHU.
-        ignoreOutsideDensities;     % Ignore densities outside of cst contours
 
         numOfDijFillSteps = 10;     % Number of times during dose calculation the temporary containers are moved to a sparse matrix
+
+        traceOnDoseGrid = false;    % perform raytracing on dose grid instead of CT grid
     end
 
     properties (SetAccess = protected)
         effectiveLateralCutOff;         %internal cutoff to be used, computed from machine/pencil-beam kernel properties and geometric/dosimetric cutoff settings
+        rayTracer;
     end
 
     properties (SetAccess = protected, GetAccess = public)
@@ -42,7 +43,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
         radDepthCubes = {};     % only stored if property set accordingly
 
         cubeWED;                % relative electron density / stopping power cube
-        hlut;                   % hounsfield lookup table to craete relative electron density cube    
+        hlut;                   % hounsfield lookup table to create relative electron density cube
     end
 
     methods
@@ -51,7 +52,8 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 pln = [];
             end
 
-            this = this@DoseEngines.matRad_DoseEngineBase(pln);            
+            this = this@DoseEngines.matRad_DoseEngineBase(pln);
+            this.requiresEqDensityCube = true;
         end
 
         function setDefaults(this)
@@ -97,7 +99,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 scenStf = stf;
                 % manipulate isocenter
                 for k = 1:numel(scenStf)
-                    scenStf(k).isoCenter = scenStf(k).isoCenter + this.multScen.isoShift(ixShiftScen,:); 
+                    scenStf(k).isoCenter = cast(scenStf(k).isoCenter + this.multScen.isoShift(ixShiftScen,:),this.precision); 
                 end
 
                 if this.multScen.totNumShiftScen > 1
@@ -111,6 +113,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
                     %Initialize Beam Geometry
                     currBeam = this.initBeam(dij,ct,cst,scenStf,i);
+                    progressLineReset = true;
 
                     %Keep tabs on bixels computed in this beam
                     bixelBeamCounter = 0;
@@ -148,52 +151,46 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         % Progress Update & Bookkeeping
                         bixelCounter = bixelCounter + currRay.numOfBixels;
                         bixelBeamCounter = bixelBeamCounter + currRay.numOfBixels;
-                        this.progressUpdate(bixelCounter,dij.totalNumOfBixels);
+                        this.progressUpdate(bixelCounter,dij.totalNumOfBixels,progressLineReset);
+                        progressLineReset = false;
                     end
                 end
             end
-
-            %Finalize dose calculation
-            dij = this.finalizeDose(dij);
         end
 
         function dij = initDoseCalc(this,ct,cst,stf)
             % modified inherited method of the superclass DoseEngine,
-            % containing intialization which are specificly needed for
+            % containing initialization which are specifically needed for
             % pencil beam calculation and not for other engines
+
+            matRad_cfg = MatRad_Config.instance();
+            if this.enableGPU
+                ct = matRad_moveCtToGPU(ct);
+                cst = matRad_moveCstToGPU(cst);
+            end
+
 
             dij = initDoseCalc@DoseEngines.matRad_DoseEngineBase(this,ct,cst,stf);
             
-            matRad_cfg = MatRad_Config.instance();
-            
-            % calculate rED or rSP from HU or take provided wedCube
-            if this.useGivenEqDensityCube && ~isfield(ct,'cube')
-                matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
-                this.useGivenEqDensityCube = false;
-            end
 
-            if this.useGivenEqDensityCube
-                matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
-            else
-                ct = matRad_calcWaterEqD(ct, stf); % Maybe we can avoid duplicating the CT here?
-            end
-
-            this.cubeWED = ct.cube;
+            this.cubeWED = cellfun(@(x) cast(x,this.precision),ct.cube, 'UniformOutput',false);
             if isfield(ct,'hlut')
-                this.hlut = ct.hlut;
-            end
-
-            % ignore densities outside of contours
-            if this.ignoreOutsideDensities
-                eraseCtDensMask = ones(prod(ct.cubeDim),1);
-                eraseCtDensMask(this.VctGrid) = 0;
-                for i = 1:ct.numOfCtScen
-                    this.cubeWED{i}(eraseCtDensMask == 1) = 0;
-                end
+                this.hlut = cast(ct.hlut,this.precision);
             end
 
             % Allocate memory for quantity containers
-            dij = this.allocateQuantityMatrixContainers(dij,{'physicalDose'});            
+            dij = this.allocateQuantityMatrixContainers(dij,{'physicalDose'});
+
+            if this.traceOnDoseGrid
+                cubesForTracing = cellfun(@(cube) matRad_interp3(...
+                    dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z, ...
+                    cube, ...
+                    dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, ...
+                    'linear'), this.cubeWED, 'UniformOutput', false);
+                this.rayTracer = matRad_RayTracerSiddon(cubesForTracing, dij.doseGrid);
+            else
+                this.rayTracer = matRad_RayTracerSiddon(this.cubeWED,dij.ctGrid);
+            end
         end
 
         function dij = allocateQuantityMatrixContainers(this,dij,names)
@@ -213,13 +210,17 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 %Now preallocate a matrix in each active scenario using the
                 %scenmask
                 if this.calcDoseDirect
-                    dij.(names{n})(this.multScen.scenMask) = {zeros(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)};
+                    dij.(names{n})(this.multScen.scenMask) = {zeros(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,this.precision)};
                 else
                     %We preallocate a sparse matrix with sparsity of
                     %1e-3 to make the filling slightly faster
                     %TODO: the preallocation could probably
-                    %have more accurate estimates
-                    dij.(names{n})(this.multScen.scenMask) = {spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,round(prod(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)*1e-3))};
+                    %have more accurate estimates                    
+                    if this.allowsSinglePrecisionSparseDij()
+                        dij.(names{n})(this.multScen.scenMask) = {spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,round(prod(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)*1e-3),this.precision)};                        
+                    else
+                        dij.(names{n})(this.multScen.scenMask) = {spalloc(dij.doseGrid.numOfVoxels,this.numOfColumnsDij,round(prod(dij.doseGrid.numOfVoxels,this.numOfColumnsDij)*1e-3))};
+                    end
                 end
             end
         end
@@ -228,16 +229,16 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % Method for initializing the beams for analytical pencil beam
             % dose calculation
             %
-            % call
+            % call:
             %   this.initBeam(ct,stf,dij,i)
             %
-            % input
+            % input:
             %   ct:                         matRad ct struct
             %   cst:                        matRad cst struct
             %   stf:                        matRad steering information struct
             %   i:                          index of beam
             %
-            % output
+            % output:
             %   dij:                        updated dij struct
 
             matRad_cfg = MatRad_Config.instance();
@@ -256,7 +257,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % Do not transpose matrix since we usage of row vectors &
             % transformation of the coordinate system need double transpose
 
-            currBeam.rotMat_system_T = matRad_getRotationMatrix(currBeam.gantryAngle,currBeam.couchAngle);
+            currBeam.rotMat_system_T = cast(matRad_getRotationMatrix(currBeam.gantryAngle,currBeam.couchAngle),this.precision);
 
             % Rotate coordinates (1st couch around Y axis, 2nd gantry movement)
             rot_coordsV         = coordsV*currBeam.rotMat_system_T;
@@ -269,23 +270,43 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             geoDistVdoseGrid(1:ct.numOfCtScen)= {sqrt(sum(rot_coordsVdoseGrid.^2,2))};
 
             % Calculate radiological depth cube
-            matRad_cfg.dispInfo('matRad: calculate radiological depth cube... ');
+            tRayTracingStart = tic;
+            if this.traceOnDoseGrid
+                matRad_cfg.dispInfo('matRad: calculate radiological depth (on dose grid)... ');
+                voxForRayTracer = this.VdoseGrid;
+                rotCoordsForRayTracer = rot_coordsVdoseGrid;
+            else
+                matRad_cfg.dispInfo('matRad: calculate radiological depth (on CT grid)... ');
+                voxForRayTracer = this.VctGrid;
+                rotCoordsForRayTracer = rot_coordsV;
+            end
 
-            ct.cube = this.cubeWED;
+            this.rayTracer.lateralCutOff = this.effectiveLateralCutOff;
+
             if this.keepRadDepthCubes
-                [radDepthVctGrid, currBeam.radDepthCube] = matRad_rayTracing(currBeam,ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
+                [radDepths, currBeam.radDepthCube] = this.rayTracer.traceCube(currBeam,voxForRayTracer,rotCoordsForRayTracer);
 
-                currBeam.radDepthCube = cellfun(@(rD) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, rD, ...
-                    dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),currBeam.radDepthCube,'UniformOutput',false);
+                if ~this.traceOnDoseGrid
+                    currBeam.radDepthCube = cellfun(@(rD) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, rD, ...
+                        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),currBeam.radDepthCube,'UniformOutput',false);
+                end
+
                 this.radDepthCubes(i,:) = currBeam.radDepthCube(:);
             else
-                radDepthVctGrid = matRad_rayTracing(currBeam,ct,this.VctGrid,rot_coordsV,this.effectiveLateralCutOff);
+                radDepths = this.rayTracer.traceCube(currBeam,voxForRayTracer,rotCoordsForRayTracer);
             end
-            
+
+            ct.cube = this.cubeWED;
             % interpolate radiological depth cube to dose grid resolution
-            radDepthVdoseGrid = this.interpRadDepth(ct,1:ct.numOfCtScen,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepthVctGrid);
+            if this.traceOnDoseGrid
+                radDepthVdoseGrid = radDepths;
+            else
+                radDepthVdoseGrid = this.interpRadDepth(ct,1:ct.numOfCtScen,this.VctGrid,this.VdoseGrid,dij.ctGrid,dij.doseGrid,radDepths);
+            end
+
+            matRad_cfg.dispInfo('done in %fs.\n',toc(tRayTracingStart));
             
-            % limit rotated coordinates to positions where ray tracing is availabe
+            % limit rotated coordinates to positions where ray tracing is available
             %radDepthsMat = cellfun(@(radDepthCube) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z,radDepthCube,dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),radDepthsMat,'UniformOutput',false);
             
             %Find valid coordinates
@@ -299,18 +320,19 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
             % compute SSDs
             currBeam = matRad_computeSSD(currBeam,ct,'densityThreshold',this.ssdDensityThreshold);
-
-            matRad_cfg.dispInfo('done.\n');
            
             %Reinitialize Progress:
             %matRad_progress(1,1000);
         end
         
-        function radDepthVdoseGrid = interpRadDepth(~,ct,ctScen,V,Vcoarse,ctGrid,doseGrid,radDepthVctGrid)                        
+        function radDepthVdoseGrid = interpRadDepth(this,ct,ctScen,V,Vcoarse,ctGrid,doseGrid,radDepthVctGrid)                        
             for i = 1:numel(ctScen)
                 ctScenNum = ctScen(i);
 
-                radDepthCube                = NaN*ones(ct.cubeDim);
+                radDepthCube                = NaN*ones(ct.cubeDim,this.precision);
+                if isa(radDepthVctGrid{i},'gpuArray')
+                    radDepthCube = gpuArray(radDepthCube);
+                end
                 radDepthCube(V(~isnan(radDepthVctGrid{1}))) = radDepthVctGrid{ctScenNum}(~isnan(radDepthVctGrid{1}));
 
                 % interpolate cube - cube is now stored in Y X Z
@@ -414,7 +436,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % last step in bixel dose calculation
 
             %Only fill if we actually had bixel (indices) to compute
-            if ~isempty(bixel) || ~isempty(bixel.ix)
+            if ~isempty(bixel) && ~isempty(bixel.ix)
                 % Store in temporary containers to limit matrix filling
                 names = fieldnames(this.tmpMatrixContainers);
                 bixelContainerColIx = mod(counter-1,this.numOfBixelsContainer)+1;
@@ -428,6 +450,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                         %this.tmpMatrixContainers.(qName){bixelContainerColIx,1} = zeros(dij.doseGrid.numOfVoxels,1);                        
                         %this.tmpMatrixContainers.(qName){bixelContainerColIx,1}(this.VdoseGrid(bixel.ix)) = bixel.(qName);
                     else
+                        if ~this.allowsSinglePrecisionSparseDij()
+                            bixel.(qName) = double(bixel.(qName));
+                        end
                         this.tmpMatrixContainers.(qName){bixelContainerColIx,subScenIdx{:}} = sparse(bixel.ix,1,bixel.(qName),dij.doseGrid.numOfVoxels,1);
                     end
                 end
@@ -517,7 +542,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % matRad calculation of lateral distances from central ray
             % used for dose calculation
             %
-            % call
+            % call:
             %   [ix,rad_distancesSq,isoLatDistsX,isoLatDistsZ] = ...
             %           this.calcGeoDists(rot_coords_bev, ...
             %                               sourcePoint_bev, ...
@@ -526,9 +551,9 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %                               radDepthIx, ...
             %                               lateralCutOff)
             %
-            % input
+            % input:
             %   rot_coords_bev:     coordinates in bev of the voxels with index V,
-            %                       where also ray tracing results are availabe
+            %                       where also ray tracing results are available
             %   sourcePoint_bev:    source point in voxel coordinates in beam's eye view
             %   targetPoint_bev:    target point in voxel coordinated in beam's eye view
             %   SAD:                source-to-axis distance
@@ -537,7 +562,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %   lateralCutOff:      lateral cutoff specifying the neighbourhood for
             %                       which dose calculations will actually be performed
             %
-            % output
+            % output:
             %   ix:                 indices of voxels where we want to compute dose
             %                       influence data
             %   rad_distancesSq:    squared radial distance to the central ray (where the

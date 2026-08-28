@@ -1,14 +1,14 @@
 function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 % matRad IPOPT get constraint bounds function for direct aperture optimization
 % 
-% call
+% call:
 %   [cl,cu] = matRad_daoGetConstBounds(optiProb,cst)
 %
-% input
+% input:
 %   optiProb:   option struct defining the type of optimization
 %   cst:        matRad cst struct
 %
-% output
+% output:
 %   cl:         lower bounds on constraints
 %   cu:         lower bounds on constraints
 %
@@ -19,7 +19,7 @@ function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -30,16 +30,16 @@ function [cl,cu] = matRad_getConstraintBounds(optiProb,cst)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% get dosimetric bounds from cst (just like for conv opt) by call to
+% superclass method
+[cl_dos,cu_dos] = matRad_getConstraintBounds@matRad_OptimizationProblem(optiProb,cst);
+
 apertureInfo = optiProb.apertureInfo;
 
 % Initialize bounds
 cl_dao = zeros(apertureInfo.totalNumOfLeafPairs,1);
 cu_dao = inf*ones(apertureInfo.totalNumOfLeafPairs,1);
 
-% get dosimetric bounds from cst (just like for conv opt) by call to
-% superclass method
-[cl_dos,cu_dos] = matRad_getConstraintBounds@matRad_OptimizationProblem(optiProb,cst);
-
 % concatenate
-cl = [cl_dao; cl_dos];
-cu = [cu_dao; cu_dos];
+cl = [cl_dos; cl_dao];
+cu = [cu_dos; cu_dao];

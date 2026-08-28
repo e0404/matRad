@@ -2,7 +2,7 @@ function obj = matRad_exportDicomCt(obj)
 % matRad function to export ct to dicom. 
 % Class method of matRad_DicomExporter
 % 
-% call
+% call:
 %   matRad_DicomExporter.matRad_exportDicomCt()
 %
 %
@@ -11,7 +11,7 @@ function obj = matRad_exportDicomCt(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2019 the matRad development team.
+% Copyright 2019-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -110,7 +110,7 @@ for i = 1:nSlices
     
     obj.ctSliceMetas(i).ImagePositionPatient = [ct.x(1); ct.y(1); ct.z(i)];
     
-    obj.ctSliceMetas(i).SlicePositions = z(i);
+    obj.ctSliceMetas(i).SliceLocation = z(i);
     
     %Create and store unique ID
     obj.ctSliceMetas(i).SOPClassUID    = ClassUID;

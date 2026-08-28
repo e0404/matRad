@@ -8,7 +8,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2015-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -24,7 +24,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
        shortName;               % short identifier by which matRad recognizes an engine
        name;                    % user readable name for dose engine
        possibleRadiationModes;  % radiation modes the engine is meant to process
-       %supportedQuantities;    % supported (influence) quantities. Does not include quantities that can be derived post-calculation.
+       %supportedQuantities;    % supported (influence) quantities. Does not include quantities that can be derived post-calculation.       
     end    
     
     % Public properties
@@ -33,11 +33,17 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         multScen;                   % scenario model to use
         voxelSubIx;                 % selection of where to calculate / store dose, empty by default
         selectVoxelsInScenarios;    % which voxels to compute in robustness scenarios
-        %bioModel;                   % name of the biological model
+        precision = 'double';       % floating point precision for the dij and computations.
+        enableGPU = false;          % whether to use GPU arrays (experimental) for dose calculation (if supported by subclass implementation).
+        %bioModel;                  % name of the biological model
+        ignoreOutsideDensities       % Ignore densities outside of cst contours
+        useGivenEqDensityCube;      % Use the given density cube ct.cube and omit conversion from cubeHU.
     end
     
     % Protected properties with public get access
     properties (SetAccess = protected, GetAccess = public)
+        requiresEqDensityCube = false; % whether the engine computes on the rED/rSP cube ct.cube (given or converted from cubeHU in preprocessCT)
+
         machine;                % base data defined in machine file
 
         timers;                 % timers of dose calc
@@ -154,8 +160,6 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             else
                 plnStruct = struct();
             end
-
-            fields = fieldnames(plnStruct);
             
             %Set up warning message
             if warnWhenPropertyChanged
@@ -164,49 +168,10 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                 warningMsg = '';
             end
 
-            % iterate over all fieldnames and try to set the
-            % corresponding properties inside the engine
-            if matRad_cfg.isOctave
-                c2sWarningState = warning('off','Octave:classdef-to-struct');                
-            end
-            
-            for i = 1:length(fields)
-                try
-                    field = fields{i};
-                    if matRad_ispropCompat(this,field)
-                        this.(field) = matRad_recursiveFieldAssignment(this.(field),plnStruct.(field),true,warningMsg);
-                    else
-                        matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.propDoseCalc to Dose Engine!',field);
-                    end
-                catch ME
-                % catch exceptions when the engine has no properties,
-                % which are defined in the struct.
-                % When defining an engine with custom setter and getter
-                % methods, custom exceptions can be caught here. Be
-                % careful with Octave exceptions!
-                    if ~isempty(warningMsg)
-                        matRad_cfg = MatRad_Config.instance();
-                        switch ME.identifier
-                            case 'MATLAB:noPublicFieldForClass'
-                                matRad_cfg.dispWarning('Not able to assign property from pln.propDoseCalc to Dose Engine: %s',ME.message);
-                            otherwise
-                                matRad_cfg.dispWarning('Problem while setting up engine from struct:%s %s',field,ME.message);
-                        end
-                    end
-                end
-            end
-            
-            if matRad_cfg.isOctave
-                warning(c2sWarningState.state,'Octave:classdef-to-struct');                
-            end
+            matRad_assignPropertiesFromStruct(this,plnStruct,true,warningMsg);
         end
     
         function assignBioModelPropertiesFromPln(this, plnModel, warnWhenPropertyChanged)
-
-
-            matRad_cfg = MatRad_Config.instance();
-            
-            fields = fieldnames(plnModel);
             
             %Set up warning message
             if warnWhenPropertyChanged
@@ -215,33 +180,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
                 warningMsg = '';
             end
 
-            % iterate over all fieldnames and try to set the
-            % corresponding properties inside the engine
-            for i = 1:length(fields)
-                try
-                    field = fields{i};
-                    if isprop(this.bioModel,field)
-                        this.bioModel.(field) = matRad_recursiveFieldAssignment(this.bioModel.(field),plnModel.(field),warningMsg);
-                    else
-                        matRad_cfg.dispWarning('Not able to assign property ''%s'' from pln.bioModel to Biological Model!',field);
-                    end
-                catch ME
-                % catch exceptions when the engine has no properties,
-                % which are defined in the struct.
-                % When defining an engine with custom setter and getter
-                % methods, custom exceptions can be caught here. Be
-                % careful with Octave exceptions!
-                    if ~isempty(warningMsg)
-                        matRad_cfg = MatRad_Config.instance();
-                        switch ME.identifier
-                            case 'MATLAB:noPublicFieldForClass'
-                                matRad_cfg.dispWarning('Not able to assign property from pln.bioModel to Biological Model: %s',ME.message);
-                            otherwise
-                                matRad_cfg.dispWarning('Problem while setting up Biological Model from struct:%s %s',field,ME.message);
-                        end
-                    end
-                end
-            end
+            matRad_assignPropertiesFromStruct(this,plnModel,true,warningMsg);
         end
         
         function resultGUI = calcDoseForward(this,ct,cst,stf,w)
@@ -280,7 +219,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             %Set direct dose calculation and compute "dij"
             this.directWeights = w;
             this.calcDoseDirect = true;
+            ct = this.preprocessCT(ct,cst,stf);
             dij = this.calcDose(ct,cst,stf);
+            dij = this.finalizeDose(dij);
 
             % calculate cubes; use uniform weights here, weighting with actual fluence 
             % already performed in dij construction
@@ -339,16 +280,60 @@ classdef (Abstract) matRad_DoseEngineBase < handle
 
         function dij = calcDoseInfluence(this,ct,cst,stf)
             this.calcDoseDirect = false;
+            ct = this.preprocessCT(ct,cst,stf);
             dij = this.calcDose(ct,cst,stf);
+            dij = this.finalizeDose(dij);
         end
         function setDefaults(this)
             % future code for property validation on creation here
             matRad_cfg = MatRad_Config.instance();
-            
             %Assign default parameters from MatRad_Config
-            this.doseGrid                   = matRad_cfg.defaults.propDoseCalc.doseGrid;
             this.multScen                   = 'nomScen';
+            this.doseGrid                   = matRad_cfg.defaults.propDoseCalc.doseGrid;
             this.selectVoxelsInScenarios    = matRad_cfg.defaults.propDoseCalc.selectVoxelsInScenarios;
+            this.ignoreOutsideDensities       = matRad_cfg.defaults.propDoseCalc.ignoreOutsideDensities;
+            this.useGivenEqDensityCube      = matRad_cfg.defaults.propDoseCalc.useGivenEqDensityCube;
+        end
+    
+        function ct = preprocessCT(this,ct,cst,stf)
+            matRad_cfg = MatRad_Config.instance();
+            % check consistent with stf
+            if isfield(stf(1),'props') && this.ignoreOutsideDensities ~= stf(1).props.ignoreOutsideDensities
+                matRad_cfg.dispWarning('The parameter ignoreOutsideDensities is inconsistent between stf generation and dose calculation')
+            end
+            if isfield(stf(1),'props') && this.useGivenEqDensityCube ~= stf(1).props.useGivenEqDensityCube
+                matRad_cfg.dispWarning('The parameter useGivenEqDensityCube is inconsistent between stf generation and dose calculation')
+            end
+
+            useGivenCube = this.requiresEqDensityCube && this.useGivenEqDensityCube;
+            if useGivenCube && ~isfield(ct,'cube')
+                matRad_cfg.dispWarning('HU Conversion requested to be omitted but no ct.cube exists! Will override and do the conversion anyway!');
+                useGivenCube = false;
+            end
+
+            if this.ignoreOutsideDensities
+                % ignore densities outside of contours
+                V = [cst{:,4}];
+                V = unique(vertcat(V{:}));
+                eraseCtDensMask = true(prod(ct.cubeDim), 1);
+                eraseCtDensMask(V) = false;
+                for i = 1:ct.numOfCtScen
+                    ct.cubeHU{i}(eraseCtDensMask) = -1000;
+                    if useGivenCube
+                        % the given cube is not re-converted from cubeHU below, so mask it directly
+                        ct.cube{i}(eraseCtDensMask) = 0;
+                    end
+                end
+            end
+
+            % only engines computing on the rED/rSP cube need ct.cube; others work on cubeHU directly
+            if this.requiresEqDensityCube
+                if useGivenCube
+                    matRad_cfg.dispInfo('Omitting HU to rED/rSP conversion and using existing ct.cube!\n');
+                else
+                    ct = matRad_calcWaterEqD(ct, stf(1).radiationMode); % Maybe we can avoid duplicating the CT here?
+                end
+            end
         end
     end
     
@@ -366,24 +351,35 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function dij = finalizeDose(this,dij)
 
             matRad_cfg = MatRad_Config.instance();
+
+            dijStoragePrecision = matRad_underlyingTypeCompat(dij.physicalDose{1});
+            if this.calcDoseDirect
+                matRad_cfg.dispInfo('Dose stored in ''%s'' precision\n', dijStoragePrecision);
+            else
+                matRad_cfg.dispInfo('Dose influence stored in ''%s'' precision\n', dijStoragePrecision);
+            end
+
             %Close Waitbar
             if any(ishandle(this.hWaitbar))
                 delete(this.hWaitbar);
             end
 
             this.timers.full = toc(this.timers.full);
-            
+
             matRad_cfg.dispInfo('Dose calculation finished in %g seconds!\n',this.timers.full);
         end
 
     
-        function progressUpdate(this,pos,total)
+        function progressUpdate(this,pos,total,linereset)
             % This function updates the progress of the dose calculation process.
             % It can handle both absolute and relative progress updates.
             % If only one argument is provided, it assumes a relative progress
             % update from 0 to 1000. If two arguments are provided, it uses the
             % actual values to calculate the progress percentage.
-            
+            if nargin < 4
+                linereset = false;
+            end
+
             % Default total value handling
             if nargin < 3
                 pos = pos*1000; % Assume pos is a relative progress if total is not provided
@@ -403,7 +399,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             % Log progress if the log level is high enough
             % This allows for detailed tracking of the calculation progress in logs
             if matRad_cfg.logLevel > 2
-                matRad_progress(pos,total); % Log the progress
+                matRad_progress(pos,total,linereset); % Log the progress
             end
             
             % Update the waitbar with the current progress if it exists
@@ -414,6 +410,13 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             
             % Reset the timer for the next progress update
             this.lastProgressUpdate = tic;
+        end
+    
+        function allows = allowsSinglePrecisionSparseDij(~)
+            matRad_cfg = MatRad_Config.instance();
+            %single precision sparse is not supported in Octave or Matlab
+            %older than R2025a.
+            allows = matRad_cfg.isMatlab & str2double(matRad_cfg.envVersion) >= 25; 
         end
     end
     
@@ -435,14 +438,16 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         function [available,msg] = isAvailable(pln,machine)   
         % return a boolean if the engine is is available for the given pln
         % struct. Needs to be implemented in non abstract subclasses
+        %
         % input:
-        % - pln:        matRad pln struct
-        % - machine:    optional machine to avoid loading the machine from
+        %   pln:        matRad pln struct
+        %   machine:    optional machine to avoid loading the machine from
         %               disk (makes sense to use if machine already loaded)
+        %
         % output:
-        % - available:  boolean value to check if the dose engine is 
+        %   available:  boolean value to check if the dose engine is 
         %               available for the given pln/machine
-        % - msg:        msg to elaborate on availability. If not available,
+        %   msg:        msg to elaborate on availability. If not available,
         %               a msg string indicates an error during the check
         %               if available, indicates a warning that not all
         %               information was present in the machine file and

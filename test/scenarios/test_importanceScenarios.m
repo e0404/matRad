@@ -143,47 +143,58 @@ function test_importanceScenarioExtractSingleScenarioWithCtScen
     end
     
 
-    function test_importanceScenarioCombineRange
+function test_importanceScenarioCombineRange
 
-        model = matRad_ImportanceScenarios();
-    
-        assertExceptionThrown(@() helper_assignmentTest(model,'combineRange','hello'),'matRad:Error');
-        assertTrue(model.combineRange);
-        
-        nRangeScen = model.totNumRangeScen;
+    model = matRad_ImportanceScenarios();
 
-        model.combineRange = false;
-        assertFalse(model.combineRange);
-        assertEqual(model.totNumRangeScen,nRangeScen^2);
-        assertEqual(model.totNumScen,model.totNumRangeScen - 1 + model.totNumShiftScen);
+    assertExceptionThrown(@() helper_assignmentTest(model,'combineRange','hello'),'matRad:Error');
+    assertTrue(model.combineRange);
     
-    function test_importanceScenarioShiftCombinations
-    
-        model = matRad_ImportanceScenarios();
-    
-        assertExceptionThrown(@() helper_assignmentTest(model,'combinations','hello'),'matRad:Error');
-        assertEqual(model.combinations,'none');
-    
-        nSetupPoints = model.numOfSetupGridPoints;
-        nRangePoints = model.numOfRangeGridPoints;
+    nRangeScen = model.totNumRangeScen;
 
-        model.combinations = 'shift';
-        assertEqual(model.combinations,'shift');
-        assertEqual(model.totNumShiftScen,nSetupPoints^3);
-        assertEqual(model.totNumScen,model.totNumRangeScen - 1 + model.totNumShiftScen);
+    model.combineRange = false;
+    assertFalse(model.combineRange);
+    assertEqual(model.totNumRangeScen,nRangeScen^2);
+    assertEqual(model.totNumScen,model.totNumRangeScen - 1 + model.totNumShiftScen);
     
-        model.combinations = 'all';
-        assertEqual(model.combinations,'all');
-        assertEqual(model.totNumShiftScen,nSetupPoints^3);
-        assertEqual(model.totNumRangeScen,nRangePoints);
-        assertEqual(model.totNumScen,model.totNumRangeScen * model.totNumShiftScen);
-    
-        model.combineRange = false;
-        assertEqual(model.totNumShiftScen,nSetupPoints^3);
-        assertEqual(model.totNumRangeScen,nRangePoints^2);
-        assertEqual(model.totNumScen,model.totNumRangeScen * model.totNumShiftScen);
-    
-        model.combinations = 'shift';
-        assertEqual(model.totNumShiftScen,nSetupPoints^3);
-        assertEqual(model.totNumRangeScen,nRangePoints^2);
-        assertEqual(model.totNumScen,model.totNumRangeScen + model.totNumShiftScen - 1);
+function test_importanceScenarioShiftCombinations
+
+    model = matRad_ImportanceScenarios();
+
+    assertExceptionThrown(@() helper_assignmentTest(model,'combinations','hello'),'matRad:Error');
+    assertEqual(model.combinations,'none');
+
+    nSetupPoints = model.numOfSetupGridPoints;
+    nRangePoints = model.numOfRangeGridPoints;
+
+    model.combinations = 'shift';
+    assertEqual(model.combinations,'shift');
+    assertEqual(model.totNumShiftScen,nSetupPoints^3);
+    assertEqual(model.totNumScen,model.totNumRangeScen - 1 + model.totNumShiftScen);
+
+    model.combinations = 'all';
+    assertEqual(model.combinations,'all');
+    assertEqual(model.totNumShiftScen,nSetupPoints^3);
+    assertEqual(model.totNumRangeScen,nRangePoints);
+    assertEqual(model.totNumScen,model.totNumRangeScen * model.totNumShiftScen);
+
+    model.combineRange = false;
+    assertEqual(model.totNumShiftScen,nSetupPoints^3);
+    assertEqual(model.totNumRangeScen,nRangePoints^2);
+    assertEqual(model.totNumScen,model.totNumRangeScen * model.totNumShiftScen);
+
+    model.combinations = 'shift';
+    assertEqual(model.totNumShiftScen,nSetupPoints^3);
+    assertEqual(model.totNumRangeScen,nRangePoints^2);
+    assertEqual(model.totNumScen,model.totNumRangeScen + model.totNumShiftScen - 1);
+
+function test_importanceScenariosPropertySetters
+    model = matRad_ImportanceScenarios();
+
+    model.numOfSetupGridPoints = 5;
+    assertEqual(model.numOfSetupGridPoints,5);
+
+    model.numOfRangeGridPoints = 5;
+    assertEqual(model.numOfRangeGridPoints,5);
+
+      

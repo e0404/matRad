@@ -1,12 +1,12 @@
 function samples = matRad_getGaussianOrbitSamples(mu,SIGMA,nFrames,varargin)
 % matRad orbit sampling
 % 
-% call
+% call:
 %   samples = matRad_getGaussianOrbitSamples(mu,SIGMA,nFrames)
 %   samples = matRad_getGaussianOrbitSamples(mu,SIGMA,nFrames,xr)
 %   samples = matRad_getGaussianOrbitSamples(___,Name,Value)
 %
-% input
+% input:
 %   mu           mean vector
 %   SIGMA        covariance matrix
 %   nFrames 	 number of sample frames
@@ -19,7 +19,7 @@ function samples = matRad_getGaussianOrbitSamples(mu,SIGMA,nFrames,varargin)
 %                       cholesky decomposition. Default is 10
 %
 %
-% output
+% output:
 %
 % References
 %   [1] http://mlss.tuebingen.mpg.de/2013/Hennig_2013_Animating_Samples_from_Gaussian_Distributions.pdf
@@ -27,7 +27,7 @@ function samples = matRad_getGaussianOrbitSamples(mu,SIGMA,nFrames,varargin)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2017 the matRad development team. 
+% Copyright 2017-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

@@ -1,14 +1,14 @@
-function writeRunFile(~, fName)
+function writeRunFile(this, fName)
 % FRED helper to write file for simulation
-% call
+% call:
 %   writeRunFile(fName)
-% 
-% input
+%
+% input:
 %   fName: string specifying the file path and name for saving the data.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2023 the matRad development team.
+% Copyright 2023-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -26,7 +26,11 @@ try
     % Include regions and plan delivery routine
     fprintf(fID, 'include: inp/regions/regions.inp\n');
     fprintf(fID, 'include: inp/plan/planDelivery.inp\n');
+    if ~this.calcDoseDirect && this.isVersionLower('3.70.0')
+        fprintf(fID, 'lwriteDij_bin = True\n');
+    end
 catch
+    fclose(fID);
     matRad_cfg.dispError('Failed to write run file');
 end
 

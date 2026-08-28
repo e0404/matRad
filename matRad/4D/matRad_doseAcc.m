@@ -1,11 +1,10 @@
 function dAcc = matRad_doseAcc(ct, phaseCubes, cst, accMethod)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad dose accumulation function
 % 
-% call
+% call:
 %   dAcc = matRad_doseAcc(d,dvf)
 %
-% input
+% input:
 %   ct:         matRad ct struct inclduing 4d ct, deformation vector
 %               fields, and meta information
 %   phaseCubes: cell array of cubes to be accumulated
@@ -16,7 +15,7 @@ function dAcc = matRad_doseAcc(ct, phaseCubes, cst, accMethod)
 %
 %   +++ Attention +++   the deformation vector fields are in [mm]
 %
-% output
+% output:
 %   dAcc:               accumulated dose cube
 %
 % References
@@ -26,7 +25,7 @@ function dAcc = matRad_doseAcc(ct, phaseCubes, cst, accMethod)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2018 the matRad development team.
+% Copyright 2018-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

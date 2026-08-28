@@ -2,10 +2,10 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 % adds artificial sinosodal patient motion by creating a deformation vector
 % field and applying it to the ct.cube by geometric transformation
 %
-% call
+% call:
 %   ct = matRad_addMovement(ct, ct.motionPeriod, ct.numOfCtScen, amp)
 %
-% input
+% input:
 %   ct:             matRad ct struct
 %   cst:            matRad cst struct
 %   motionPeriod:   the length of a whole breathing cycle (in seconds)
@@ -20,7 +20,7 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 %                   a positive amplitude moves the phantom to the right,
 %                   anterior, inferior
 %
-% output
+% output:
 %   ct:             modified matRad ct struct including dvf and cubes for
 %                   all phases
 %   cst:            modified matRad cst struct
@@ -30,7 +30,7 @@ function [ct, cst] = matRad_addMovement(ct, cst, motionPeriod, numOfCtScen, amp,
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2018 the matRad development team.
+% Copyright 2018-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

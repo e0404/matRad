@@ -1,0 +1,8 @@
+# MCsquare sparse matrix format
+SimulationDate = 2026/2/27 15:41:31
+PlanName = matRad_bixel
+SimulationMode = Beamlet
+NbrSpots = 14
+ImageSize = 10 20 10
+VoxelSpacing = 10.000000 10.000000 10.000000
+BinaryFile = Sparse_Dose.bin

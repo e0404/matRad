@@ -4,12 +4,12 @@ function multScen = matRad_multScen(ct,scenarioModel)
 %  the respective matRad_ScenarioModel instance for the specific scenario
 %  model chosen with standard parameters. 
 %
-% call
+% call:
 %   pln.multScen = matRad_multScen(ct,scenarioModel);
 %
 %   e.g. pln.multScen = matRad_multScen(ct,'nomScen');
 %
-% input
+% input:
 %   ct:                 ct cube
 %   scenarioModel:      string to denote a scenario creation method
 %                       'nomScen'   create only the nominal scenario
@@ -19,7 +19,7 @@ function multScen = matRad_multScen(ct,scenarioModel)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2022 the matRad development team.
+% Copyright 2022-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

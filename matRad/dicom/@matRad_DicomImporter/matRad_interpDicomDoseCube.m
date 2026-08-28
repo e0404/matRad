@@ -10,7 +10,7 @@ function obj = matRad_interpDicomDoseCube(obj)
 % Output - structure with different actual current dose cube and several 
 % meta data.
 %
-% call
+% call:
 %   obj = matRad_interpDicomDoseCube(obj)
 %
 %
@@ -19,7 +19,7 @@ function obj = matRad_interpDicomDoseCube(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2015-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

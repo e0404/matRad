@@ -2,10 +2,10 @@ function matRad_visSpotWeights(stf,weights)
 % visualise spot weights per energy slice (or fluence map for photons resp.)
 % for single beams
 % 
-% call
+% call:
 %    matRad_visSpotWeights(stf,weights)
 %
-% input
+% input:
 %   stf:              matRad stf struct
 %   weights:          spot weights for bixels (resultGUI.w)
 
@@ -17,7 +17,7 @@ function matRad_visSpotWeights(stf,weights)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

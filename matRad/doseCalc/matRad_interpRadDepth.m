@@ -1,11 +1,10 @@
 function radDepthVcoarse = matRad_interpRadDepth(ct,V,Vcoarse,vXgrid,vYgrid,vZgrid,radDepthV)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % down/up sampling the radiological depth dose cubes
 % 
-% call
+% call:
 %   radDepthVcoarse = matRad_interpRadDepth(ct,V,Vcoarse,vXgrid,vYgrid,vZgrid,radDepthV)
 %
-% input
+% input:
 %   ct:             matRad ct structure
 %   V:              linear voxel indices of the cst 
 %   Vcoarse:        linear voxel indices of the down sampled grid resolution
@@ -14,7 +13,7 @@ function radDepthVcoarse = matRad_interpRadDepth(ct,V,Vcoarse,vXgrid,vYgrid,vZgr
 %   vZgrid:         query points of now location in z dimension
 %   radDepthV:      radiological depth of radDepthIx
 %
-% output
+% output:
 %   radDepthVcoarse:   interpolated radiological depth of radDepthIx
 %
 % References
@@ -22,7 +21,7 @@ function radDepthVcoarse = matRad_interpRadDepth(ct,V,Vcoarse,vXgrid,vYgrid,vZgr
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2018 the matRad development team. 
+% Copyright 2018-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

@@ -11,7 +11,7 @@ function obj = matRad_importDicomRtss(obj)
 % Output - structure containing names, numbers, colors and coordinates 
 % of the polygon segmentations.
 %
-% call
+% call:
 %   obj = matRad_importDicomRtss(obj)
 %
 %
@@ -20,7 +20,7 @@ function obj = matRad_importDicomRtss(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
@@ -126,8 +126,11 @@ for i = 1:numOfContStructs % loop over every structure
         end
         
         % sanity check 2
-         if unique(structZ) > max(obj.ct.dicomInfo.SlicePositions) || unique(structZ) < min(obj.ct.dicomInfo.SlicePositions)
-            matRad_cfg.dispWarning(['Omitting contour data for ' obj.importRtss.structures(i).structName ' at slice position ' num2str(unique(structZ)) 'mm - no ct data available.\n']);
+        contourZ = unique(structZ);
+        if isempty(matRad_findRtssContourSlicesInCt(contourZ, obj.ct))
+            matRad_cfg.dispWarning(['Omitting contour data for ' obj.importRtss.structures(i).structName ...
+                                    ' at slice position ' num2str(contourZ) ...
+                                    'mm - no ct data available.\n']);
         else
             obj.importRtss.structures(i).item(j).points = [structX, structY, structZ];
         end

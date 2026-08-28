@@ -1,10 +1,10 @@
 function matRad_writeMHA(filepath,cube,metadata)
 % matRad function to write mha files
 % 
-% call
+% call:
 %   matRad_writeMHA(filepath,cube,metadata)
 %
-% input
+% input:
 %   filepath:   full filename (with extension)
 %   cube:       3D array to be written into file
 %   metadata:   struct of metadata. Writer will wrap the existing metadata 
@@ -13,7 +13,7 @@ function matRad_writeMHA(filepath,cube,metadata)
 %               - resolution: [x y z]
 %               - datatype: numeric MATLAB-Datatype
 %
-% output
+% output:
 %   file will be written to disk
 %
 % References
@@ -21,7 +21,7 @@ function matRad_writeMHA(filepath,cube,metadata)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

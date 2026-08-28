@@ -2,43 +2,36 @@ function [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolutio
 % gamma index calculation 
 % according to http://www.ncbi.nlm.nih.gov/pubmed/9608475
 % 
-% call
+% call:
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,cst)
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,cst)
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,n,cst)
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,localglobal,cst)
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,cst)
-%               ...
+%   ...
 %   [gammaCube,gammaPassRateCell] = matRad_gammaIndex(cube1,cube2,resolution,criteria,slice,n,localglobal,cst)
 %
-% input
+% input:
 %   cube1:         dose cube as an M x N x O array
 %   cube2:         dose cube as an M x N x O array
 %   resolution:    resolution of the cubes [mm/voxel]
-%   criteria:      [1x2] vector specifying the distance to agreement
-%                  criterion; first element is percentage difference,
-%                  second element is distance [mm]
-%   slice:         (optional) slice in cube1/2 that will be visualized 
-%   n:             (optional) number of interpolations. there will be 2^n-1 
-%                  interpolation points. The maximum suggested value is 3.
-%   localglobal:   (optional) parameter to choose between 'global' and 'local' 
-%                  normalization 
+%   criteria:      [1x2] vector specifying the distance to agreement criterion; first element is percentage difference, second element is distance [mm]
+%   slice:         (optional) slice in cube1/2 that will be visualized
+%   n:             (optional) number of interpolations. there will be 2^n-1 interpolation points. The maximum suggested value is 3.
+%   localglobal:   (optional) parameter to choose between 'global' and 'local' normalization
 %   cst:           list of interessing volumes inside the patient
 %
 % output 
 %
 %   gammaCube:          result of gamma index calculation
-%   gammaPassRateCell:  rate of voxels passing the specified gamma criterion 
-%                  evaluated for every structure listed in 'cst'.
-%                  note that only voxels exceeding the dose threshold are
-%                  considered.
+%   gammaPassRateCell:  rate of voxels passing the specified gamma criterion, evaluated for every structure listed in 'cst'. Note that only voxels exceeding the dose threshold are considered.
 %
 % References
 %   [1]  http://www.ncbi.nlm.nih.gov/pubmed/9608475
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 

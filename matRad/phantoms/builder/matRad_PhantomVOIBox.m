@@ -4,11 +4,8 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
     % References
     %     -
     %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %
-    % Copyright 2022 the matRad development team.
+    % Copyright 2022-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -18,56 +15,76 @@ classdef matRad_PhantomVOIBox < matRad_PhantomVOIVolume
     % LICENSE file.
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    properties %additional property of cubic objects
-        boxDimensions;
+    properties % additional property of cubic objects
+        boxDimensions
     end
 
     methods (Access = public)
 
-        function obj = matRad_PhantomVOIBox(name,type,boxDimensions,varargin)
+        function obj = matRad_PhantomVOIBox(name, type, boxDimensions, varargin)
             p = inputParser;
-            addParameter(p,'objectives',{});
-            addParameter(p,'offset',[0,0,0]);
-            addParameter(p,'HU',0);
-            parse(p,varargin{:});
+            addParameter(p, 'objectives', {});
+            addParameter(p, 'offset', [0, 0, 0]);
+            addParameter(p, 'HU', 0);
+            addParameter(p, 'coordType', 'voxel', @(x) numel(validatestring(x, {'voxel', 'mm'})));
+            parse(p, varargin{:});
 
-            obj@matRad_PhantomVOIVolume(name,type,p); %call superclass constructor
+            obj@matRad_PhantomVOIVolume(name, type, p); % call superclass constructor
             obj.boxDimensions = boxDimensions;
         end
 
-        function [cst] = initializeParameters(obj,ct,cst)
-            %add this objective to the phantomBuilders cst
+        function [cst] = initializeParameters(obj, ct, cst)
+            % add this objective to the phantomBuilders cst
+            ct = matRad_getWorldAxes(ct);
+            cst = initializeParameters@matRad_PhantomVOIVolume(obj, cst);
 
-            cst = initializeParameters@matRad_PhantomVOIVolume(obj,cst);
-            center = round(ct.cubeDim/2);
-            VOIHelper = zeros(ct.cubeDim);
-            offsets = obj.offset;
-            dims = obj.boxDimensions;
+            % Swaps [i j k] (x-first) <-> [j i k] (y-first / MATLAB array order)
+            dimPerm = [0 1 0; 1 0 0; 0 0 1];
 
-            xMinMax = center(2)+offsets(1) + round(dims(1)/2)*[-1,1];
-            yMinMax = center(1)+offsets(2) + round(dims(2)/2)*[-1,1];
-            zMinMax = center(3)+offsets(3) + round(dims(3)/2)*[-1,1];
-            
-            %Correct if out of bounds
-            xMinMax(xMinMax < 1) = 1;
-            yMinMax(yMinMax < 1) = 1;
-            zMinMax(zMinMax < 1) = 1;
+            % Center in [j i k] (cubeDim is already in MATLAB array order)
+            centerPoint = (ct.cubeDim + 1) / 2;
 
-            xMinMax(xMinMax > ct.cubeDim(2)) = ct.cubeDim(2);
-            yMinMax(yMinMax > ct.cubeDim(1)) = ct.cubeDim(1);
-            zMinMax(zMinMax > ct.cubeDim(3)) = ct.cubeDim(3);
-            
-            for x = xMinMax(1):1:xMinMax(2) 
-                for y = yMinMax(1):1:yMinMax(2)
-                   for z = zMinMax(1):1:zMinMax(2)
-                        VOIHelper(y,x,z) = 1;
-                   end
-                end
+            switch obj.coordType
+                case 'voxel'
+                    ctMin = [1 1 1];
+                    ctMax = ct.cubeDim;  % [j i k]
+                    [y, x, z] = ndgrid(1:ct.cubeDim(1), 1:ct.cubeDim(2), 1:ct.cubeDim(3));
+
+                case 'mm'
+                    % cubeIndex2worldCoords expects [i j k], outputs [x y z];
+                    % * dimPerm converts to [y x z] = [j i k] in world mm
+                    centerPoint = matRad_cubeIndex2worldCoords(centerPoint, ct) * dimPerm;
+                    halfRes = [ct.resolution.y ct.resolution.x ct.resolution.z] / 2;
+                    ctMin = [min(ct.y) min(ct.x) min(ct.z)] - halfRes;
+                    ctMax = [max(ct.y) max(ct.x) max(ct.z)] + halfRes;
+                    % ct.y has nRows elements (dim1), ct.x has nCols elements (dim2)
+                    [y, x, z] = ndgrid(ct.y, ct.x, ct.z);
             end
-            
-            cst{end,4}{1} = find(VOIHelper);
-            
 
+            % offset and boxDimensions are in [i j k]; convert to [j i k]
+            centerPoint = centerPoint + obj.offset * dimPerm;
+            dims = obj.boxDimensions * dimPerm;
+
+            coords = [y(:) x(:) z(:)];  % [j i k]
+
+            maxPoints = min(centerPoint + dims / 2, ctMax);
+            minPoints = max(centerPoint - dims / 2, ctMin);
+
+            voiHelper = all(coords >= minPoints & coords <= maxPoints, 2);
+            voiHelper = reshape(voiHelper, ct.cubeDim);
+
+            cst{end, 4}{1} = find(voiHelper);
         end
+
     end
-end  
+
+    % Set Methods
+    methods
+
+        function set.boxDimensions(obj, dims)
+            validateattributes(dims, {'numeric'}, {'vector', 'numel', 3, 'positive'});
+            obj.boxDimensions = dims;
+        end
+
+    end
+end

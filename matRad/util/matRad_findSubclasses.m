@@ -6,16 +6,13 @@ function classList = matRad_findSubclasses(superClass,varargin)
 %
 % call:
 %   classList = matRad_findSubclasses(superClass);
-%   classList =
-%       matRad_findSubclasses(superClass,'package',{packageNames})
-%   classList =
-%       matRad_findSubclasses(superClass,'folders',{folderNames})
-%   classList =
-%       matRad_findSubclasses(superClass,'includeAbstract',true/false)
+%   classList = matRad_findSubclasses(superClass,'package',{packageNames})
+%   classList = matRad_findSubclasses(superClass,'folders',{folderNames})
+%   classList = matRad_findSubclasses(superClass,'includeAbstract',true/false)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2022 the matRad development team.
+% Copyright 2022-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this

@@ -2,11 +2,11 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,nHistories)
     % matRad function to bypass dij calculation
     %   Should not be used directly anymore as it is deprecated. Use matRad_calcDoseForward instead.
     % 
-    % call
+    % call:
     %   resultGUI = matRad_calcDoseDirec(ct,stf,pln,cst)
     %   resultGUI = matRad_calcDoseDirec(ct,stf,pln,cst,w)
     %
-    % input
+    % input:
     %   ct:         ct cube
     %   stf:        matRad steering information struct
     %   pln:        matRad plan meta information struct
@@ -14,7 +14,7 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,nHistories)
     %   w:          (optional, if no weights available in stf): bixel weight
     %               vector
     %
-    % output
+    % output:
     %   resultGUI:  matRad result struct
     %
     % References
@@ -22,7 +22,7 @@ function resultGUI = matRad_calcDoseDirect(ct,stf,pln,cst,w,nHistories)
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2024 the matRad development team. 
+    % Copyright 2024-2026 the matRad development team.
     % 
     % This file is part of the matRad project. It is subject to the license 
     % terms in the LICENSE file found in the top-level directory of this 

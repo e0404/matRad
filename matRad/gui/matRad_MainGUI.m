@@ -6,7 +6,7 @@ classdef matRad_MainGUI < handle
     %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
-    % Copyright 2019 the matRad development team.
+    % Copyright 2019-2026 the matRad development team.
     %
     % This file is part of the matRad project. It is subject to the license
     % terms in the LICENSE file found in the top-level directory of this
@@ -209,6 +209,9 @@ classdef matRad_MainGUI < handle
             %WindowState not available in all versions
             if matRad_ispropCompat(obj.guiHandle,'WindowState')
                 set(obj.guiHandle,'WindowState','maximized');
+            end
+            if  matRad_cfg.isMatlab && isunix
+                movegui(obj.guiHandle,'onscreen');
             end
 
             if matRad_cfg.isOctave

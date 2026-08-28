@@ -1,11 +1,11 @@
 function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)
 % Comparison of two dose cubes in terms of gamma index, absolute and visual difference
 %
-% call
+% call:
 %   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst)
 %   [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, cst,enable , contours, pln, criteria, n,localglobal)
 %
-% input
+% input:
 %   cube1:         dose cube 1 as an M x N x O array
 %   cube2:         dose cube 2 as an M x N x O array
 %   ct:            ct struct with ct cube
@@ -29,7 +29,7 @@ function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, c
 %                  normalization 
 %
 %
-% output
+% output:
 %
 %   gammaCube:      result of gamma index calculation
 %   gammaPassRate:  rate of voxels passing the specified gamma criterion
@@ -44,7 +44,7 @@ function [gammaCube,gammaPassRate,hfig] = matRad_compareDose(cube1, cube2, ct, c
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team.
+% Copyright 2015-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
 % terms in the LICENSE file found in the top-level directory of this
@@ -148,6 +148,9 @@ if enable(1) == 1
     % Calculate absolute difference cube and dose windows for plots
     differenceCube  = cube1-cube2;
     doseDiffWindow  = [-max(abs(differenceCube(:))) max(abs(differenceCube(:)))];
+    if doseDiffWindow(1)==0 && doseDiffWindow(2)==0
+        doseDiffWindow(2) = 1;
+    end
     %doseGammaWindow = [0 max(gammaCube(:))];
     doseGammaWindow = [0 2]; %We choose 2 as maximum value since the gamma colormap has a sharp cut in the middle
     

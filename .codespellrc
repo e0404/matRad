@@ -1,0 +1,5 @@
+[codespell]
+# Algorithmus: German, appears in cited thesis titles
+ignore-words-list = indX, hAx, linIx, thirdParty, assignin, Algorithmus
+# archiv: part of http://archiv.ub.uni-heidelberg.de
+uri-ignore-words-list = archiv

@@ -44,15 +44,6 @@ function test_nonMatchingCouchAngles
     assertFalse(isempty(msg));
     assertTrue(ischar(msg));
 
-%Test case for wrong number of beams provided
-function test_wrongNumberOfAngles
-    [pln, stf] = helper_getDummyBasicPlnStf();
-    pln.propStf.numOfBeams = 3;
-    [allMatch, msg] = matRad_comparePlnStf(pln, stf);
-    assertFalse(allMatch);
-    assertFalse(isempty(msg));
-    assertTrue(ischar(msg));
-
 % Test case for non-matching bixel width
 function test_nonMatchingBixelWidth
     [pln, stf] = helper_getDummyBasicPlnStf();

@@ -9,7 +9,7 @@ function obj = matRad_scanDicomImportFolder(obj)
 % infomation (type, series number etc.)
 %   - list of patients with dicom data in the folder
 %
-% call
+% call:
 %   obj = matRad_scanDicomImportFolder(obj)
 %
 %
@@ -18,7 +18,7 @@ function obj = matRad_scanDicomImportFolder(obj)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Copyright 2015 the matRad development team. 
+% Copyright 2015-2026 the matRad development team.
 % 
 % This file is part of the matRad project. It is subject to the license 
 % terms in the LICENSE file found in the top-level directory of this 
