@@ -36,12 +36,12 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         calcBioDose = false;            % RBE-weighted dose via secondary particle spectra (MCDS/RMF model)
         calcRMFparameters = false;
         MCNPinstallationCheck;
-        MCNPFolder;
+        MCNPFolder;         % Folder with the MCNP helper functions and data
+        workingDir;         % Working directory for run files and logs
     end
 
     properties (SetAccess = protected, GetAccess = public)
 
-        currFolder = pwd; %folder path when set
 
         constantRBE = NaN;              % constant RBE value
     end
@@ -97,7 +97,8 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             
             %Set Default MCNP path
             %Set folder
-            this.MCNPFolder = fullfile(matRad_cfg.matRadSrcRoot,'doseCalc','MCNP');        
+            this.MCNPFolder = fullfile(matRad_cfg.matRadSrcRoot,'doseCalc','MCNP');
+            this.workingDir = fullfile(matRad_cfg.primaryUserFolder,'MCNP');        
         end
     end
 
@@ -143,16 +144,12 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Convert MeV/g to J/kg, output is now in Gy/source particle
             absCalibrationFactorMCNP = 1.602177e-19*1e6*1e3;
 
-            %matRad_cfg.matRadRoot 
-
-            % Generate log-file
-            pathLog = strcat(this.MCNPFolder, filesep, 'logFile');
-
-            try diary(fullfile(pathLog, strcat(matRad_getTime4log, '_neutronDoseCalculation')))
-            catch
-                mkdir('logFile')
-                diary(fullfile(pathLog, strcat(matRad_getTime4log, '_neutronDoseCalculation')))
-            end
+            % Prepare working directory (run files) and log file
+            pathRunfiles = fullfile(this.workingDir,'runfiles',filesep);
+            pathLog = fullfile(this.workingDir,'logFile');
+            cellfun(@(d) ~isfolder(d) && mkdir(d), {this.workingDir,pathRunfiles,pathLog});
+            diary(fullfile(pathLog, [matRad_getTime4log '_neutronDoseCalculation.log']));
+            diaryCleanup = onCleanup(@() diary('off'));
 
             % Load predefined conversion properties for tissue characterization
             % according to CT values - elemental composition will be assigned according
@@ -295,6 +292,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
 
             %% Create MCNP runfile blocks A and B
+            varHelper.simPropMCNP.pathRunfiles = pathRunfiles;
             varHelper.simPropMCNP.loopCounter = false; % try to generate MCNP runfile with maximum 99999 elements for reasons of performance
             varHelper.simPropMCNP.MCNP_limitNumberOfElements = 99999-1; % minus one since we need one integer for the source surface
 
@@ -343,7 +341,6 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % positioning can be done easily w/o wasting time on redundant writing of
             % the rest (like MODE and PHYS card) into a text file.
 
-            pathRunfiles = fullfile(this.MCNPFolder,'runfiles_tmp',filesep);
             fileID_C_rest = fopen(strcat(pathRunfiles,'blockC_rest'), 'w');
 
             % C.2 Physics and problem termination
@@ -383,10 +380,8 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             matRad_bixelDoseCalculatorMCNP(this);
 
             %% Evaluate MCNP results
-            dij = matRad_evaluateTallyMCNP(dij, cst, ct);
+            dij = matRad_evaluateTallyMCNP(dij, cst, ct, pathRunfiles);
             
-            %% Switch off diary
-            diary off
         end
 
         function setBinaries(this)
@@ -406,8 +401,6 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % Executables for simulation
             this.setBinaries();
 
-            % set and change to MCsquare binary folder
-            this.currFolder = pwd;
 
             %% Call Superclass init function
             dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);

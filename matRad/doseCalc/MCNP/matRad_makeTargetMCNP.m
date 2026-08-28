@@ -43,8 +43,7 @@ switch simPropMNCP.geometryOption
         end
         clear counterMaterial
         
-        % Generate log-file    
-        pathRunfiles = fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'MCNP', 'runfiles_tmp', filesep);
+        pathRunfiles = simPropMCNP.pathRunfiles;
         fileID_A = fopen(strcat(pathRunfiles,'blockA.txt'), 'w');
         fileID_B = fopen(strcat(pathRunfiles,'blockB.txt'), 'w');
         

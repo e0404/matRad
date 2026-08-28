@@ -1,9 +1,8 @@
-function dij = matRad_evaluateTallyMCNP(dij, cst, ct)
+function dij = matRad_evaluateTallyMCNP(dij, cst, ct, pathRunfiles)
 %% Read output from MCNP calculation and generate dij matix
 %% Preparation and get list of mctal data
 matRad_cfg = MatRad_Config.instance();
-cd(fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'MCNP', 'runfiles_tmp'));
-tallyDataList = dir('MCNPrunfile_*bixelm');
+tallyDataList = dir(fullfile(pathRunfiles, 'MCNPrunfile_*bixelm'));
 % Re-organize list
 dummyList = struct;
 lengthList = dij.totalNumOfRays;
@@ -49,7 +48,7 @@ for counterBeam = 1:dij.numOfBeams
         tic;
 
         % Read TMESH results
-        resultMCNP = matRad_readDataFromText_TMESHvBioOpti(dummyList(counterDijColumns).name, 'TMESH3', 2);
+        resultMCNP = matRad_readDataFromText_TMESHvBioOpti(fullfile(dummyList(counterDijColumns).folder, dummyList(counterDijColumns).name), 'TMESH3', 2);
         resultMCNP = resultMCNP';
         doseMatrixBixel.physicalDose = zeros(dij.doseGrid.dimensions(2), dij.doseGrid.dimensions(1), dij.doseGrid.dimensions(3));   % Total dose
         doseMatrixBixel.physicalDose(1:end) = resultMCNP(:,1);

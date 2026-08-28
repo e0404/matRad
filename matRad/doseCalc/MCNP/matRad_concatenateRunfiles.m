@@ -18,8 +18,8 @@ function matRad_concatenateRunfiles(varHelper, pathRunfiles)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-oldPath = pwd;
-cd(pathRunfiles)
+oldPath = cd(pathRunfiles);
+restoreDir = onCleanup(@() cd(oldPath));
 
 if ismac || isunix
     for counterRunfile=1:varHelper.totalNumberBixels
@@ -44,5 +44,3 @@ elseif ispc
 else
     disp('Platform not supported but you can concatenate the blocks to one runfile by hand.')
 end
-
-cd(oldPath);
