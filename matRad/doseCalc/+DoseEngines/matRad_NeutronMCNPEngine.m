@@ -33,6 +33,7 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         useDICOMinfoRescale = true;
         useLungQuestionDialog = false;
         
+        calcBioDose = false;            % RBE-weighted dose via secondary particle spectra (MCDS/RMF model)
         calcRMFparameters = false;
         MCNPinstallationCheck;
         MCNPFolder;
@@ -74,12 +75,12 @@ classdef matRad_NeutronMCNPEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             % This should not be handled here as an optimization property
             % We should rather make optimization dependent on what we have
             % decided to calculate here.
-            if nargin > 0
-                if (isfield(pln,'propOpt')&& isfield(pln.propOpt,'bioOptimization')&& ...
-                        isequal(pln.propOpt.bioOptimization,'RBExSecPartDose_MCDS_RMFmodel'))
+            if nargin > 0 && isfield(pln, 'bioModel')
+                if isa(pln.bioModel, 'matRad_LQBasedModel')
+                    % RBE-weighted dose from secondary particle spectra (MCDS/RMF model)
                     this.calcBioDose = true;
-                elseif strcmp(pln.radiationMode,'neutrons') && isfield(pln,'propOpt') && isfield(pln.propOpt,'bioOptimization') && isequal(pln.propOpt.bioOptimization,'const_RBExD')
-                    this.constantRBE = 4;
+                elseif isa(pln.bioModel, 'matRad_ConstantRBE')
+                    this.constantRBE = pln.bioModel.RBE;
                 end
             end
         end
