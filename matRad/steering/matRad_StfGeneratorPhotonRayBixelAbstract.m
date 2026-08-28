@@ -35,7 +35,13 @@ classdef (Abstract) matRad_StfGeneratorPhotonRayBixelAbstract < matRad_StfGenera
                 
         function beam = initBeamData(this,beam)
             beam = this.initBeamData@matRad_StfGeneratorExternalRayBixelAbstract(beam);
-            beam.SCD = this.machine.meta.SCD;
+            % Source-to-collimator distance is optional (only needed for
+            % beamlet corners in the collimator plane, e.g. photon MC engines)
+            if isfield(this.machine.meta,'SCD')
+                beam.SCD = this.machine.meta.SCD;
+            else
+                beam.SCD = [];
+            end
         end
 
         function beam = setBeamletEnergies(this,beam)
@@ -62,6 +68,9 @@ classdef (Abstract) matRad_StfGeneratorPhotonRayBixelAbstract < matRad_StfGenera
                             beam.ray(j).rayPos_bev + [-beam.bixelWidth/2,0,+beam.bixelWidth/2];...
                             beam.ray(j).rayPos_bev + [-beam.bixelWidth/2,0,-beam.bixelWidth/2];...
                             beam.ray(j).rayPos_bev + [+beam.bixelWidth/2,0,-beam.bixelWidth/2]]*rotMat_vectors_T;
+                        if isempty(beam.SCD)
+                            continue;
+                        end
                         beam.ray(j).rayCorners_SCD = (repmat([0, beam.SCD - beam.SAD, 0],4,1)+ (beam.SCD/beam.SAD) * ...
                             [beam.ray(j).rayPos_bev + [+beam.bixelWidth/2,0,+beam.bixelWidth/2];...
                             beam.ray(j).rayPos_bev + [-beam.bixelWidth/2,0,+beam.bixelWidth/2];...
@@ -88,7 +97,9 @@ classdef (Abstract) matRad_StfGeneratorPhotonRayBixelAbstract < matRad_StfGenera
 
             available = available && isfield(machine.data,'energy') && isscalar(machine.data.energy);
             
-            available = available && isfield(machine.meta,'SCD') && isscalar(machine.meta.SCD);
+            if isfield(machine.meta,'SCD')
+                available = available && isscalar(machine.meta.SCD);
+            end
 
 
             if ~available
