@@ -1,35 +1,43 @@
-function [cst, tissueBin] = matRad_segmentationCTscan(CTdata, CTresolution, binIntervals, cst, cstBodyIndex, cstTargetIndex, lungStructureName, autoSegmentLung)
-% DESCRIPTION:
-% 1) Read scaled Hounsfield units and bin voxels into predefined tissue
-%    bins characterized by HU intervals in binIntervals,
-% 2) In case no lung has been pre-segmented define lung and reassign false
-%    lung tissue to other tissue types. Furthermore, use body contour to
-%    define skin layer around patient (body structure has to exist in cst).
+function [cst, tissueBin] = matRad_segmentationCTscan(CTdata, CTresolution, binIntervals, cst, ...
+                                                      cstBodyIndex, cstTargetIndex, lungStructureName, autoSegmentLung)
+% matRad segmentation of a CT scan into MCNP tissue bins
 %
-% USAGE:
-%       [cst, tissueBin] = segmentationCTscan(CTdata, CTresolution, binIntervals, cst, cstBodyIndex)
+% 1) Classifies all voxels into the tissue bins defined by the HU intervals
+%    in binIntervals (HU -> material lookup for the MCNP engine),
+% 2) applies structure/morphology based tissue overrides on top of the
+%    classification (see the local functions):
+%      - matRad_overrideLungTissue:         lung from a contoured structure, from
+%                                    auto-segmentation, or reassignment of
+%                                    HU-classified lung to soft tissue
+%      - matRad_overrideSkinLayer:          skin shell grown around the body hull
+%      - matRad_overrideBnctTargetMaterial: boron-loaded material in a 'PTV_BNCT'
 %
-% INPUTS:
-%       CTdata               - CT values given in scaled HU
-%       CTresolution         - CT scan resolution
-%       binIntervals         - intervals for material segementation
-%       cst                  - radiotherapy structures coherent with matRad
-%                              structure handling
-%       cstBodyIndex         - index of body structure in cst
+% NOTE: This function is private to the MCNP dose engine. It is slated to be
+% replaced by a general, engine-independent HU material model with cst-based
+% material overrides.
 %
-% OUTPUTS:
-%       tissueBin           - structure containing all information obtained
-%                             from segmentation
-%       tissueBin.indices   - indices of each material specified in the bin
-%                             intervals, output has the same ordering as
-%                             given in binIntervals.name
-%       cst                 - radiotherapy structures with additional lung
-%                             and/or skin structure (depends on problem)
+% call
+%   [cst, tissueBin] = matRad_segmentationCTscan(CTdata, CTresolution, binIntervals, cst, ...
+%                                                 cstBodyIndex, cstTargetIndex, lungStructureName, autoSegmentLung)
+%
+% input
+%   CTdata               - CT values given in scaled HU
+%   CTresolution         - CT scan resolution
+%   binIntervals         - intervals for material segmentation
+%   cst                  - matRad cst struct
+%   cstBodyIndex         - index of the body structure in cst
+%   cstTargetIndex       - index/indices of target structures in cst
+%   lungStructureName    - name of a contoured lung structure (case insensitive)
+%   autoSegmentLung      - segment the lung from HU if no structure is found
+%
+% output
+%   cst                  - cst with additional LUNG/SKIN/BONE structures
+%   tissueBin            - struct array with name, matIndex and voxel
+%                          indices (linIndVol/matIndVol) per material,
+%                          ordered as binIntervals.name
 %
 % Author: Lucas Sommer (Lucas.Sommer@tum.de), 06/2018
-
-%% Extract information
-
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2018-2026 the matRad development team.
@@ -45,13 +53,7 @@ function [cst, tissueBin] = matRad_segmentationCTscan(CTdata, CTresolution, binI
 
 matRad_cfg = MatRad_Config.instance();
 
-HUbin = {binIntervals.HUbin};
-tissueName = {binIntervals.name};
-
-% Find indices in volume for each material
-%% A) Segmentation by HU intervals given in variable binIntervals
-
-dummy_indexCounter = 0; % Make sure all voxels are detected
+%% A) Classification by HU intervals given in variable binIntervals
 
 % Important: some materials cannot be segmented using HU bin intervals
 % s.th. the corresponding HUbin in the variable binIntervals is empty,
@@ -62,322 +64,231 @@ while ~isempty(binIntervals(maxHUbin_nonEmpty + 1).HUbin) && (maxHUbin_nonEmpty 
     maxHUbin_nonEmpty = maxHUbin_nonEmpty + 1;
 end
 
-% Segmentation using predefined HU bin intervals goes here
+boneIndex = [];
+numClassifiedVoxels = 0; % Make sure all voxels are detected
 for i = 1:maxHUbin_nonEmpty
-    % Names of tissue associated to HU
-    tissueBin(i).name = tissueName{i};
-
-    % Tissue Indices
+    tissueBin(i).name = binIntervals(i).name;
     tissueBin(i).matIndex = i;
+    tissueBin(i).linIndVol = find((CTdata >= binIntervals(i).HUbin(1)) & CTdata < binIntervals(i).HUbin(2));
 
-    % Linear and matrix indices
-    tissueBin(i).linIndVol = find((CTdata >= HUbin{i}(1)) & CTdata < HUbin{i}(2));   % indexing according to input
-    [dum1, dum2, dum3]  = ind2sub(size(CTdata), tissueBin(i).linIndVol);
-    tissueBin(i).matIndVol = [dum1, dum2, dum3];
-    clear dum1;
-    clear dum2;
-    clear dum3;
-
-    % Add bone to cst structure
     if strcmpi(tissueBin(i).name, 'bone')
         boneIndex = i;
     end
 
-    dummy_indexCounter = dummy_indexCounter + numel(tissueBin(i).linIndVol);
+    numClassifiedVoxels = numClassifiedVoxels + numel(tissueBin(i).linIndVol);
 end
 
-if dummy_indexCounter ~= numel(CTdata)
+if numClassifiedVoxels ~= numel(CTdata)
     matRad_cfg.dispError('Some voxels were lost in the segmentation process!');
 end
 
-%% B) Post-processing of CT data
-% 1) Eliminate small regions that have been falsely segmented as lung
-% 2) Define pre-segmented lung or perform segmentation
-% 3) Find body surface
-% 4) Enlarge body hull for skin segmentation
-% 5) Find small cavities in body and process surrounding tissue
-% 6) Find BNCT PTV if present in contours
+%% B) Structure/morphology based tissue overrides
+airHUlimit = 300;   % Limit between air and soft tissue in scaled HU
+huSmoothed = imboxfilt3(CTdata, 3, 'padding', 'replicate');   % Local mean CT values (cubic 3x3x3 box filter)
 
-%% 1) Eliminate small regions that have been falsely segmented as lung
-% Predefinitions
-nnOfInterest = 1;   % Set size of region
-minDist = sqrt(3);  % Set minimum distance to n.n. before elemination
+[tissueBin, cst, falseLungIdx, lungIndex] = matRad_overrideLungTissue(CTdata, tissueBin, cst, ...
+                                                                      lungStructureName, autoSegmentLung, huSmoothed, airHUlimit);
 
-airHUlimit = 300;   % Set limit for HU air value
+[tissueBin, cst, falseLungIdx] = matRad_overrideSkinLayer(CTdata, CTresolution, tissueBin, cst, ...
+                                                          cstBodyIndex, cstTargetIndex, falseLungIdx, lungIndex);
 
-lungIndex = 1;  % Find material index for lung tissue from HU interval segmentation
-while ~strcmpi(tissueBin(lungIndex).name, 'lung') && (lungIndex <= size(tissueBin, 2))
-    lungIndex = lungIndex + 1;
-end
-
-if ~strcmpi(tissueBin(lungIndex).name, 'lung')  % Check if lung tissue exists in segmented material
-    matRad_cfg.dispInfo('No lung tissue from HU segmentation process.\n');
-    lungIndex = false;
-end
-
-if ~isempty(tissueBin(lungIndex).linIndVol)
-    lungMask_HUsegmentation = zeros(size(CTdata));
-    lungMask_HUsegmentation(tissueBin(lungIndex).linIndVol) = 1;
-    falseLungIdx = [];
-else
-    matRad_cfg.dispInfo('Segmentation via HU intervals led to zero voxels with lung tissue.\n');
-    lungIndex = false;
-end
-
-dummyCube_smoothed = imboxfilt3(CTdata, 3, 'padding', 'replicate');   % Calculate local mean CT values by using cubic 3x3x3 box filter
-
-% Only process lung material in case it has been pre-segmented
+% Reassign the remaining false-lung voxels (small cavities in the body) to
+% air or soft tissue according to the locally smoothed HU
 if lungIndex
-    % Find k nearest neighbors
-    [a1, a2, a3] = ind2sub(size(lungMask_HUsegmentation), find(lungMask_HUsegmentation > 0));
-    a_ind = [a1 a2 a3];
-    b_ind = a_ind;
-    [~, dist] = knnsearch(a_ind, b_ind, 'K', 27);
-
-    % Generate mask from tissue within lung HU interval
-    lungMask_processed = zeros(size(CTdata));
-    lungMask_processed(tissueBin(lungIndex).linIndVol) = 1;
-
-    % Eleminate small pseudo-lung regions by assigning them to neighboring
-    % tissue intervals
-    eraseInd = a_ind(dist(:, nnOfInterest + 1) > minDist, :); % Number of n.n. of interest should not include voxel itself
-
-    lungMask_processed(sub2ind(size(lungMask_processed), eraseInd(:, 1), eraseInd(:, 2), eraseInd(:, 3))) = 0;
-
-    % Reassign pseudo-lung regions to tissue from surrounding HU intervals
-    for counterAdditional = 1:length(eraseInd)
-        if dummyCube_smoothed(sub2ind(size(lungMask_processed), ...
-                                      eraseInd(counterAdditional, 1), eraseInd(counterAdditional, 2), ...
-                                      eraseInd(counterAdditional, 3))) > airHUlimit
-
-            tissueBin(lungIndex + 1).linIndVol(end + 1) = sub2ind(size(lungMask_processed), ...
-                                                              eraseInd(counterAdditional, 1), ...
-                                                              eraseInd(counterAdditional, 2), ...
-                                                              eraseInd(counterAdditional, 3));
-        elseif dummyCube_smoothed(sub2ind(size(lungMask_processed), ...
-                                          eraseInd(counterAdditional, 1), ...
-                                          eraseInd(counterAdditional, 2), eraseInd(counterAdditional, 3))) <= airHUlimit
-
-            tissueBin(lungIndex - 1).linIndVol(end + 1) = sub2ind(size(lungMask_processed), ...
-                                                              eraseInd(counterAdditional, 1), ...
-                                                              eraseInd(counterAdditional, 2), ...
-                                                              eraseInd(counterAdditional, 3));
+    for counterAdditional = 1:length(falseLungIdx)
+        if huSmoothed(falseLungIdx(counterAdditional)) > airHUlimit
+            tissueBin(lungIndex + 1).linIndVol(end + 1) = falseLungIdx(counterAdditional);
+        else
+            tissueBin(lungIndex - 1).linIndVol(end + 1) = falseLungIdx(counterAdditional);
         end
     end
-
     tissueBin(lungIndex - 1).linIndVol = sort(tissueBin(lungIndex - 1).linIndVol, 1);
     tissueBin(lungIndex + 1).linIndVol = sort(tissueBin(lungIndex + 1).linIndVol, 1);
-    tissueBin(lungIndex).linIndVol = sort(find(lungMask_processed));
 
-    tissueBin(lungIndex - 1).matIndVol = [];
-    [tissueBin(lungIndex - 1).matIndVol(:, 1), tissueBin(lungIndex - 1).matIndVol(:, 2), tissueBin(lungIndex - 1).matIndVol(:, 3)] = ind2sub(size(CTdata), tissueBin(lungIndex - 1).linIndVol);
-    tissueBin(lungIndex + 1).matIndVol = [];
-    [tissueBin(lungIndex + 1).matIndVol(:, 1), tissueBin(lungIndex + 1).matIndVol(:, 2), tissueBin(lungIndex + 1).matIndVol(:, 3)] = ind2sub(size(CTdata), tissueBin(lungIndex + 1).linIndVol);
-    tissueBin(lungIndex).matIndVol = [];
-    [tissueBin(lungIndex).matIndVol(:, 1), tissueBin(lungIndex).matIndVol(:, 2), tissueBin(lungIndex).matIndVol(:, 3)] = ind2sub(size(CTdata), tissueBin(lungIndex).linIndVol);
-
-    matRad_cfg.dispInfo('%s\n', [num2str(length(find(lungMask_HUsegmentation)) - length(find(lungMask_processed))), ' voxels were redefined to be either air or soft tissue.']);
-
-    % Result: lungMask_processed: Mask smoothed lung tissue from segmentation according to HU
-    % intervals without small regions
-
-    clear lungMask_HUsegmentation;
+    matRad_cfg.dispInfo('%s\n', ['Additional ', num2str(length(falseLungIdx)), ' voxels were redefined to be either air or soft tissue.']);
 end
 
-%% 2. Find lung
-% Overwrite lung segmentation by predefined lung structure or segment
-% lung here
+[tissueBin, cst] = matRad_overrideBnctTargetMaterial(tissueBin, cst);
 
-if lungIndex
-    % Use a contoured lung structure if present, otherwise (optionally)
-    % segment the lung as the largest connected region of the HU-based lung
-    % voxels, otherwise reassign the HU-based lung voxels to soft tissue.
-    cstLungIndex = find(strcmpi(cst(:, 2), lungStructureName), 1);
-    if ~isempty(cstLungIndex)
-        lungIndRegions = cst{cstLungIndex, 4}{1};
-        matRad_cfg.dispInfo('Lung structure ''%s'' from the structure set used for tissue segmentation.\n', cst{cstLungIndex, 2});
-    elseif autoSegmentLung
-        matRad_cfg.dispInfo('No lung structure ''%s'' found, lung structure will be generated...\n', lungStructureName);
-        % Eleminate small regions before segmenting lung
-        nnOfInterest = 9;
-        minDist = sqrt(3);
-        eraseInd = a_ind(dist(:, nnOfInterest + 1) > minDist, :); % Number of n.n. of interest should not include voxel itself
-        lungMask_processed(sub2ind(size(lungMask_processed), eraseInd(:, 1), eraseInd(:, 2), eraseInd(:, 3))) = 0;
-        % Set largest connected region within body to lung
-        regionConnectivity = 6; % Region connectivity (default value for 3D: 26)
-        CC = bwconncomp(lungMask_processed, regionConnectivity);
-        stats = regionprops3(CC, 'Volume', 'VoxelIdxList');
-        [~, maxInd] = max(stats.Volume);
-        lungIndRegions = stats.VoxelIdxList{maxInd, 1};
-        % Generate matRad structure in cst variable
-        cstCounter = size(cst, 1) + 1;
-        cst{cstCounter, 1} = cstCounter - 1;
-        cst{cstCounter, 2} = 'LUNG';
-        cst{cstCounter, 3} = 'OAR';
-        cst{cstCounter, 4} = {lungIndRegions};
-        cst{cstCounter, 5}.Visible = true;
-        cst{cstCounter, 5}.Priority = 2;
+%% C) Finalize
+% Add bone to cst structure
+cstCounter = size(cst, 1) + 1;
+cst{cstCounter, 1} = cstCounter - 1;
+cst{cstCounter, 2} = 'BONE';
+cst{cstCounter, 3} = 'OAR';
+cst{cstCounter, 4} = {tissueBin(boneIndex).linIndVol};
+cst{cstCounter, 5}.Visible = true;
+cst{cstCounter, 5}.Priority = 2;
+
+% Make sure linear and sub-indices are the same
+for counterTissueBins = 1:size(tissueBin, 2)
+    tissueBin(counterTissueBins).matIndVol = [];
+    if ~isempty(tissueBin(counterTissueBins).linIndVol)
+        [tissueBin(counterTissueBins).matIndVol(:, 1), tissueBin(counterTissueBins).matIndVol(:, 2), ...
+         tissueBin(counterTissueBins).matIndVol(:, 3)] = ind2sub(size(CTdata), tissueBin(counterTissueBins).linIndVol);
+    end
+end
+
+% Check if all voxels are still assigned to a medium
+numAssignedVoxels = sum(arrayfun(@(bin) length(bin.linIndVol), tissueBin));
+
+if numAssignedVoxels > numel(CTdata)
+    matRad_cfg.dispError('Something went wrong with the segmentation process. Too many voxels after segmentation.');
+elseif numAssignedVoxels < numel(CTdata)
+    matRad_cfg.dispError('Something went wrong with the segmentation process. Voxels were lost in segmentation process.');
+else
+    matRad_cfg.dispInfo('Segmentation process performed sucessfully.\n');
+end
+
+end
+
+function [tissueBin, cst, falseLungIdx, lungIndex] = matRad_overrideLungTissue(CTdata, tissueBin, cst, ...
+                                                                               lungStructureName, autoSegmentLung, huSmoothed, airHUlimit)
+% Lung tissue override:
+% 1) eliminate small regions falsely classified as lung by the HU intervals
+%    (reassigned to air/soft tissue based on the locally smoothed HU),
+% 2) replace the HU-classified lung by a contoured lung structure if
+%    present, otherwise (optionally) auto-segment the lung as the largest
+%    connected HU-lung region, otherwise drop the HU-lung voxels.
+% Voxels removed from the lung are returned in falseLungIdx and reassigned
+% by the caller after the skin layer has been cut out; lungIndex is the
+% lung's tissue bin (false if the classification yielded no lung voxels).
+
+matRad_cfg = MatRad_Config.instance();
+
+falseLungIdx = [];
+
+% Find material index for lung tissue from HU interval segmentation
+lungIndex = find(strcmpi({tissueBin.name}, 'lung'), 1);
+if isempty(lungIndex)
+    matRad_cfg.dispInfo('No lung tissue from HU segmentation process.\n');
+    lungIndex = false;
+    return
+end
+
+if isempty(tissueBin(lungIndex).linIndVol)
+    matRad_cfg.dispInfo('Segmentation via HU intervals led to zero voxels with lung tissue.\n');
+    lungIndex = false;
+    return
+end
+
+%% 1) Eliminate small regions that have been falsely segmented as lung
+nnOfInterest = 1;   % Set size of region
+minDist = sqrt(3);  % Set minimum distance to n.n. before elimination
+
+lungMask_HUsegmentation = zeros(size(CTdata));
+lungMask_HUsegmentation(tissueBin(lungIndex).linIndVol) = 1;
+
+% Find k nearest neighbors
+[a1, a2, a3] = ind2sub(size(lungMask_HUsegmentation), find(lungMask_HUsegmentation > 0));
+a_ind = [a1 a2 a3];
+[~, dist] = knnsearch(a_ind, a_ind, 'K', 27);
+
+% Generate mask from tissue within lung HU interval
+lungMask_processed = lungMask_HUsegmentation;
+
+% Eliminate small pseudo-lung regions by assigning them to neighboring
+% tissue intervals
+eraseInd = a_ind(dist(:, nnOfInterest + 1) > minDist, :); % Number of n.n. of interest should not include voxel itself
+eraseLinInd = sub2ind(size(lungMask_processed), eraseInd(:, 1), eraseInd(:, 2), eraseInd(:, 3));
+lungMask_processed(eraseLinInd) = 0;
+
+% Reassign pseudo-lung regions to tissue from surrounding HU intervals
+for counterAdditional = 1:length(eraseLinInd)
+    if huSmoothed(eraseLinInd(counterAdditional)) > airHUlimit
+        tissueBin(lungIndex + 1).linIndVol(end + 1) = eraseLinInd(counterAdditional);
     else
-        matRad_cfg.dispInfo('No lung structure ''%s'' found. All voxels in the HU interval for lung will be redefined as soft tissue.\n', lungStructureName);
-        matRad_cfg.dispInfo('Set the dose engine property lungStructureName or enable autoSegmentLung to segment the lung.\n');
-        lungIndRegions = [];
-    end
-
-    falseLungIdx = setxor(tissueBin(lungIndex).linIndVol, lungIndRegions);
-    tissueBin(lungIndex).linIndVol = lungIndRegions;
-    tissueBin(lungIndex).matIndVol = [];
-    if ~isempty(lungIndRegions)
-        [tissueBin(lungIndex).matIndVol(:, 1), tissueBin(lungIndex).matIndVol(:, 2), tissueBin(lungIndex).matIndVol(:, 3)] = ind2sub(size(CTdata), tissueBin(lungIndex).linIndVol);
+        tissueBin(lungIndex - 1).linIndVol(end + 1) = eraseLinInd(counterAdditional);
     end
 end
 
-% Result: lungMask_final: Mask for segmented lung
+tissueBin(lungIndex - 1).linIndVol = sort(tissueBin(lungIndex - 1).linIndVol, 1);
+tissueBin(lungIndex + 1).linIndVol = sort(tissueBin(lungIndex + 1).linIndVol, 1);
+tissueBin(lungIndex).linIndVol = sort(find(lungMask_processed));
 
-%% 3. Find body surface
+matRad_cfg.dispInfo('%s\n', [num2str(length(find(lungMask_HUsegmentation)) - length(find(lungMask_processed))), ...
+                             ' voxels were redefined to be either air or soft tissue.']);
+
+%% 2) Assign the lung from a contoured structure or by auto-segmentation
+cstLungIndex = find(strcmpi(cst(:, 2), lungStructureName), 1);
+if ~isempty(cstLungIndex)
+    lungIndRegions = cst{cstLungIndex, 4}{1};
+    matRad_cfg.dispInfo('Lung structure ''%s'' from the structure set used for tissue segmentation.\n', cst{cstLungIndex, 2});
+elseif autoSegmentLung
+    matRad_cfg.dispInfo('No lung structure ''%s'' found, lung structure will be generated...\n', lungStructureName);
+    % Eliminate small regions before segmenting lung
+    nnOfInterest = 9;
+    eraseInd = a_ind(dist(:, nnOfInterest + 1) > minDist, :); % Number of n.n. of interest should not include voxel itself
+    lungMask_processed(sub2ind(size(lungMask_processed), eraseInd(:, 1), eraseInd(:, 2), eraseInd(:, 3))) = 0;
+    % Set largest connected region within body to lung
+    regionConnectivity = 6; % Region connectivity (default value for 3D: 26)
+    CC = bwconncomp(lungMask_processed, regionConnectivity);
+    stats = regionprops3(CC, 'Volume', 'VoxelIdxList');
+    [~, maxInd] = max(stats.Volume);
+    lungIndRegions = stats.VoxelIdxList{maxInd, 1};
+    % Generate matRad structure in cst variable
+    cstCounter = size(cst, 1) + 1;
+    cst{cstCounter, 1} = cstCounter - 1;
+    cst{cstCounter, 2} = 'LUNG';
+    cst{cstCounter, 3} = 'OAR';
+    cst{cstCounter, 4} = {lungIndRegions};
+    cst{cstCounter, 5}.Visible = true;
+    cst{cstCounter, 5}.Priority = 2;
+else
+    matRad_cfg.dispInfo(['No lung structure ''%s'' found. ' ...
+                         'All voxels in the HU interval for lung will be redefined as soft tissue.\n'], lungStructureName);
+    matRad_cfg.dispInfo('Set the dose engine property lungStructureName or enable autoSegmentLung to segment the lung.\n');
+    lungIndRegions = [];
+end
+
+% Voxels that are no longer lung are reassigned later by the caller;
+% voxels that newly became lung have to leave their previous tissue bin
+falseLungIdx = setdiff(tissueBin(lungIndex).linIndVol, lungIndRegions);
+for binCounter = 1:size(tissueBin, 2)
+    if binCounter ~= lungIndex
+        tissueBin(binCounter).linIndVol = setdiff(tissueBin(binCounter).linIndVol, lungIndRegions);
+    end
+end
+tissueBin(lungIndex).linIndVol = lungIndRegions;
+
+end
+
+function [tissueBin, cst, falseLungIdx] = matRad_overrideSkinLayer(CTdata, CTresolution, tissueBin, cst, ...
+                                                                   cstBodyIndex, cstTargetIndex, falseLungIdx, lungIndex)
+% Skin override: finds the hull of the body structure, grows a skin layer
+% of skinThick mm inside it, adds the layer as an own tissue bin (and SKIN
+% structure in cst) and removes its voxels from all other tissue bins as
+% well as from the false-lung voxels still awaiting reassignment.
+
+matRad_cfg = MatRad_Config.instance();
+
+skinThick = 1; % Skin thickness [mm]
+
 % Generate body mask
 dummyMask_bodyStruct = zeros(size(CTdata));
 bodyIdx = [cst{sort([cstTargetIndex, cstBodyIndex]), 4}];
 bodyIdx = unique(vertcat(bodyIdx{:}));
-
-dummyMask_bodyStruct(bodyIdx) = 1; % cst{cstBodyIndex,4}{1} contains body
-
-% Find minimum and maximum z values of body axis
-[yAxis, ~, zAxis] = ind2sub(size(dummyMask_bodyStruct), find(dummyMask_bodyStruct));
-maxZ = max(zAxis);
-minZ = min(zAxis);
-
-maxY = max(yAxis);
-minY = min(yAxis);
-
-% Find body surface
-dummyMask_bodyHull = zeros(size(CTdata));
-
-hullIdx = zeros(length(cst{cstBodyIndex, 4}{1}), 3);
-hullCounter = 1;
-
-for zCounter = minZ:maxZ
-    stats = regionprops(bwconncomp(squeeze(dummyMask_bodyStruct(:, :, zCounter))), 'Centroid', 'PixelIdxList');
-    for objectCounter = 1:size(stats, 1)
-        dummyImage = zeros(size(squeeze(dummyMask_bodyStruct(:, :, zCounter))));
-        dummyImage(stats(objectCounter).PixelIdxList) = 1;
-        for counter1 = 1:size(dummyImage, 1)
-            ind1 = find(dummyImage(counter1, :));
-            if ~isempty(ind1) && numel(ind1) > 2
-                hullIdx(hullCounter, :) = [counter1, min(ind1), zCounter];
-                hullCounter = hullCounter + 1;
-                hullIdx(hullCounter, :) = [counter1, max(ind1), zCounter];
-                hullCounter = hullCounter + 1;
-            elseif ~isempty(ind1) && numel(ind1) == 2
-                hullIdx(hullCounter, :) = [counter1, min(ind1), zCounter];
-                hullCounter = hullCounter + 1;
-                hullIdx(hullCounter, :) = [counter1, max(ind1), zCounter];
-                hullCounter = hullCounter + 1;
-            elseif ~isempty(ind1) && numel(ind1) == 1
-                hullIdx(hullCounter, :) = [counter1, min(ind1), zCounter];
-            end
-        end
-        for counter2 = 1:size(dummyImage, 2)
-            ind1 = find(dummyImage(:, counter2));
-            if ~isempty(ind1) && numel(ind1) > 2
-                hullIdx(hullCounter, :) = [min(ind1), counter2, zCounter];
-                hullCounter = hullCounter + 1;
-                hullIdx(hullCounter, :) = [max(ind1), counter2, zCounter];
-                hullCounter = hullCounter + 1;
-            elseif ~isempty(ind1) && numel(ind1) == 2
-                hullIdx(hullCounter, :) = [min(ind1), counter2, zCounter];
-                hullCounter = hullCounter + 1;
-                hullIdx(hullCounter, :) = [max(ind1), counter2, zCounter];
-                hullCounter = hullCounter + 1;
-            elseif ~isempty(ind1) && numel(ind1) == 1
-                hullIdx(hullCounter, :) = [min(ind1), counter2, zCounter];
-            end
-
-        end
-    end
-end
-
-for yCounter = minY:maxY
-    stats = regionprops(bwconncomp(squeeze(dummyMask_bodyStruct(yCounter, :, :))), 'Centroid', 'PixelIdxList');
-    for objectCounter = 1:size(stats, 1)
-        dummyImage = zeros(size(squeeze(dummyMask_bodyStruct(yCounter, :, :))));
-        dummyImage(stats(objectCounter).PixelIdxList) = 1;
-        for counter1 = 1:size(dummyImage, 1)
-            ind1 = find(dummyImage(counter1, :));
-            if ~isempty(ind1) && numel(ind1) > 2
-                hullIdx(hullCounter, :) = [yCounter, counter1, min(ind1)];
-                hullCounter = hullCounter + 1;
-                hullIdx(hullCounter, :) = [yCounter, counter1, max(ind1)];
-                hullCounter = hullCounter + 1;
-
-            elseif ~isempty(ind1) && numel(ind1) == 2
-                hullIdx(hullCounter, :) = [yCounter, counter1, min(ind1)];
-                hullCounter = hullCounter + 1;
-                hullIdx(hullCounter, :) = [yCounter, counter1, max(ind1)];
-                hullCounter = hullCounter + 1;
-            elseif ~isempty(ind1) && numel(ind1) == 1
-                hullIdx(hullCounter, :) = [yCounter, counter1, min(ind1)];
-            end
-
-        end
-        for counter2 = 1:size(dummyImage, 2)
-            ind1 = find(dummyImage(:, counter2));
-            if ~isempty(ind1) && numel(ind1) > 2
-                hullIdx(hullCounter, :) = [yCounter, min(ind1), counter2];
-                hullCounter = hullCounter + 1;
-                hullIdx(hullCounter, :) = [yCounter, max(ind1), counter2];
-                hullCounter = hullCounter + 1;
-
-            elseif ~isempty(ind1) && numel(ind1) == 2
-                hullIdx(hullCounter, :) = [yCounter, min(ind1), counter2];
-                hullCounter = hullCounter + 1;
-
-                hullIdx(hullCounter, :) = [yCounter, max(ind1), counter2];
-                hullCounter = hullCounter + 1;
-
-            elseif ~isempty(ind1) && numel(ind1) == 1
-                hullIdx(hullCounter, :) = [yCounter, min(ind1), counter2];
-
-            end
-
-        end
-    end
-end
-%
-hullIdx_2 = nonzeros(hullIdx);
-hullIdx_2 = reshape(hullIdx_2, [length(hullIdx_2) / 3, 3]);
-
-linHullIdx = sub2ind(size(dummyMask_bodyHull), hullIdx_2(:, 1), hullIdx_2(:, 2), hullIdx_2(:, 3));
-
-dummyMask_bodyHull(linHullIdx) = 1;
-
-% Result: dummyMask_bodyStruct: Mask of body structure; dummyMask_bodyHull: Mask of hull of
-% body structure
-
-%% 4. Enlarge body hull for skin segmentation
-
-% Set skin thickness
-skinThick = 1; % [mm]
+dummyMask_bodyStruct(bodyIdx) = 1;
 
 if skinThick > 0
     matRad_cfg.dispInfo('*****\n');
     matRad_cfg.dispInfo('%s\n', ['Skin thickness has been set to: ', num2str(skinThick), ' mm.']);
     matRad_cfg.dispInfo('*****\n');
-    % Find k nearest neigbors of hull within body
-    % Define indices of hull
-    [a1, a2, a3] = ind2sub(size(dummyMask_bodyHull), find(dummyMask_bodyHull > 0));
 
-    a1 = a1 * CTresolution.y - CTresolution.y / 2;    % Rescale according to CT resolution s.th. origin is in voxel center
-    a2 = a2 * CTresolution.x - CTresolution.x / 2;
-    a3 = a3 * CTresolution.z - CTresolution.z / 2;
-    a_ind = [a1 a2 a3];
+    % Find the hull of the body structure
+    linHullIdx = matRad_findBodyHull(dummyMask_bodyStruct);
 
-    % Define body indices
+    % Find k nearest neighbors of hull within body,
+    % rescaled according to CT resolution s.th. origin is in voxel center
+    [a1, a2, a3] = ind2sub(size(dummyMask_bodyStruct), linHullIdx);
+    a_ind = [a1 * CTresolution.y - CTresolution.y / 2, ...
+             a2 * CTresolution.x - CTresolution.x / 2, ...
+             a3 * CTresolution.z - CTresolution.z / 2];
+
     [b1, b2, b3] = ind2sub(size(dummyMask_bodyStruct), find(dummyMask_bodyStruct > 0));
-
-    b1 = b1 * CTresolution.y - CTresolution.y / 2;    % Rescale according to CT resolution
-    b2 = b2 * CTresolution.x - CTresolution.x / 2;
-    b3 = b3 * CTresolution.z - CTresolution.z / 2;
-    b_ind = [b1 b2 b3];
+    b_ind = [b1 * CTresolution.y - CTresolution.y / 2, ...
+             b2 * CTresolution.x - CTresolution.x / 2, ...
+             b3 * CTresolution.z - CTresolution.z / 2];
 
     % Find neighbors and define mask
     [idx, dist] = knnsearch(b_ind, a_ind, 'K', 5000);
@@ -391,15 +302,10 @@ if skinThick > 0
         skinInd(:, 3) = (skinInd(:, 3) + CTresolution.z / 2) / CTresolution.z;
 
         dummyMask_skin(sub2ind(size(dummyMask_bodyStruct), skinInd(:, 1), skinInd(:, 2), skinInd(:, 3))) = 1;
-        clear skinInd;
     end
 
     % Exclude presegmented air from skin segment
-    airIndex = 1;  % Find material index for lung tissue from HU interval segmentation
-    while ~strcmp(tissueBin(airIndex).name, 'air')
-        airIndex = airIndex + 1;
-    end
-
+    airIndex = find(strcmp({tissueBin.name}, 'air'), 1);
     linSkinIdx = find(dummyMask_skin);
     idxSurfAir = intersect(linSkinIdx, tissueBin(airIndex).linIndVol);
     dummyMask_skin(idxSurfAir) = 0;
@@ -410,20 +316,15 @@ if skinThick > 0
     tissueBin(skinBinIdx).matIndex = skinBinIdx;
     tissueBin(skinBinIdx).linIndVol = find(dummyMask_skin);
 
-    [dumIdx1, dumIdx2, dumIdx3] = ind2sub(size(dummyMask_skin), tissueBin(skinBinIdx).linIndVol);
-    tissueBin(skinBinIdx).matIndVol = [dumIdx1 dumIdx2 dumIdx3];
-
-    % Remove skin from other tissue bins
-    % Start with voxel uncorrectly assigend to lung
+    % Remove skin from the false-lung voxels awaiting reassignment
     if lungIndex    % Only in case lung has been segmented using HU intervals
         falseLungIdx = setxor(falseLungIdx, intersect(falseLungIdx, tissueBin(skinBinIdx).linIndVol));
     end
 
     % Remove skin segment from remaining tissue segments
     for binCounter = 1:size(tissueBin, 2) - 1
-        tissueBin(binCounter).linIndVol = setxor(tissueBin(binCounter).linIndVol, intersect(tissueBin(binCounter).linIndVol, tissueBin(skinBinIdx).linIndVol));
-        [dumIdx1, dumIdx2, dumIdx3] = ind2sub(size(dummyMask_skin), tissueBin(binCounter).linIndVol);
-        tissueBin(binCounter).matIndVol = [dumIdx1, dumIdx2, dumIdx3];
+        tissueBin(binCounter).linIndVol = setxor(tissueBin(binCounter).linIndVol, ...
+                                                 intersect(tissueBin(binCounter).linIndVol, tissueBin(skinBinIdx).linIndVol));
     end
 
     % Generate matRad structure in cst variable
@@ -434,9 +335,8 @@ if skinThick > 0
     cst{cstCounter, 4} = {tissueBin(skinBinIdx).linIndVol};
     cst{cstCounter, 5}.Visible = true;
     cst{cstCounter, 5}.Priority = 2;
-
-elseif skinThick == 0
-    % Add skin as tissue type
+else
+    % Add (empty) skin as tissue type
     skinBinIdx = size(tissueBin, 2) + 1;
     tissueBin(skinBinIdx).name = 'skin';
     tissueBin(skinBinIdx).matIndex = skinBinIdx;
@@ -444,125 +344,126 @@ elseif skinThick == 0
     tissueBin(skinBinIdx).matIndVol = [];
 end
 
-% Result: dummyMask_skin: Mask of skin structure
+end
 
-%% 5. Find small cavities in body and process surrounding tissue
+function linHullIdx = matRad_findBodyHull(bodyMask)
+% Finds the hull of a 3D mask by marking, slice-wise in two orientations,
+% the first and last voxel of every mask row and column. Returns the linear
+% indices of the hull voxels.
 
-if lungIndex    % Only in case lung has been segmented using HU intervals
-    falseLungIdx = intersect(falseLungIdx, setxor(falseLungIdx, tissueBin(skinBinIdx).linIndVol));
-    dummyMask_falseLungToProcess = zeros(size(CTdata));
-    dummyMask_falseLungToProcess(falseLungIdx) = 1;
+[yAxis, ~, zAxis] = ind2sub(size(bodyMask), find(bodyMask));
+minZ = min(zAxis);
+maxZ = max(zAxis);
+minY = min(yAxis);
+maxY = max(yAxis);
 
-    % Reassign pseudo-lung regions to another tissue
-    for counterAdditional = 1:length(falseLungIdx)
-        if dummyCube_smoothed(falseLungIdx(counterAdditional)) > airHUlimit
-            tissueBin(lungIndex + 1).linIndVol(end + 1) = falseLungIdx(counterAdditional);
-        elseif dummyCube_smoothed(falseLungIdx(counterAdditional)) <= airHUlimit
-            tissueBin(lungIndex - 1).linIndVol(end + 1) = falseLungIdx(counterAdditional);
+hullIdx = zeros(nnz(bodyMask), 3);
+hullCounter = 1;
+
+% Transversal slices: scan rows and columns of every connected object
+for zCounter = minZ:maxZ
+    stats = regionprops(bwconncomp(squeeze(bodyMask(:, :, zCounter))), 'PixelIdxList');
+    for objectCounter = 1:size(stats, 1)
+        dummyImage = zeros(size(squeeze(bodyMask(:, :, zCounter))));
+        dummyImage(stats(objectCounter).PixelIdxList) = 1;
+        for counter1 = 1:size(dummyImage, 1)
+            [hullIdx, hullCounter] = matRad_markRowEnds(hullIdx, hullCounter, find(dummyImage(counter1, :)), @(i) [counter1, i, zCounter]);
+        end
+        for counter2 = 1:size(dummyImage, 2)
+            [hullIdx, hullCounter] = matRad_markRowEnds(hullIdx, hullCounter, find(dummyImage(:, counter2)), @(i) [i, counter2, zCounter]);
         end
     end
+end
 
-    tissueBin(lungIndex - 1).linIndVol = sort(tissueBin(lungIndex - 1).linIndVol, 1);
-    tissueBin(lungIndex - 1).matIndVol = [];
-    [tissueBin(lungIndex - 1).matIndVol(:, 1), tissueBin(lungIndex - 1).matIndVol(:, 2), tissueBin(lungIndex - 1).matIndVol(:, 3)] = ind2sub(size(CTdata), tissueBin(lungIndex - 1).linIndVol);
+% Coronal slices
+for yCounter = minY:maxY
+    stats = regionprops(bwconncomp(squeeze(bodyMask(yCounter, :, :))), 'PixelIdxList');
+    for objectCounter = 1:size(stats, 1)
+        dummyImage = zeros(size(squeeze(bodyMask(yCounter, :, :))));
+        dummyImage(stats(objectCounter).PixelIdxList) = 1;
+        for counter1 = 1:size(dummyImage, 1)
+            [hullIdx, hullCounter] = matRad_markRowEnds(hullIdx, hullCounter, find(dummyImage(counter1, :)), @(i) [yCounter, counter1, i]);
+        end
+        for counter2 = 1:size(dummyImage, 2)
+            [hullIdx, hullCounter] = matRad_markRowEnds(hullIdx, hullCounter, find(dummyImage(:, counter2)), @(i) [yCounter, i, counter2]);
+        end
+    end
+end
 
-    tissueBin(lungIndex + 1).linIndVol = sort(tissueBin(lungIndex + 1).linIndVol, 1);
-    tissueBin(lungIndex + 1).matIndVol = [];
-    [tissueBin(lungIndex + 1).matIndVol(:, 1), tissueBin(lungIndex + 1).matIndVol(:, 2), tissueBin(lungIndex + 1).matIndVol(:, 3)] = ind2sub(size(CTdata), tissueBin(lungIndex + 1).linIndVol);
-
-    matRad_cfg.dispInfo('%s\n', ['Additional ', num2str(length(falseLungIdx)), ' voxels were redefined to be either air or soft tissue.']);
+hullIdx = hullIdx(1:hullCounter - 1, :);
+linHullIdx = unique(sub2ind(size(bodyMask), hullIdx(:, 1), hullIdx(:, 2), hullIdx(:, 3)));
 
 end
 
-%% 6. Find BNCT
+function [hullIdx, hullCounter] = matRad_markRowEnds(hullIdx, hullCounter, ind1, coordFun)
+% Adds the first and last index of a mask row/column (given by coordFun) to
+% the hull index list
+
+if isempty(ind1)
+    return
+end
+
+hullIdx(hullCounter, :) = coordFun(min(ind1));
+hullCounter = hullCounter + 1;
+if numel(ind1) > 1
+    hullIdx(hullCounter, :) = coordFun(max(ind1));
+    hullCounter = hullCounter + 1;
+end
+
+end
+
+function [tissueBin, cst] = matRad_overrideBnctTargetMaterial(tissueBin, cst)
+% BNCT override: if a structure named 'PTV_BNCT' is contoured, its soft
+% tissue and skin voxels are moved into an own tissue bin 'bnct_material'
+% (soft tissue with the B-10 loading defined in the last binIntervals
+% entry); voxels of other tissues (e.g. bone) are cut from the PTV instead.
+
+matRad_cfg = MatRad_Config.instance();
+
 matRad_cfg.dispInfo('*****\n');
 matRad_cfg.dispInfo('In case you wish to simulate BNCT irradiation make sure the PTV is called PTV_BNCT.\n');
 matRad_cfg.dispInfo('*****\n');
 matRad_cfg.dispInfo('Checking for PTV...\n');
 
-% Find BNCT PTV
-for cstCounter = 1:size(cst, 1)
-    if strcmpi(cst{cstCounter, 2}, 'PTV_BNCT')
-        matRad_cfg.dispInfo('*****\n');
-        matRad_cfg.dispInfo('PTV for BNCT detected. PTV will be filled with soft tissu and B-10 density specified in segmentation variable.\n');
-        matRad_cfg.dispInfo('*****\n');
+bnct_cstIndex = find(strcmpi(cst(:, 2), 'PTV_BNCT'), 1);
 
-        bnct_Control = true;
-        bnct_cstIndex = cstCounter;
-    else
-        continue
-    end
-end
+bnctBinIdx = size(tissueBin, 2) + 1;
+tissueBin(bnctBinIdx).name = 'bnct_material';
+tissueBin(bnctBinIdx).matIndex = bnctBinIdx;
+tissueBin(bnctBinIdx).linIndVol = [];
 
-% Process BNCT volume and generate specific material with B-10 for MCNP
-% simulation
-if exist('bnct_Control') && bnct_Control
-    lindInd_PTV_BNCT = cst{bnct_cstIndex, 4};
-    for tissueBin_counter = 1:size(tissueBin, 2)
-        if ~strcmpi(tissueBin(tissueBin_counter).name, 'softTissue') && ~strcmpi(tissueBin(tissueBin_counter).name, 'skin')
-            dummyIntersect = intersect(lindInd_PTV_BNCT{1}, tissueBin(tissueBin_counter).linIndVol);
-            if ~isempty(dummyIntersect)
-                lindInd_PTV_BNCT{1} = setxor(lindInd_PTV_BNCT{1}, dummyIntersect);
-                matRad_cfg.dispInfo('*****\n');
-                matRad_cfg.dispInfo('%s\n', [num2str(numel(dummyIntersect)), ' from ', tissueBin(tissueBin_counter).name, ' voxels were cut from PTV_BNCT.']);
-                matRad_cfg.dispInfo('*****\n');
-            end
-        elseif strcmpi(tissueBin(tissueBin_counter).name, 'softTissue') || strcmpi(tissueBin(tissueBin_counter).name, 'skin')
-            dummyIntersect = intersect(lindInd_PTV_BNCT{1}, tissueBin(tissueBin_counter).linIndVol);
-            if ~isempty(dummyIntersect)
-                tissueBin(tissueBin_counter).linIndVol = setxor(tissueBin(tissueBin_counter).linIndVol, dummyIntersect);
-                matRad_cfg.dispInfo('*****\n');
-                matRad_cfg.dispInfo('%s\n', [num2str(numel(dummyIntersect)), ' from ', tissueBin(tissueBin_counter).name, ' voxels were cut from ', tissueBin(tissueBin_counter).name, ' and associated to PTV_BNCT.']);
-                matRad_cfg.dispInfo('*****\n');
-            end
-        end
-
-    end
-    tissueBin(size(tissueBin, 2) + 1).name = 'bnct_material';
-    tissueBin(size(tissueBin, 2)).matIndex = size(tissueBin, 2);
-    tissueBin(size(tissueBin, 2)).linIndVol = lindInd_PTV_BNCT{1};
-    [dumIdx1, dumIdx2, dumIdx3] = ind2sub(size(CTdata), lindInd_PTV_BNCT{1});
-    tissueBin(size(tissueBin, 2)).matIndVol = [dumIdx1, dumIdx2, dumIdx3];
-elseif ~exist('bnct_Control')
+if isempty(bnct_cstIndex)
     matRad_cfg.dispInfo('*****\n');
     matRad_cfg.dispInfo('No PTV for BNCT detected.\n');
     matRad_cfg.dispInfo('*****\n');
-    % Add bnct tissue as tissue type
-    bnctBinIdx = size(tissueBin, 2) + 1;
-    tissueBin(bnctBinIdx).name = 'bnct_material';
-    tissueBin(bnctBinIdx).matIndex = bnctBinIdx;
-    tissueBin(bnctBinIdx).linIndVol = [];
-    tissueBin(bnctBinIdx).matIndVol = [];
+    return
 end
 
-%% Appendix: add bone to cst structure
-% Generate matRad structure in cst variable
-cstCounter = size(cst, 1) + 1;
-cst{cstCounter, 1} = cstCounter - 1;
-cst{cstCounter, 2} = 'BONE';
-cst{cstCounter, 3} = 'OAR';
-cst{cstCounter, 4} = {tissueBin(boneIndex).linIndVol};
-cst{cstCounter, 5}.Visible = true;
-cst{cstCounter, 5}.Priority = 2;
+matRad_cfg.dispInfo('*****\n');
+matRad_cfg.dispInfo('PTV for BNCT detected. PTV will be filled with soft tissue and B-10 density specified in segmentation variable.\n');
+matRad_cfg.dispInfo('*****\n');
 
-% Make sure linear and sub-indices are the same
-for counterTissueBins = 1:size(tissueBin, 2)
-    tissueBin(counterTissueBins).matIndVol = [];
-    if ~isempty(tissueBin(counterTissueBins).linIndVol)
-        [tissueBin(counterTissueBins).matIndVol(:, 1), tissueBin(counterTissueBins).matIndVol(:, 2), tissueBin(counterTissueBins).matIndVol(:, 3)] = ind2sub(size(CTdata), tissueBin(counterTissueBins).linIndVol);
+lindInd_PTV_BNCT = cst{bnct_cstIndex, 4}{1};
+for tissueBin_counter = 1:bnctBinIdx - 1
+    isSoftOrSkin = strcmpi(tissueBin(tissueBin_counter).name, 'softTissue') || ...
+                   strcmpi(tissueBin(tissueBin_counter).name, 'skin');
+    dummyIntersect = intersect(lindInd_PTV_BNCT, tissueBin(tissueBin_counter).linIndVol);
+    if isempty(dummyIntersect)
+        continue
+    end
+
+    if isSoftOrSkin
+        % Move soft tissue/skin voxels from their bin into the BNCT material
+        tissueBin(tissueBin_counter).linIndVol = setxor(tissueBin(tissueBin_counter).linIndVol, dummyIntersect);
+        matRad_cfg.dispInfo('%s\n', [num2str(numel(dummyIntersect)), ' from ', tissueBin(tissueBin_counter).name, ...
+                                     ' voxels were cut from ', tissueBin(tissueBin_counter).name, ' and associated to the BNCT material.']);
+    else
+        % Other tissues (e.g. bone) are cut from the PTV instead
+        lindInd_PTV_BNCT = setxor(lindInd_PTV_BNCT, dummyIntersect);
+        matRad_cfg.dispInfo('%s\n', [num2str(numel(dummyIntersect)), ' from ', tissueBin(tissueBin_counter).name, ' voxels were cut from PTV_BNCT.']);
     end
 end
 
-%% Check if all voxels are still assigned to a medium
-dummyVoxelSum = 0;
-for checkerC = 1:size(tissueBin, 2)
-    dummyVoxelSum = dummyVoxelSum + length(tissueBin(checkerC).linIndVol);
-end
+tissueBin(bnctBinIdx).linIndVol = lindInd_PTV_BNCT;
 
-if dummyVoxelSum > numel(CTdata)
-    matRad_cfg.dispError('Something went wrong with the segmentation process. Too many voxels after segmentation.');
-elseif dummyVoxelSum < numel(CTdata)
-    matRad_cfg.dispError('Something went wrong with the segmentation process. Voxels were lost in segmentation process.');
-else
-    matRad_cfg.dispInfo('Segmentation process performed sucessfully.\n');
 end
