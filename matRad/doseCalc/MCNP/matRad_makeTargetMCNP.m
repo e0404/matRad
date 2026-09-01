@@ -17,7 +17,7 @@ function [control_makeTargetMCNP, fileID_A, fileID_B, geometryOption] = matRad_m
 %   fileID_A/B:     File IDs to control block A and B txt-files
 %
 % References
-%   [1] PELOWITZ, D. B., et al. MCNP6 User’s Manual. LACP-00634, May, 2013.
+%   [1] PELOWITZ, D. B., et al. MCNP6 User's Manual. LACP-00634, May, 2013.
 %
 % Author: Lucas Sommer (Lucas.Sommer@tum.de), 11/2018
 %

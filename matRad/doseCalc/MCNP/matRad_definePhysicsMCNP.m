@@ -15,7 +15,7 @@ function matRad_definePhysicsMCNP(fileID_C_rest, this, binIntervals, simPropMCNP
 %   none
 %
 % References
-%   [1] PELOWITZ, D. B., et al. MCNP6 User’s Manual. LACP-00634, May, 2013.
+%   [1] PELOWITZ, D. B., et al. MCNP6 User's Manual. LACP-00634, May, 2013.
 %
 % Author: Lucas Sommer (Lucas.Sommer@tum.de), 12/2018
 %

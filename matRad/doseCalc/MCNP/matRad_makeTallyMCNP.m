@@ -10,7 +10,7 @@ function matRad_makeTallyMCNP(this, ct, fileID_C_rest, binIntervals)
 % output:
 %
 % References
-%   [1] PELOWITZ, D. B., et al. MCNP6 User’s Manual. LACP-00634, May, 2013.
+%   [1] PELOWITZ, D. B., et al. MCNP6 User's Manual. LACP-00634, May, 2013.
 %
 % Author: Lucas Sommer (Lucas.Sommer@tum.de), 11/2018
 %
