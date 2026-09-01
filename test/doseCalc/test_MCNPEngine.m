@@ -77,6 +77,69 @@ assertTrue(numel(dir(fullfile(runDir, 'runAll.*'))) == 1);
 assertEqual(size(dij.physicalDose{1}), [dij.doseGrid.numOfVoxels, dij.totalNumOfBixels]);
 assertEqual(nnz(dij.physicalDose{1}), 0);
 
+function test_writeRunFilesGenericMachine
+% The Generic (MEDAPP) machine carries both a neutron and a photon spectrum
+% and thus exercises the mixed-field source writer
+requiredFuncs = {'imboxfilt3', 'knnsearch', 'bwconncomp'};
+if any(cellfun(@(f) isempty(which(f)), requiredFuncs))
+    moxunit_throw_test_skipped_exception('Image processing/statistics functions required for the tissue segmentation not available');
+end
+
+[ct, cst, stf, pln] = helper_mcnpTestCase();
+pln.machine = 'Generic';
+stf = matRad_generateStf(ct, cst, pln);
+
+engine = DoseEngines.matRad_NeutronMCNPEngine(pln);
+engine.externalCalculation = 'write';
+engine.useDICOMinfoRescale = false;
+engine.workingDir = helper_temporaryFolder('testMCNPGeneric', true);
+
+dij = engine.calcDoseInfluence(ct, cst, stf);
+
+runFiles = dir(fullfile(engine.workingDir, 'runfiles', 'MCNPrunfile_*bixel'));
+assertEqual(numel(runFiles), dij.totalNumOfBixels);
+
+function test_evaluateExternalResults
+% Read back externally calculated results: write the run files, fabricate a
+% TMESH tally result file per bixel and evaluate them via the folder mode of
+% externalCalculation
+requiredFuncs = {'imboxfilt3', 'knnsearch', 'bwconncomp'};
+if any(cellfun(@(f) isempty(which(f)), requiredFuncs))
+    moxunit_throw_test_skipped_exception('Image processing/statistics functions required for the tissue segmentation not available');
+end
+
+[ct, cst, stf, pln] = helper_mcnpTestCase();
+
+engine = DoseEngines.matRad_NeutronMCNPEngine(pln);
+engine.externalCalculation = 'write';
+engine.useDICOMinfoRescale = false;
+engine.workingDir = helper_temporaryFolder('testMCNPEval', true);
+dij = engine.calcDoseInfluence(ct, cst, stf);
+
+% Fabricate a mesh tally result (dose / relative error pairs) for each bixel
+resultDir = fullfile(engine.workingDir, 'results');
+mkdir(resultDir);
+nVox = prod(dij.doseGrid.dimensions);
+vals = [ones(1, nVox); 0.01 * ones(1, nVox)];
+for b = 1:dij.totalNumOfBixels
+    fid = fopen(fullfile(resultDir, sprintf('MCNPrunfile_%dbixelm', b)), 'w');
+    fprintf(fid, 'mctal dump\nvals    \n 0 0\ntally    3\nvals    \n');
+    fprintf(fid, ' %g %g\n', vals);
+    fprintf(fid, 'tfc\n');
+    fclose(fid);
+end
+
+engineEval = DoseEngines.matRad_NeutronMCNPEngine(pln);
+engineEval.externalCalculation = resultDir;
+engineEval.useDICOMinfoRescale = false;
+engineEval.workingDir = helper_temporaryFolder('testMCNPEval2', true);
+dijEval = engineEval.calcDoseInfluence(ct, cst, stf);
+
+assertEqual(size(dijEval.physicalDose{1}), [nVox, dij.totalNumOfBixels]);
+assertTrue(nnz(dijEval.physicalDose{1}) > 0);
+% dose is normalized to its maximum during evaluation
+assertElementsAlmostEqual(full(max(dijEval.physicalDose{1}(:))), 1, 'relative', 1e-6);
+
 function test_missingBodyStructure
 [ct, cst, stf, pln] = helper_mcnpTestCase();
 cst{1, 2} = 'Patient';
