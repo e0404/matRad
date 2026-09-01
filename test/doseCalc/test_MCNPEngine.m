@@ -51,8 +51,11 @@ engine = DoseEngines.matRad_DoseEngineBase.getEngineFromPln(pln);
 assertEqual(engine.constantRBE, 4);
 
 function test_writeRunFiles
-if ~license('test', 'image_toolbox')
-    moxunit_throw_test_skipped_exception('Image Processing Toolbox required for the tissue segmentation');
+% The tissue segmentation needs image processing and statistics functions
+% that may be unavailable (e.g. Octave without the respective packages)
+requiredFuncs = {'imboxfilt3', 'knnsearch', 'bwconncomp'};
+if any(cellfun(@(f) isempty(which(f)), requiredFuncs))
+    moxunit_throw_test_skipped_exception('Image processing/statistics functions required for the tissue segmentation not available');
 end
 
 [ct, cst, stf, pln] = helper_mcnpTestCase();

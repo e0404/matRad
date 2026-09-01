@@ -71,7 +71,7 @@ switch this.externalCalculation
 
     case 'write'
         %% Only write a script to run all bixels externally
-        cores = feature('numcores');    % Attention: should be adopted to allow portability to other pc/cluster
+        cores = this.config.Num_Threads;
         if ispc
             scriptName = fullfile(runDir, 'runAll.cmd');
         else

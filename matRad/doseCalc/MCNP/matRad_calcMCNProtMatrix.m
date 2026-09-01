@@ -16,12 +16,6 @@ function rotMatrix = matRad_calcMCNProtMatrix(gantryAngle, couchAngle)
 % References
 %   -
 %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Copyright
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
 % Copyright 2018-2026 the matRad development team.
 %
 % This file is part of the matRad project. It is subject to the license
