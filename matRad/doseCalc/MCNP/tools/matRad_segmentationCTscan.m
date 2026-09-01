@@ -6,9 +6,9 @@ function [cst, tissueBin] = matRad_segmentationCTscan(CTdata, CTresolution, binI
 %    in binIntervals (HU -> material lookup for the MCNP engine),
 % 2) applies structure/morphology based tissue overrides on top of the
 %    classification (see the local functions):
-%      - matRad_overrideLungTissue:         lung from a contoured structure, from
-%                                    auto-segmentation, or reassignment of
-%                                    HU-classified lung to soft tissue
+%      - matRad_overrideLungTissue:         lung from a contoured structure,
+%                                           from auto-segmentation, or reassignment
+%                                           of HU-classified lung to soft tissue
 %      - matRad_overrideSkinLayer:          skin shell grown around the body hull
 %      - matRad_overrideBnctTargetMaterial: boron-loaded material in a 'PTV_BNCT'
 %

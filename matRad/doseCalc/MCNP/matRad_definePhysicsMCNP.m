@@ -1,5 +1,4 @@
 function matRad_definePhysicsMCNP(fileID_C_rest, this, binIntervals, simPropMCNP)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Define physics that is needed in MCNP simulation according to the used
 % tally and the radiation type.
 %

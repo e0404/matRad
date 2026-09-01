@@ -1,5 +1,4 @@
 function matRad_bixelDoseCalculatorMCNP(this)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % matRad neutron dose calculation for each bixel individually
 %
 % Neutron dose engine A: Monte Carlo - MCNP6

@@ -1,5 +1,4 @@
 function matRad_makeTallyMCNP(this, ct, fileID_C_rest, binIntervals)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Description goes here.
 %
 % call

@@ -19,6 +19,15 @@ By default, Octave is distributed with 32-bit indexing on Linux, while for Windo
 
 While matRad can be used with Octave compiled either with 32-bit or 64-bit indexing, some clinically relevant treatment planning scenarios may require an influence matrix, which exceeds the maximum array size available with 32-bit indexing.
 
+Octave packages
+---------------
+
+Some optional features require `Octave packages <https://gnu-octave.github.io/packages/>`_, which are available for all major platforms and can be installed with ``pkg install -forge <name>`` and activated with ``pkg load <name>``:
+
+* ``image`` and ``statistics``: required for the CT material segmentation of the MCNP neutron dose engine (:class:`DoseEngines.matRad_NeutronMCNPEngine`).
+
+The corresponding functionality checks for the availability of the required functions at runtime and aborts (or skips, in the test suite) with a message if they are missing.
+
 IPOPT
 -----
 

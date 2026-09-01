@@ -1,5 +1,4 @@
 function matRad_concatenateRunfiles(varHelper, pathRunfiles)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function concatenates blocks for MCNP input to one runfile for each bixel
 % calles 'MCNPrunfile_bixelN' where N is the bixel number.
 %
@@ -9,6 +8,7 @@ function matRad_concatenateRunfiles(varHelper, pathRunfiles)
 % input
 %   varHelper:      Helping variable with varHelper.totalNumberBixels and
 %                   varHelper.simPropMCNP.sourceBlockNames
+%
 %   pathRunfiles:   Path to previously generated MCNP runfiles
 %
 % output

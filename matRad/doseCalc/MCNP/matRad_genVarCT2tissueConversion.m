@@ -7,10 +7,14 @@
 %   [1] Schneider  et al. Correlation between CT numbers and
 %       tissue parameters needed for Monte Carlo simulations of clinical
 %       dose distribution, Phys. Med. Biol. 45 (2000)
+%
 %   [2] Schneider et al. The calibration of CT HU for RT treatment
 %       planning, Phys. Med. Bio. 41 (1996)
+%
 %   [3] ICRU 46
+%
 %   [4] MCNP6 Manual Part 3 Appendix G
+%
 %   [5] DeMarco et al. A CTbased Monte Carlo simulation tool for dosimetry
 %       planning and analysis. Medical physics 25.1 (1998)
 %

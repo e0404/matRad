@@ -1,5 +1,4 @@
 function cstBodyIndex = matRad_findBodyStructureCST(cst, bodyStructureName)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MATLAB function to find the index of the radiotherapy structure body.
 %
 % Note: Body structure is the only structure that has to be contoured.

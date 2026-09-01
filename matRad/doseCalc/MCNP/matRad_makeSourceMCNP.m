@@ -1,5 +1,4 @@
 function [control_makeSourceMCNP, varHelper] = matRad_makeSourceMCNP(this, stf, ct, varHelper, counterField, counterRay)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Write source data as MCNP input file. For each bixel/ray an individual
 % MCNP input file is generated, where position of the source is defined by
 % opening of Multi-Leaf Collimator and optional energyspectrum of

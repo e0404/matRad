@@ -1,5 +1,4 @@
 function cstTargetIndex = matRad_findTargetStructureCST(cst)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MATLAB function to find the index of the radiotherapy target structure.
 %
 %

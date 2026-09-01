@@ -1,5 +1,4 @@
 function [control_makeTargetMCNP, fileID_A, fileID_B, geometryOption] = matRad_makeTargetMCNP(ct, simPropMCNP)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Write target as MCNP input file using ct data, predefined simulation
 % properties and tissue specific HU intervals defined for segmentation
 %
