@@ -67,7 +67,7 @@ bixel.vAlphaX = 0.5;
 bixel.vBetaX = 0.05;
 bixel.vTissueIndex = 1;
 
-test_bixelAlpha = 0.5170;
+test_bixelAlpha = 0.5128; % 0.5*(p0 + p1*LET/(alphaX/betaX)) with the corrected p0 = 0.99064
 test_bixelBeta = 0.0593;
 
 [bixel] = calcBiologicalQuantitiesForBixel(bioModel, bixel, kernels);
