@@ -92,8 +92,8 @@ classdef matRad_StfGeneratorBrachy < matRad_StfGeneratorBase
             end
 
             [row, col] = find(this.template.activeNeedles);            
-            templX = col * this.bixelWidth + this.template.root(1) - (size(this.template.activeNeedles,1) + 1) / 2 * this.bixelWidth;
-            templY = row * this.bixelWidth + this.template.root(2) - (size(this.template.activeNeedles,2) + 1) / 2 * this.bixelWidth;
+            templX = row * this.bixelWidth + this.template.root(1) - (size(this.template.activeNeedles,1) + 1) / 2 * this.bixelWidth;
+            templY = col * this.bixelWidth + this.template.root(2) - (size(this.template.activeNeedles,2) + 1) / 2 * this.bixelWidth;
             templZ = ones(size(col)) + this.template.root(3);
 
 
