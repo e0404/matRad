@@ -74,7 +74,7 @@ try
     end
 
     if ~isempty(this.dijFormatVersion) && ~this.isVersionLower('3.76.0')
-        fprintf(fID, 'ijFormatVersion = %s\n', this.dijFormatVersion);
+        fprintf(fID, 'ijFormatVersion = %d\n', this.dijFormatVersion);
     end
 
 catch ME
