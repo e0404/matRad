@@ -59,7 +59,7 @@ Given a ``pln`` with set ``pln.radiationMode`` (and optionally ``pln.machine``),
 External Beam Therapy
 ~~~~~~~~~~~~~~~~~~~~~
 
-matRad supports dose calculation for photons and charged particles (protons, helium, carbon ions) in external beam therapy.
+matRad supports dose calculation for photons, neutrons and charged particles (protons, helium, carbon ions) in external beam therapy.
 
 matRad's standard algorithms are based on the pencil-beam model, which is a fast and efficient way to compute dose distributions in a patient CT. The pencil beam model assumes that the dose at a certain voxel can be computed as the product of a depth-dependent part and a lateral part, which are computed separately. The model uses a pencil-beam kernel of an infinitely narrow beam, which is convolved with the primary fluence to compute the dose distribution. The pencil beam model is a fast and efficient way to compute dose distributions in a patient CT, but it is not as accurate as Monte Carlo simulations.
 
@@ -154,3 +154,25 @@ For the particle dose calculation, there are three main possibilities to speed u
 1. It is possible to reduce the spatial resolution of the dose calculation in the patient CT by downsampling the CT data upon import. If you do this as a post-processing step, be aware you need to adjust the binary segmentations in the cst cell array accordingly.
 2. You can increase the variable ``pln.propStf.bixelWidth`` in the :scpt:`matRad script <matRad.m>` which effectively reduces the number of pencil beams which have to be computed approximately quadratically.
 3. You can reduce the radius around the central ray where dose is computed by adjusting the :attr:`DoseEngines.matRad_PencilBeamEngineAbstract.dosimetricLateralCutOff` property.
+
+Neutrons
+^^^^^^^^
+
+Dose Calculation Algorithm
+##########################
+
+For fast neutron therapy, matRad provides a singular value decomposed pencil beam algorithm in :class:`DoseEngines.matRad_NeutronPencilBeamSVDEngine` (``pln.propDoseCalc.engine = 'SVDPB'``). It follows the photon SVD pencil beam model, with two differences: each of the three SVD kernels uses a two-term exponential depth dose parameterization fitted to Monte Carlo simulations (see `Sommer et al. (2024) <https://pubmed.ncbi.nlm.nih.gov/38241727/>`_), and the dose is corrected voxel-wise with tissue-dependent KERMA factors relative to water, assigned by HU intervals from the machine file (``machine.data.neutronKERMAcorr``). The penumbra convolution with a Gaussian is only performed if the machine file provides ``machine.data.penumbraFWHMatIso``. Neutron plans use the photon steering (stf) generators.
+
+In addition, :class:`DoseEngines.matRad_NeutronMCNPEngine` (``pln.propDoseCalc.engine = 'MCNP'``) interfaces the Monte Carlo code `MCNP6 <https://mcnp.lanl.gov/>`_, which is not distributed with matRad and has to be obtained and installed separately. The engine segments the CT into MCNP materials (see below) and writes one MCNP run file per beamlet. Its ``externalCalculation`` property controls the workflow: ``'write'`` (default) only writes the run files and a run-all script to ``<userfolder>/MCNP/runfiles`` for external execution, ``'off'`` runs a locally installed ``mcnp6`` directly, and a folder path evaluates previously computed results from that folder into a dose influence matrix.
+
+Material segmentation for MCNP
+##############################
+
+The MCNP engine converts the CT into discrete tissue bins (air, lung, soft tissue, bone, skin) with elemental compositions and cross section libraries defined in ``matRad/doseCalc/MCNP/conversionCT2tissue.mat``. On top of the HU classification, structure-based overrides are applied: a contoured lung structure (engine property ``lungStructureName``, optionally auto-segmentation via ``autoSegmentLung``), a skin layer grown around the body contour (``bodyStructureName``), and a boron-loaded target material for BNCT if a structure named ``PTV_BNCT`` is contoured. The segmentation requires functions from the Image Processing Toolbox and the Statistics and Machine Learning Toolbox (in GNU Octave: the ``image`` and ``statistics`` packages, see :ref:`octave`).
+
+Base data / Machine
+###################
+
+Neutron machine files follow the photon machine format with additional fields. `neutrons_Generic.mat <https://github.com/e0404/matRad/blob/dev/matRad/basedata/neutrons_Generic.mat>`_ models the MEDAPP fast neutron therapy beamline at FRM II and contains the SVD kernels (``kernel``, ``kernelPos``), the two-term depth dose parameters (``betas``, ``m``), the primary fluence, the neutron and photon spectra and the KERMA correction factors. The machines ``neutrons_FNT``, ``neutrons_BNCT`` and ``neutrons_thermalFRM`` only contain the neutron spectra for Monte Carlo simulation with the MCNP engine.
+
+See also ``examples/matRad_example23_neutrons.m`` for a complete workflow.

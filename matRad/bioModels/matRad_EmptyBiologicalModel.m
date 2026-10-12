@@ -16,7 +16,7 @@ classdef matRad_EmptyBiologicalModel < matRad_BiologicalModel
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     properties (Constant)
         model = 'none'
-        possibleRadiationModes =  {'photons', 'protons', 'carbon', 'helium', 'oxygen', 'brachy', 'VHEE'}
+        possibleRadiationModes =  {'photons', 'protons', 'carbon', 'helium', 'oxygen', 'brachy', 'VHEE', 'neutrons'}
         requiredQuantities = {}
         defaultReportQuantity = 'physicalDose'
     end
