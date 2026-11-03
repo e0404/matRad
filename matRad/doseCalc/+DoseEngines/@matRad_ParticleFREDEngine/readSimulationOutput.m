@@ -101,6 +101,7 @@ else
     if calcLET
         try 
             letCube = matRad_readMHD(fullfile(scoreFolder, letdCubeFileName));
+            letCube = letCube ./ 10; %divided by 10 to have keV/um
         catch
             matRad_cfg.dispError('Unable to load file: %s',fullfile(letdDijFolder, letdCubeFileName));
         end
