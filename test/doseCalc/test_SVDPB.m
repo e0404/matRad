@@ -61,6 +61,73 @@ function test_suite = test_SVDPB
         % Unbiased in expectation: the integral dose of each bixel is kept
         % within the sampling noise
         assertElementsAlmostEqual(full(sum(doseSampled,1)),full(sum(doseFull,1)),'relative',2e-2);
+        % Summed over all bixels, the sampling noise is far below 0.15 %
+        assertElementsAlmostEqual(full(sum(doseSampled(:))),full(sum(doseFull(:))),'relative',1.5e-3);
+
+    function test_dijSamplingShallowRadDepths
+        % All tail voxels lie shallower than two radiological depth
+        % clusters; sampling must still keep part of the tail
+        ct = struct();
+        ct.cubeDim = [3 51 51];
+        ct.resolution = struct('x',2,'y',2,'z',2);
+        ct.cubeHU = {zeros(ct.cubeDim)};
+        ct.numOfCtScen = 1;
+        cst = {0,'Body','OAR',{(1:prod(ct.cubeDim))'},struct('Priority',2),[]; ...
+               1,'Target','TARGET',{sub2ind(ct.cubeDim,2,26,26)},struct('Priority',1),[]};
+
+        pln = struct('radiationMode','photons','machine','Generic','numOfFractions',1);
+        pln.propStf.gantryAngles = 0;
+        pln.propStf.couchAngles = 0;
+        pln.propStf.bixelWidth = 5;
+        pln.propStf.isoCenter = matRad_getIsoCenter(cst,ct,0);
+        pln.propDoseCalc.engine = 'SVDPB';
+        pln.propDoseCalc.doseGrid.resolution = ct.resolution;
+        pln.propDoseCalc.geometricLateralCutOff = 50;
+        pln.propDoseCalc.kernelCutOff = 50;
+        pln.multScen = 'nomScen';
+
+        stf = matRad_generateStf(ct,cst,pln);
+        pln.propDoseCalc.enableDijSampling = false;
+        dijFull = matRad_calcDoseInfluence(ct,cst,stf,pln);
+        pln.propDoseCalc.enableDijSampling = true;
+        dijSampled = matRad_calcDoseInfluence(ct,cst,stf,pln);
+
+        assertElementsAlmostEqual(full(sum(dijSampled.physicalDose{1}(:))),full(sum(dijFull.physicalDose{1}(:))),'relative',1e-2);
+
+    function test_bixelDoseMirrorSymmetricWithKernelCutOff
+        % The Gauss filter and kernel grids must be symmetric around the
+        % ray, also when the kernel is cut off where it is not yet zero
+        ct = struct();
+        ct.cubeDim = [41 41 41];
+        ct.resolution = struct('x',1,'y',1,'z',1);
+        ct.cubeHU = {zeros(ct.cubeDim)};
+        ct.numOfCtScen = 1;
+        cst = {0,'Body','OAR',{(1:prod(ct.cubeDim))'},struct('Priority',2),[]; ...
+               1,'Target','TARGET',{sub2ind(ct.cubeDim,21,21,21)},struct('Priority',1),[]};
+
+        pln = struct('radiationMode','photons','machine','Generic','numOfFractions',1);
+        pln.propStf.gantryAngles = 0;
+        pln.propStf.couchAngles = 0;
+        pln.propStf.bixelWidth = 5;
+        pln.propStf.isoCenter = matRad_getIsoCenter(cst,ct,0);
+        pln.propDoseCalc.engine = 'SVDPB';
+        pln.propDoseCalc.enableDijSampling = false;
+        pln.propDoseCalc.doseGrid.resolution = ct.resolution;
+        pln.propDoseCalc.geometricLateralCutOff = 20;
+        pln.propDoseCalc.kernelCutOff = 20;
+        pln.multScen = 'nomScen';
+
+        stf = matRad_generateStf(ct,cst,pln);
+        [~,ix] = min(sum(reshape([stf.ray.rayPos_bev],3,[]).^2,1));
+        stf.ray = stf.ray(ix);
+        stf.numOfRays = 1;
+        stf.numOfBixelsPerRay = 1;
+        stf.totalNumOfBixels = 1;
+
+        resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,1);
+        dose = resultGUI.physicalDose;
+        assertElementsAlmostEqual(dose,flip(dose,2),'absolute',1e-5*max(dose(:)));
+        assertElementsAlmostEqual(dose,flip(dose,3),'absolute',1e-5*max(dose(:)));
 
     function test_customPrimaryFluenceGantryInvariance
         % The primary fluence of an off-axis bixel must not depend on the

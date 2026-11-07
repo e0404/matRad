@@ -228,9 +228,10 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             sigmaGauss = this.penumbraFWHM / sqrt(8*log(2)); % [mm]
             % use 5 times sigma as the limits for the gaussian convolution
             gaussLimit = cast(ceil(5*sigmaGauss/this.intConvResolution),this.precision);
-            [gaussFilterX,gaussFilterZ] = meshgrid(-gaussLimit*this.intConvResolution: ...
-                this.intConvResolution: ...
-                (gaussLimit-1)*this.intConvResolution);
+            % The filter and kernel grids are symmetric around 0. With
+            % 2*gaussLimit+1 and 2*kernelLimit+1 points, the convolution
+            % sizes below still hold the full linear convolution
+            [gaussFilterX,gaussFilterZ] = meshgrid((-gaussLimit:gaussLimit)*this.intConvResolution);
             %Scaling with intconvResolution^2 for correct convolution integral
             %in mm units
             this.gaussFilter =  this.intConvResolution^2 / (2*pi*sigmaGauss^2) * exp(-(gaussFilterX.^2+gaussFilterZ.^2)/(2*sigmaGauss^2) );
@@ -239,9 +240,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % get kernel size and distances
 
             kernelLimit = cast(ceil(this.kernelCutOff/this.intConvResolution),this.precision);
-            [this.kernelX, this.kernelZ] = meshgrid(-kernelLimit*this.intConvResolution: ...
-                this.intConvResolution: ...
-                (kernelLimit-1)*this.intConvResolution);
+            [this.kernelX, this.kernelZ] = meshgrid((-kernelLimit:kernelLimit)*this.intConvResolution);
 
             % precalculate convolved kernel size and distances
             kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
@@ -473,7 +472,9 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 % cluster radiological dephts to reduce computations
                 B_r                 = int32(ceil(radDepthTail));                 % cluster radiological depths;
                 maxRadDepth         = double(max(B_r));
-                C                   = int32(linspace(0,maxRadDepth,round(maxRadDepth)/deltaRadDepth));     % coarse clustering of rad depths
+                numClusterEdges     = max(2,floor(maxRadDepth/deltaRadDepth));
+                C                   = int32(linspace(0,maxRadDepth,numClusterEdges));  % coarse clustering of rad depths
+                C(end)              = C(end) + 1;                                % upper edges are exclusive, keep the deepest voxels
 
                 ixNew               = zeros(numTail,1);                          % initialize new index vector
                 bixelDoseNew        = zeros(numTail,1);                          % initialize new dose vector
