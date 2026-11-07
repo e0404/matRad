@@ -522,7 +522,10 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
                 % prepare primary fluence array
                 primaryFluence = this.machine.data.primaryFluence;
-                r     = sqrt( (this.F_X-ray.rayPos(1)).^2 + (this.F_Z-ray.rayPos(3)).^2 );
+                % F_X/F_Z are lateral offsets from the ray in the beam's
+                % eye view, so the distance to the central axis follows
+                % from the ray position in the beam's eye view
+                r     = sqrt( (this.F_X + ray.rayPos_bev(1)).^2 + (this.F_Z + ray.rayPos_bev(3)).^2 );
                 Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,'linear',0);
 
                 % apply the primary fluence to the field
