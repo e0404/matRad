@@ -302,7 +302,12 @@ classdef  (Abstract) matRad_PhotonLeafSequencerAbstract < matRad_SequencerBase
 
             %
             % [bixelFieldX,bixelFieldY] = ndgrid(-fieldWidth/2:bixelWidth:fieldWidth/2,-fieldWidth/2:leafWidth:fieldWidth/2);
-            [convFieldX, convFieldY] = meshgrid(-fieldWidth / 2:convResolution:fieldWidth / 2);
+            % Field shapes have 2*fieldLimit pixels per dimension covering
+            % [-fieldLimit, fieldLimit)*convResolution, as the photon dose
+            % engine expects. Pixels are sampled at their centers.
+            fieldLimit = ceil(fieldWidth / (2 * convResolution));
+            pixelCenters = ((-fieldLimit:fieldLimit - 1) + 0.5) * convResolution;
+            [convFieldX, convFieldY] = meshgrid(pixelCenters);
 
             % TODO: Not used in calcPhotonDose but imported from DICOM
             % pln.propStf.collimation.Devices ...
@@ -323,8 +328,11 @@ classdef  (Abstract) matRad_PhotonLeafSequencerAbstract < matRad_SequencerBase
                 stfTmp.totalNumOfBixels = nShapes;
 
                 ray = struct();
+                rotMatTransposed = transpose(matRad_getRotationMatrix(stfTmp.gantryAngle, stfTmp.couchAngle));
                 ray.rayPos_bev = [0 0 0];
                 ray.targetPoint_bev = [0 stfTmp.SAD 0];
+                ray.rayPos = ray.rayPos_bev * rotMatTransposed;
+                ray.targetPoint = ray.targetPoint_bev * rotMatTransposed;
                 ray.weight = 1;
                 ray.energy = stfTmp.ray(1).energy;
                 ray.beamletCornersAtIso = stfTmp.ray(1).beamletCornersAtIso;

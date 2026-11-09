@@ -217,12 +217,14 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % calculate field size and distances
             fieldLimit = cast(ceil(this.fieldWidth/(2*this.intConvResolution)),this.precision);
             if this.isFieldBasedDoseCalc
-                fieldGrid = (-fieldLimit:fieldLimit-1)*this.intConvResolution;
+                % Field shapes hold 2*fieldLimit pixels per dimension,
+                % covering [-fieldLimit, fieldLimit)*intConvResolution
+                nPixels = 2 * fieldLimit;
             else
-                % One point per fluence pixel, symmetric around the ray
-                nPixels = floor(this.fieldWidth/this.intConvResolution);
-                fieldGrid = cast(((0:nPixels-1) - (nPixels-1)/2) * this.intConvResolution,this.precision);
+                nPixels = floor(this.fieldWidth / this.intConvResolution);
             end
+            % One point per fluence pixel at the pixel center, symmetric around the ray
+            fieldGrid = cast(((0:nPixels - 1) - (nPixels - 1) / 2) * this.intConvResolution, this.precision);
             [this.F_X,this.F_Z] = meshgrid(fieldGrid);
 
             sigmaGauss = this.penumbraFWHM / sqrt(8*log(2)); % [mm]
@@ -517,6 +519,13 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 % overwrite field opening if necessary
                 if this.isFieldBasedDoseCalc
                     F = ray.shape;
+                    if ~isequal(size(F), size(this.F_X))
+                        matRad_cfg = MatRad_Config.instance();
+                        matRad_cfg.dispError(['Field shape of beam %d has %d x %d pixels, but collimation.fieldWidth = %g mm ' ...
+                                              'at convResolution = %g mm requires %d x %d.'], ...
+                                             currBeam.beamIndex, size(F, 1), size(F, 2), this.fieldWidth, ...
+                                             this.intConvResolution, size(this.F_X, 1), size(this.F_X, 2));
+                    end
                 else
                     F = this.Fpre;
                 end

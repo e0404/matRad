@@ -97,37 +97,84 @@ function test_suite = test_SVDPB
     function test_bixelDoseMirrorSymmetricWithKernelCutOff
         % The Gauss filter and kernel grids must be symmetric around the
         % ray, also when the kernel is cut off where it is not yet zero
+        [ct, cst, pln, stf] = helper_centralRaySetup();
+        pln.propDoseCalc.kernelCutOff = 20;
+
+        resultGUI = matRad_calcDoseForward(ct, cst, stf, pln, 1);
+        dose = resultGUI.physicalDose;
+        assertElementsAlmostEqual(dose, flip(dose, 2), 'absolute', 1e-5 * max(dose(:)));
+        assertElementsAlmostEqual(dose, flip(dose, 3), 'absolute', 1e-5 * max(dose(:)));
+
+    function test_fieldBasedDoseMirrorSymmetric
+        % A field shape pixel covers [g, g + convResolution), so a symmetric
+        % open field must give a mirror symmetric dose
+        [ct, cst, pln, stf] = helper_centralRaySetup();
+        [pln, stf] = helper_toFieldBased(pln, stf, ones(20));
+
+        resultGUI = matRad_calcDoseForward(ct, cst, stf, pln, 1);
+        dose = resultGUI.physicalDose;
+        assertElementsAlmostEqual(dose, flip(dose, 2), 'absolute', 1e-5 * max(dose(:)));
+        assertElementsAlmostEqual(dose, flip(dose, 3), 'absolute', 1e-5 * max(dose(:)));
+
+    function test_fieldBasedShapeSizeMismatchErrors
+        % fieldWidth = 10 mm at 0.5 mm resolution requires 20 x 20 pixels
+        [ct, cst, pln, stf] = helper_centralRaySetup();
+        [pln, stf] = helper_toFieldBased(pln, stf, ones(21));
+
+        assertExceptionThrown(@() matRad_calcDoseForward(ct, cst, stf, pln, 1), 'matRad:Error');
+
+    function test_fieldBasedDoseMatchesSequencedBixelDose
+        % Field-based dose of the sequenced apertures must reproduce the
+        % bixel-based dose of the sequenced weights
+        p = load('photons_testData.mat');
+        pln = p.pln;
+        pln.propDoseCalc.engine = 'SVDPB';
+        pln.propSeq.sequencer = 'siochi';
+        resultGUI = matRad_sequencing(p.resultGUI, p.stf, pln);
+        sequencing = resultGUI.sequencing;
+
+        resultBixel = matRad_calcDoseForward(p.ct, p.cst, p.stf, pln, sequencing.w);
+        [plnField, stfField] = matRad_aperture2collimation(pln, p.stf, sequencing, sequencing.apertureInfo);
+        resultField = matRad_calcDoseForward(p.ct, p.cst, stfField, plnField);
+
+        doseBixel = resultBixel.physicalDose;
+        assertElementsAlmostEqual(resultField.physicalDose, doseBixel, 'absolute', 5e-3 * max(doseBixel(:)));
+
+    function [pln, stf] = helper_toFieldBased(pln, stf, shape)
+        fieldWidth = 10;
+        pln.propStf.bixelWidth = 'field';
+        pln.propStf.collimation = struct('convResolution', 0.5, 'fieldWidth', fieldWidth);
+        stf.bixelWidth = 'field';
+        stf.ray.shape = shape;
+
+    function [ct, cst, pln, stf] = helper_centralRaySetup()
+        % Water cube with the isocenter in its center voxel and a single
+        % 5 mm bixel on the central axis
         ct = struct();
         ct.cubeDim = [41 41 41];
-        ct.resolution = struct('x',1,'y',1,'z',1);
+        ct.resolution = struct('x', 1, 'y', 1, 'z', 1);
         ct.cubeHU = {zeros(ct.cubeDim)};
         ct.numOfCtScen = 1;
-        cst = {0,'Body','OAR',{(1:prod(ct.cubeDim))'},struct('Priority',2),[]; ...
-               1,'Target','TARGET',{sub2ind(ct.cubeDim,21,21,21)},struct('Priority',1),[]};
+        cst = {0, 'Body', 'OAR', {(1:prod(ct.cubeDim))'}, struct('Priority', 2), []
+               1, 'Target', 'TARGET', {sub2ind(ct.cubeDim, 21, 21, 21)}, struct('Priority', 1), []};
 
-        pln = struct('radiationMode','photons','machine','Generic','numOfFractions',1);
+        pln = struct('radiationMode', 'photons', 'machine', 'Generic', 'numOfFractions', 1);
         pln.propStf.gantryAngles = 0;
         pln.propStf.couchAngles = 0;
         pln.propStf.bixelWidth = 5;
-        pln.propStf.isoCenter = matRad_getIsoCenter(cst,ct,0);
+        pln.propStf.isoCenter = matRad_getIsoCenter(cst, ct, 0);
         pln.propDoseCalc.engine = 'SVDPB';
         pln.propDoseCalc.enableDijSampling = false;
         pln.propDoseCalc.doseGrid.resolution = ct.resolution;
         pln.propDoseCalc.geometricLateralCutOff = 20;
-        pln.propDoseCalc.kernelCutOff = 20;
         pln.multScen = 'nomScen';
 
-        stf = matRad_generateStf(ct,cst,pln);
-        [~,ix] = min(sum(reshape([stf.ray.rayPos_bev],3,[]).^2,1));
+        stf = matRad_generateStf(ct, cst, pln);
+        [~, ix] = min(sum(reshape([stf.ray.rayPos_bev], 3, []).^2, 1));
         stf.ray = stf.ray(ix);
         stf.numOfRays = 1;
         stf.numOfBixelsPerRay = 1;
         stf.totalNumOfBixels = 1;
-
-        resultGUI = matRad_calcDoseForward(ct,cst,stf,pln,1);
-        dose = resultGUI.physicalDose;
-        assertElementsAlmostEqual(dose,flip(dose,2),'absolute',1e-5*max(dose(:)));
-        assertElementsAlmostEqual(dose,flip(dose,3),'absolute',1e-5*max(dose(:)));
 
     function test_customPrimaryFluenceGantryInvariance
         % The primary fluence of an off-axis bixel must not depend on the
