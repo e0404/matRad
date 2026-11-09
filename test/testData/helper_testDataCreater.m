@@ -54,6 +54,14 @@ for radMode = radModes
     pln.propStf.longitudinalSpotSpacing = 8;
     pln.propStf.bixelWidth = 10;
     pln.propDoseCalc.doseGrid.resolution = struct('x', 10, 'y', 10, 'z', 10); % [mm]
+    if radMode == "photons"
+        % Deterministic reference that does not depend on the (testing)
+        % defaults; the same file is used to validate pyRadPlan
+        pln.propDoseCalc.enableDijSampling = false;
+        pln.propDoseCalc.geometricLateralCutOff = 50;
+        pln.propDoseCalc.dosimetricLateralCutOff = 0.995;
+        pln.propDoseCalc.kernelCutOff = Inf;
+    end
     if radMode == "carbon" || radMode == "oxygen"
         pln.bioModel = 'LEM';
     else
