@@ -32,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Matlab's two-argument `round(x,n)` was used in VMAT steering information generation, the sampling report and the DVH band plot, which errors on Octave because its `round` takes the value alone. These now call the new `matRad_roundCompat`, and a test guards against reintroducing the two-argument form
 - Classes living in `@` folders were missing from the API documentation and the MATLAB module index, since `automodule` does not descend into them: `matRad_OptimizationProblem` and its DAO and VMAT subclasses, `matRad_DoseEngineBase` and `matRad_ParticleFREDEngine` are now documented explicitly. The `FluenceObjectives` package was likewise missing and is now included
 - `matRad_LinearScalingModel.getRBEminMax`: the LET threshold mask was written as a chained `a < b < c` comparison, which MATLAB evaluates as `(a < b) < c` and is therefore always true, so the interior branch silently covered every voxel; out-of-range LET values were then extrapolated with the raw (unclamped) LET instead of the threshold LET; and the final normalization divided by `vAlphaX` indexed with that always-true mask instead of the full vector, leaving clamped voxels unnormalized. Added a regression test (`test_getRBEminMax_LinearScalingModel`)
+-  `DoseEngines.matRad_ParticleFREDEngine.readSimulationOutput` add missing conversion from MeV/cm to kev/mu for the LETd computed with `forwardCalculation` option active. The conversion is already implemented for influence calcualtion.
 
 ### Changed
 
