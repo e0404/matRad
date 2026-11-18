@@ -127,7 +127,13 @@ wOnes          = ones(dij.totalNumOfBixels, 1);
 if isfield(pln, 'propOpt') && isfield(pln.propOpt, 'scen4D')
     scen4D = pln.propOpt.scen4D;
 else
-    scen4D = 1; % Use only first 4D scenario for optimization
+    % Use only first 4D scenario for optimization, i.e., the first CT
+    % scenario with nominal dose influence (if only a subset of the CT
+    % scenarios was used for dose calculation, this is not necessarily 1)
+    scen4D = find(~cellfun(@isempty, dij.physicalDose(:, 1, 1)), 1, 'first');
+    if isempty(scen4D)
+        scen4D = 1;
+    end
 end
 
 % Workaround until future release with consistent data management
@@ -153,6 +159,13 @@ end
 % If "all" provided, use all scenarios
 if isequal(scen4D, 'all')
     scen4D = 1:totNumCtScen;
+end
+
+% Nominal scenario of the first used CT scenario with dose influence, used
+% for the initialization of the bixel weights
+ixInitScen = scen4D(find(~cellfun(@isempty, dij.physicalDose(scen4D, 1, 1)), 1, 'first'));
+if isempty(ixInitScen)
+    ixInitScen = 1;
 end
 
 if ~isfield(pln.propOpt, 'quantityOpt') || isempty(pln.propOpt.quantityOpt)
@@ -197,7 +210,7 @@ elseif isa(backProjection, 'matRad_ConstantRBEProjection') && strcmp(pln.radiati
         dij.RBE = 1.1;
     end
 
-    doseTmp = dij.physicalDose{1} * wOnes;
+    doseTmp = dij.physicalDose{ixInitScen} * wOnes;
     bixelWeight =  (doseTarget) / (dij.RBE * mean(doseTmp(V)));
     wInit       = wOnes * bixelWeight;
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n', bixelWeight);
@@ -216,13 +229,13 @@ elseif isa(backProjection, 'matRad_EffectProjection')
         end
     end
 
-    doseTmp = dij.physicalDose{1} * wOnes;
+    doseTmp = dij.physicalDose{ixInitScen} * wOnes;
     if all(isfield(dij, {'mAlphaDose', 'mSqrtBetaDose'}))
-        aTmp = dij.mAlphaDose{1} * wOnes;
-        bTmp = dij.mSqrtBetaDose{1} * wOnes;
+        aTmp = dij.mAlphaDose{ixInitScen} * wOnes;
+        bTmp = dij.mSqrtBetaDose{ixInitScen} * wOnes;
     else
-        aTmp = doseTmp .* dij.ax{1};
-        bTmp = doseTmp .* sqrt(dij.bx{1});
+        aTmp = doseTmp .* dij.ax{ixInitScen};
+        bTmp = doseTmp .* sqrt(dij.bx{ixInitScen});
     end
 
     if isequal(pln.propOpt.quantityOpt, 'effect')
@@ -260,7 +273,7 @@ elseif isa(backProjection, 'matRad_EffectProjection')
     matRad_cfg.dispInfo('chosen weights adapted to biological dose calculation!\n');
 
 else
-    doseTmp = dij.physicalDose{1} * wOnes;
+    doseTmp = dij.physicalDose{ixInitScen} * wOnes;
     bixelWeight =  (doseTarget) / mean(doseTmp(V));
     wInit       = wOnes * bixelWeight;
     matRad_cfg.dispInfo('chosen uniform weight of %f!\n', bixelWeight);
@@ -275,10 +288,16 @@ end
 %% calculate probabilistic quantities for probabilistic optimization if at least
 % one robust objective is defined
 
-linIxDIJ = find(~cellfun(@isempty, dij.physicalDose(scen4D, :, :)))';
+% Full scenario indices (into dij.physicalDose) of all computed scenarios on
+% the CT scenarios used for optimization
+isComputedScen = ~cellfun(@isempty, dij.physicalDose);
+isUsedScen = false(size(isComputedScen));
+isUsedScen(scen4D, :, :) = true;
+linIxDIJ = find(isComputedScen & isUsedScen)';
 
-% Only select the indexes of the nominal ct Scenarios
-linIxDIJ_nominalCT = find(~cellfun(@isempty, dij.physicalDose(scen4D, 1, 1)))';
+% Full scenario indices of the nominal scenarios (no shift and range error)
+% of the used CT scenarios, i.e., the CT scenario ids
+nominalScenIx = find(isComputedScen(:, 1, 1) & isUsedScen(:, 1, 1))';
 
 FLAG_CALC_PROB = false;
 FLAG_ROB_OPT   = false;
@@ -303,14 +322,27 @@ end
 
 % set optimization options
 if ~FLAG_ROB_OPT || FLAG_CALC_PROB     % if multiple robust objectives are defined for one structure then remove FLAG_CALC_PROB from the if clause
-    ixForOpt = scen4D;
+    ixForOpt = nominalScenIx;
 else
     ixForOpt = linIxDIJ;
 end
 
+% Scenario probabilities in the order of the scenarios used for optimization
+scenNumForOpt = pln.multScen.scenNum(ixForOpt);
+if numel(scenNumForOpt) == numel(ixForOpt)
+    scenProbForOpt = pln.multScen.scenProb(scenNumForOpt);
+else
+    matRad_cfg.dispWarning('The scenario model does not contain all scenarios in dij, using equal scenario probabilities!');
+    scenProbForOpt = ones(numel(ixForOpt), 1) ./ numel(ixForOpt);
+end
+
+% Positions of the nominal CT scenarios within the scenarios used for
+% optimization
+linIxDIJ_nominalCT = find(ismember(ixForOpt, nominalScenIx));
+
 % Give scenarios used for optimization
 backProjection.scenarios    = ixForOpt;
-backProjection.scenarioProb = pln.multScen.scenProb;
+backProjection.scenarioProb = scenProbForOpt;
 backProjection.nominalCtScenarios = linIxDIJ_nominalCT;
 % backProjection.scenDim      = pln.multScen
 
@@ -440,7 +472,7 @@ optimizer = optimizer.optimize(wInit, optiProb, dij, cst);
 wOpt = optimizer.wResult;
 info = optimizer.resultInfo;
 
-resultGUI = matRad_calcCubes(wOpt, dij);
+resultGUI = matRad_calcCubes(wOpt, dij, ixInitScen);
 resultGUI.wUnsequenced = wOpt;
 resultGUI.usedOptimizer = optimizer;
 resultGUI.info = info;
