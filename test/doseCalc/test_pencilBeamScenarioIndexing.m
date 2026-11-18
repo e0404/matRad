@@ -110,3 +110,23 @@ for ctScen = [2 3]
     refDose = full(dijAll.physicalDose{ctScen});
     assertElementsAlmostEqual(full(dij.physicalDose{ctScen}), refDose, 'absolute', 1e-6 * max(refDose(:)));
 end
+
+function test_setupOnlyScenariosSingleCt
+% Single CT scenario without range scenarios: scenMask is a 1 x 7 row
+% vector, every active scenario has to be computed
+[ct, cst] = helper_multiCtPhantom(1);
+[pln, stf] = helper_plan(ct, cst, 'photons', 'SVDPB');
+
+dijNominal = matRad_calcDoseInfluence(ct, cst, stf, pln);
+
+model = matRad_WorstCaseScenarios(ct);
+model.numOfRangeGridPoints = 1;
+assertEqual(size(model.scenMask), [1 model.totNumScen]);
+pln.multScen = model;
+dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
+
+for scenIx = model.scenNum2scenIx()'
+    assertTrue(nnz(dij.physicalDose{scenIx}) > 0);
+end
+refDose = full(dijNominal.physicalDose{1});
+assertElementsAlmostEqual(full(dij.physicalDose{model.sub2scenIx(1, 1, 1)}), refDose, 'absolute', 1e-6 * max(refDose(:)));

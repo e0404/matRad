@@ -293,7 +293,7 @@ end
 isComputedScen = ~cellfun(@isempty, dij.physicalDose);
 isUsedScen = false(size(isComputedScen));
 isUsedScen(scen4D, :, :) = true;
-linIxDIJ = find(isComputedScen & isUsedScen)';
+linIxDIJ = reshape(find(isComputedScen & isUsedScen), 1, []);
 
 % Full scenario indices of the nominal scenarios (no shift and range error)
 % of the used CT scenarios, i.e., the CT scenario ids

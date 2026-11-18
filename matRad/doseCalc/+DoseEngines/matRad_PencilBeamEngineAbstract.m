@@ -514,7 +514,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             % loop over all active scenarios (the first scenMask dimension
             % is the CT scenario id, which may exceed numOfCtScen if only a
             % subset of the CT scenarios is used)
-            for scenIx = find(this.multScen.scenMask)'
+            for scenIx = reshape(find(this.multScen.scenMask), 1, [])
                 %loop over all used quantities
                 for qIx = 1:numel(qNames)
                     dij.(qNames{qIx}){scenIx}(ix,:) = 0;
