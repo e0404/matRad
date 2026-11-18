@@ -37,6 +37,10 @@ for i = 1:numel(stfOut)
     assertEqual(stfOut(i).numOfRays, 1);
     assertTrue(isfield(stfOut(i).ray, 'shapes'));
     assertEqual(numel(stfOut(i).ray.shapes), sequencing.beam(i).numOfShapes);
+    % the shape grid is the one the photon dose engine expects
+    nPixels = 2 * ceil(plnOut.propStf.collimation.fieldWidth / (2 * plnOut.propStf.collimation.convResolution));
+    assertEqual(size(stfOut(i).ray.shape), [nPixels nPixels]);
+    assertTrue(isfield(stfOut(i).ray, 'rayPos') && isfield(stfOut(i).ray, 'targetPoint'));
 end
 
 function test_aperture2collimation_missingApertureInfoErrors
