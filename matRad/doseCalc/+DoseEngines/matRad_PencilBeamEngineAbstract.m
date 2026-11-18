@@ -126,7 +126,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
                         for ctScen = 1:this.multScen.numOfCtScen
                             for rangeShiftScen = 1:this.multScen.totNumRangeScen
-                                fullScenIdx = this.multScen.sub2scenIx(ctScen,shiftScen,rangeShiftScen);
+                                fullScenIdx = this.multScen.sub2scenIx(ctScen,shiftScen,rangeShiftScen,'position');
  
                                 if this.multScen.scenMask(fullScenIdx)
                                     %TODO: This shows we probably need
@@ -507,23 +507,17 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
             %(i.e., which quantity an engine could compute)
             % remove dose influence for voxels outside of segmentations for every ct
             % scenario
-            for i = 1:this.multScen.numOfCtScen
-                % generate index set to erase
-                ix = setdiff(1:dij.doseGrid.numOfVoxels,this.VdoseGrid);
+            % generate index set to erase
+            ix = setdiff(1:dij.doseGrid.numOfVoxels,this.VdoseGrid);
+            qNames = fieldnames(this.tmpMatrixContainers);
 
-                for j = 1:this.multScen.totNumShiftScen
-                    for k = 1:this.multScen.totNumRangeScen
-
-                        if this.multScen.scenMask(i,j,k)
-                            
-                            %loop over all used quantities
-                            qNames = fieldnames(this.tmpMatrixContainers);
-                            for qIx = 1:numel(qNames)
-                                dij.(qNames{qIx}){i,j,k}(ix,:) = 0;
-                            end
-                        end
-
-                    end
+            % loop over all active scenarios (the first scenMask dimension
+            % is the CT scenario id, which may exceed numOfCtScen if only a
+            % subset of the CT scenarios is used)
+            for scenIx = reshape(find(this.multScen.scenMask), 1, [])
+                %loop over all used quantities
+                for qIx = 1:numel(qNames)
+                    dij.(qNames{qIx}){scenIx}(ix,:) = 0;
                 end
             end
 
@@ -673,4 +667,3 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
     end
 
 end
-

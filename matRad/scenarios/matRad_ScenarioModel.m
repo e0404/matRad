@@ -12,6 +12,26 @@ classdef (Abstract) matRad_ScenarioModel < handle
     % input:
     %   ct:                 ct cube
     %
+    % Scenario indexing:
+    %   A scenario is addressed in three ways.
+    %
+    %   - CT scenario id: index of the CT scenario in ``ct.cubeHU`` (and
+    %     ``cst{:,4}``), as listed in the first column of ``ctScenProb``.
+    %     If only a subset of the CT scenarios is used, the CT scenario id
+    %     differs from the position of the CT scenario in ``ctScenProb``.
+    %   - Scenario number: row in ``linearMask``, ``scenForProb``,
+    %     ``scenProb``, ``scenWeight``, ``isoShift``, ``absRangeShift`` and
+    %     ``relRangeShift`` (``1:totNumScen``).
+    %   - Full scenario index: linear index into ``scenMask``, which is also
+    %     the index of the scenario in the dose influence cell arrays
+    %     (e.g. ``dij.physicalDose``). Its subscripts are the CT scenario id,
+    %     the shift scenario and the range shift scenario stored in
+    %     ``linearMask``.
+    %
+    %   ``sub2scenIx`` and ``scenNum2scenIx`` convert to the full scenario
+    %   index, ``scenNum`` converts the full scenario index back to the
+    %   scenario number.
+    %
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
     % Copyright 2022-2026 the matRad development team.
@@ -170,11 +190,17 @@ classdef (Abstract) matRad_ScenarioModel < handle
         function newInstance = extractSingleScenario(this, scenNum)
             newInstance = matRad_NominalScenario();
 
-            ctScenNum = this.linearMask(scenNum, 1);
+            % The CT scenario id is not necessarily the row in ctScenProb
+            ctScenId = this.linearMask(scenNum, 1);
+            ctScenProbIx = find(this.ctScenProb(:, 1) == ctScenId, 1, 'first');
+            if isempty(ctScenProbIx)
+                matRad_cfg = MatRad_Config.instance();
+                matRad_cfg.dispError('Could not find CT scenario %d in ctScenProb!', ctScenId);
+            end
 
             % First set properties that force an update
             newInstance.numOfCtScen         = 1;
-            newInstance.ctScenProb          = this.ctScenProb(ctScenNum, :);
+            newInstance.ctScenProb          = this.ctScenProb(ctScenProbIx, :);
 
             % Now overwrite existing variables for correct probabilities
             % and error realizations
@@ -193,25 +219,95 @@ classdef (Abstract) matRad_ScenarioModel < handle
             % newInstance.updateScenarios();
         end
 
-        function scenIx = sub2scenIx(this, ctScen, shiftScen, rangeShiftScen)
-            % Returns linear index in the scenario cell array from scenario
-            % subscript indices.
-            % Note:
-            %   scenMask can be squeezed by MATLAB (e.g. [1 x N_S x 1]
-            %   becomes [1 x N_S]), so we must explicitly check for a
-            %   column vector here in case of 4D scenarios only
-            if iscolumn(this.scenMask)
-                % pure CT scenarios
-                scenIx = this.ctScenIx(ctScen);
-            else
-                % multi-dimensional scenario array
-                scenIx = sub2ind(size(this.scenMask), ctScen, shiftScen, rangeShiftScen);
+        function scenIx = sub2scenIx(this, ctScen, shiftScen, rangeShiftScen, ctScenReference)
+            % Returns the full scenario index (linear index into scenMask
+            % and the dose influence cell arrays) from scenario subscripts
+            %
+            % call:
+            %   scenIx = model.sub2scenIx(ctScen, shiftScen, rangeShiftScen)
+            %   scenIx = model.sub2scenIx(ctScen, shiftScen, rangeShiftScen, ctScenReference)
+            %
+            % input:
+            %   ctScen:          CT scenario, interpreted according to
+            %                    ctScenReference
+            %   shiftScen:       shift scenario index
+            %   rangeShiftScen:  range shift scenario index
+            %   ctScenReference: (optional) 'id' (default) if ctScen is the
+            %                    CT scenario id as stored in linearMask(:,1),
+            %                    or 'position' if ctScen is the position of
+            %                    the CT scenario in ctScenProb
+            %
+            % output:
+            %   scenIx:          full scenario index
+
+            matRad_cfg = MatRad_Config.instance();
+
+            if nargin < 5 || isempty(ctScenReference)
+                ctScenReference = 'id';
             end
+
+            if ~ischar(ctScenReference) || ~any(strcmpi(ctScenReference, {'id', 'position'}))
+                matRad_cfg.dispError('ctScenReference must be ''id'' or ''position''!');
+            end
+
+            if strcmpi(ctScenReference, 'position')
+                if any(ctScen(:) < 1 | ctScen(:) > size(this.ctScenProb, 1) | mod(ctScen(:), 1) ~= 0)
+                    matRad_cfg.dispError('CT scenario position exceeds the number of CT scenarios in ctScenProb!');
+                end
+                ctScen = this.ctScenProb(ctScen, 1);
+            end
+
+            maskSize = this.getScenMaskSize();
+            subs = {ctScen, shiftScen, rangeShiftScen};
+            for d = 1:3
+                if any(subs{d}(:) < 1 | subs{d}(:) > maskSize(d) | mod(subs{d}(:), 1) ~= 0)
+                    matRad_cfg.dispError('Scenario subscript exceeds the dimensions of the scenario mask!');
+                end
+            end
+
+            scenIx = sub2ind(maskSize, ctScen, shiftScen, rangeShiftScen);
+        end
+
+        function scenIx = scenNum2scenIx(this, scenNum)
+            % Returns the full scenario index (linear index into scenMask
+            % and the dose influence cell arrays) of scenario numbers, i.e.,
+            % rows of linearMask
+            %
+            % call:
+            %   scenIx = model.scenNum2scenIx()
+            %   scenIx = model.scenNum2scenIx(scenNum)
+            %
+            % input:
+            %   scenNum:    (optional) scenario numbers, all scenarios if
+            %               omitted
+            %
+            % output:
+            %   scenIx:     column vector of full scenario indices
+
+            if nargin < 2
+                scenNum = 1:size(this.linearMask, 1);
+            end
+
+            subs = this.linearMask(scenNum, :);
+            scenIx = sub2ind(this.getScenMaskSize(), subs(:, 1), subs(:, 2), subs(:, 3));
         end
 
         function scenNum = scenNum(this, fullScenIx)
-            % gets number of scenario from full scenario index in scenMask
-            scenNum = find(find(this.scenMask) == fullScenIx);
+            % Returns the scenario number, i.e., the row in linearMask,
+            % scenForProb, scenProb, ..., from full scenario indices into
+            % scenMask. Indices of inactive scenarios are dropped.
+            %
+            % call:
+            %   scenNum = model.scenNum(fullScenIx)
+            %
+            % input:
+            %   fullScenIx: full scenario indices
+            %
+            % output:
+            %   scenNum:    scenario numbers
+
+            [isActive, scenNum] = ismember(fullScenIx, this.scenNum2scenIx());
+            scenNum = scenNum(isActive);
         end
 
         %% Deprecated functions / properties
@@ -238,6 +334,17 @@ classdef (Abstract) matRad_ScenarioModel < handle
             matRad_cfg = MatRad_Config.instance();
             matRad_cfg.dispDeprecationWarning('The property wcFactor of the scenario class will soon be deprecated!');
             this.wcSigma = value;
+        end
+
+    end
+
+    methods (Access = protected)
+
+        function maskSize = getScenMaskSize(this)
+            % Size of scenMask as [ctScen shiftScen rangeShiftScen], also
+            % if trailing singleton dimensions are dropped by MATLAB
+            maskSize = [size(this.scenMask) 1 1];
+            maskSize = maskSize(1:3);
         end
 
     end
