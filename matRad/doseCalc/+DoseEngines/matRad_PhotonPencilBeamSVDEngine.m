@@ -1,7 +1,7 @@
 classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineAbstract
-    % matRad_PhotonPencilBeamSVDEngine: Pencil-beam dose calculation with 
+    % matRad_PhotonPencilBeamSVDEngine: Pencil-beam dose calculation with
     % singular value decomposed kernels
-    % 
+    %
     %
     % References
     %   [1] http://www.ncbi.nlm.nih.gov/pubmed/8497215
@@ -23,7 +23,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
         possibleRadiationModes = {'photons'}; %constant which represent available radiation modes
         name = 'SVD Pencil Beam';
         shortName = 'SVDPB';
-        
+
         %supportedQuantities = {'physicalDose'};
 
         % Define function_Di for beamlet calculation. Constant for use in
@@ -66,7 +66,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
         Fpre;                           %precomputed fluence if uniform fluence used for calculation
         interpKernelCache;              %Kernel interpolators (cached if precomputation per beam possible)
-        
+
         collimation;                    %collimation structure from dicom import
     end
 
@@ -84,16 +84,16 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             %   stf:                        matRad steering information struct
             %   pln:                        matRad plan meta information struct
             %   cst:                        matRad cst struct
-            
+
             if nargin < 1
                 pln = [];
             end
 
             % create this from superclass
-            this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);            
+            this = this@DoseEngines.matRad_PencilBeamEngineAbstract(pln);
 
             %TODO: engines should not rely on reading properties from "propStf", we need to find another way to handle those two fields in the future.
-            if nargin > 0 && isfield(pln,'propStf') 
+            if nargin > 0 && isfield(pln,'propStf')
                 if isfield(pln.propStf,'bixelWidth')
                     % 0 if field calc is bixel based, 1 if dose calc is field based
                     % num2str is only used to prevent failure of strcmp when bixelWidth
@@ -115,10 +115,10 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             matRad_cfg = MatRad_Config.instance();
             this.useCustomPrimaryPhotonFluence  = matRad_cfg.defaults.propDoseCalc.useCustomPrimaryPhotonFluence;
             this.kernelCutOff                   = matRad_cfg.defaults.propDoseCalc.kernelCutOff;
-            
-            %dij sampling defaults                      
+
+            %dij sampling defaults
             this.dijSampling.relDoseThreshold = 0.01;
-            this.dijSampling.latCutOff        = 20; 
+            this.dijSampling.latCutOff        = 20;
             this.dijSampling.type             = 'radius';
             this.dijSampling.deltaRadDepth    = 5;
         end
@@ -178,7 +178,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 matRad_cfg.dispWarning('Kernel Cut-Off ''%f mm'' cannot be smaller than geometric lateral cutoff ''%f mm''. Using ''%f mm''!',this.kernelCutOff,this.geometricLateralCutOff,this.geometricLateralCutOff);
                 this.kernelCutOff = this.geometricLateralCutOff;
             end
-            
+
             % TODO: calculate and add weightToMU for the generic photon
             % machine. Typical calibration: 100 cGy/100 MU in a 10x10 cm^2
             % field, 100 cm SSD, depth of dose maximum for the given beam
@@ -208,7 +208,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
                 this.fieldWidth = unique([stf.bixelWidth]);
             end
-            
+
             minKernelSpacing = min(diff(this.machine.data.kernelPos));
             if this.intConvResolution > minKernelSpacing
                 matRad_cfg.dispWarning('Chosen kernel convolution resolution of %f mm is larger than minimum kernel spacing of %f mm. This can strongly affect absolute dosimetry.',this.intConvResolution,minKernelSpacing);
@@ -216,18 +216,24 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
 
             % calculate field size and distances
             fieldLimit = cast(ceil(this.fieldWidth/(2*this.intConvResolution)),this.precision);
-            [this.F_X,this.F_Z] = meshgrid(-fieldLimit*this.intConvResolution: ...
-                this.intConvResolution: ...
-                (fieldLimit-1)*this.intConvResolution);
-
-
+            if this.isFieldBasedDoseCalc
+                % Field shapes hold 2*fieldLimit pixels per dimension,
+                % covering [-fieldLimit, fieldLimit)*intConvResolution
+                nPixels = 2 * fieldLimit;
+            else
+                nPixels = floor(this.fieldWidth / this.intConvResolution);
+            end
+            % One point per fluence pixel at the pixel center, symmetric around the ray
+            fieldGrid = cast(((0:nPixels - 1) - (nPixels - 1) / 2) * this.intConvResolution, this.precision);
+            [this.F_X,this.F_Z] = meshgrid(fieldGrid);
 
             sigmaGauss = this.penumbraFWHM / sqrt(8*log(2)); % [mm]
             % use 5 times sigma as the limits for the gaussian convolution
             gaussLimit = cast(ceil(5*sigmaGauss/this.intConvResolution),this.precision);
-            [gaussFilterX,gaussFilterZ] = meshgrid(-gaussLimit*this.intConvResolution: ...
-                this.intConvResolution: ...
-                (gaussLimit-1)*this.intConvResolution);
+            % The filter and kernel grids are symmetric around 0. With
+            % 2*gaussLimit+1 and 2*kernelLimit+1 points, the convolution
+            % sizes below still hold the full linear convolution
+            [gaussFilterX,gaussFilterZ] = meshgrid((-gaussLimit:gaussLimit)*this.intConvResolution);
             %Scaling with intconvResolution^2 for correct convolution integral
             %in mm units
             this.gaussFilter =  this.intConvResolution^2 / (2*pi*sigmaGauss^2) * exp(-(gaussFilterX.^2+gaussFilterZ.^2)/(2*sigmaGauss^2) );
@@ -236,24 +242,24 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             % get kernel size and distances
 
             kernelLimit = cast(ceil(this.kernelCutOff/this.intConvResolution),this.precision);
-            [this.kernelX, this.kernelZ] = meshgrid(-kernelLimit*this.intConvResolution: ...
-                this.intConvResolution: ...
-                (kernelLimit-1)*this.intConvResolution);
+            [this.kernelX, this.kernelZ] = meshgrid((-kernelLimit:kernelLimit)*this.intConvResolution);
 
             % precalculate convolved kernel size and distances
             kernelConvLimit = fieldLimit + gaussLimit + kernelLimit;
-            [this.convMx_X, this.convMx_Z] = meshgrid(-kernelConvLimit*this.intConvResolution: ...
-                this.intConvResolution: ...
-                (kernelConvLimit-1)*this.intConvResolution);
+            % The FFT convolution places the first fluence pixel at
+            % -fieldLimit*intConvResolution; shift the grid by the actual
+            % position of the first pixel
+            fieldGridShift = fieldGrid(1) + fieldLimit*this.intConvResolution;
+            [this.convMx_X, this.convMx_Z] = meshgrid((-kernelConvLimit:kernelConvLimit-1)*this.intConvResolution + fieldGridShift);
             % calculate also the total size and distance as we need this during convolution extensively
             this.kernelConvSize = 2*kernelConvLimit;
 
             % define an effective lateral cutoff where dose will be calculated. note
             % that storage within the influence matrix may be subject to sampling
             this.effectiveLateralCutOff = this.geometricLateralCutOff + this.fieldWidth/sqrt(2);
-            
 
-            % Check if we can precompute fluence and precompute kernel 
+
+            % Check if we can precompute fluence and precompute kernel
             % convolution if we use a uniform fluence
             if ~this.isFieldBasedDoseCalc
                 % Create fluence matrix
@@ -297,7 +303,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             %   dij:                        updated dij struct
 
             currBeam = initBeam@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,ct,cst,stf,i);
-            
+
             matRad_cfg = MatRad_Config.instance();
 
             % get index of central ray or closest to the central ray
@@ -336,14 +342,14 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             %
             % call:
             %   bixel = this.computeBixel(currRay,k)
-            
+
             bixel = struct();
 
             if this.calcDoseDirect
                 bixel.weight = currRay.weight;
             end
 
-            if isfield(this.tmpMatrixContainers,'physicalDose')            
+            if isfield(this.tmpMatrixContainers,'physicalDose')
                 bixel.physicalDose = this.calcSingleBixel(currRay.SAD,...
                     this.machine.data.m,...
                     this.machine.data.betas,...
@@ -364,7 +370,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 bixel.ix = [];
             end
         end
-        
+
         function interpKernels = getKernelInterpolators(this,Fx)
 
             matRad_cfg = MatRad_Config.instance();
@@ -468,10 +474,12 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 % cluster radiological dephts to reduce computations
                 B_r                 = int32(ceil(radDepthTail));                 % cluster radiological depths;
                 maxRadDepth         = double(max(B_r));
-                C                   = int32(linspace(0,maxRadDepth,round(maxRadDepth)/deltaRadDepth));     % coarse clustering of rad depths
+                numClusterEdges     = max(2,floor(maxRadDepth/deltaRadDepth));
+                C                   = int32(linspace(0,maxRadDepth,numClusterEdges));  % coarse clustering of rad depths
+                C(end)              = C(end) + 1;                                % upper edges are exclusive, keep the deepest voxels
 
-                ixNew               = zeros(numTail,1);                          % inizialize new index vector
-                bixelDoseNew        = zeros(numTail,1);                          % inizialize new dose vector
+                ixNew               = zeros(numTail,1);                          % initialize new index vector
+                bixelDoseNew        = zeros(numTail,1);                          % initialize new dose vector
                 linIx               = int32(1:1:numTail)';
                 IxCnt               = 1;
 
@@ -500,7 +508,7 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
             end
 
         end
-    
+
         function [ray] = initRay(this,currBeam,j)
 
             ray = initRay@DoseEngines.matRad_PencilBeamEngineAbstract(this,currBeam,j);
@@ -511,13 +519,23 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 % overwrite field opening if necessary
                 if this.isFieldBasedDoseCalc
                     F = ray.shape;
+                    if ~isequal(size(F), size(this.F_X))
+                        matRad_cfg = MatRad_Config.instance();
+                        matRad_cfg.dispError(['Field shape of beam %d has %d x %d pixels, but collimation.fieldWidth = %g mm ' ...
+                                              'at convResolution = %g mm requires %d x %d.'], ...
+                                             currBeam.beamIndex, size(F, 1), size(F, 2), this.fieldWidth, ...
+                                             this.intConvResolution, size(this.F_X, 1), size(this.F_X, 2));
+                    end
                 else
                     F = this.Fpre;
                 end
 
                 % prepare primary fluence array
                 primaryFluence = this.machine.data.primaryFluence;
-                r     = sqrt( (this.F_X-ray.rayPos(1)).^2 + (this.F_Z-ray.rayPos(3)).^2 );
+                % F_X/F_Z are lateral offsets from the ray in the beam's
+                % eye view, so the distance to the central axis follows
+                % from the ray position in the beam's eye view
+                r     = sqrt( (this.F_X + ray.rayPos_bev(1)).^2 + (this.F_Z + ray.rayPos_bev(3)).^2 );
                 Psi   = interp1(primaryFluence(:,1)',primaryFluence(:,2)',r,'linear',0);
 
                 % apply the primary fluence to the field
@@ -533,8 +551,8 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
                 ray.interpKernels = this.interpKernelCache;
             end
 
-            
-        end    
+
+        end
     end
 
     methods (Static)
@@ -652,4 +670,3 @@ classdef matRad_PhotonPencilBeamSVDEngine < DoseEngines.matRad_PencilBeamEngineA
     end
 
 end
-
