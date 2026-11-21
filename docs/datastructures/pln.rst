@@ -14,7 +14,7 @@ These include the radiation modality, the machine information, the number of fra
 
 **pln.radiationMode**
 
-    Specifies the radiation modality. Can either be *photons*, *protons*, *helium*, *carbon*, *VHEE* or *brachy*.
+    Specifies the radiation modality. Can either be *photons*, *protons*, *helium*, *carbon*, *VHEE*, *neutrons* or *brachy*.
 
 **pln.machine**
 

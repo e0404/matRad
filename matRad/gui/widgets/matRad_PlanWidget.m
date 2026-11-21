@@ -33,7 +33,7 @@ classdef matRad_PlanWidget < matRad_Widget
 
     properties (Constant)
 
-        modalities = {'photons', 'protons', 'carbon', 'helium', 'oxygen', 'brachy', 'VHEE'}
+        modalities = {'photons', 'protons', 'carbon', 'helium', 'oxygen', 'brachy', 'VHEE', 'neutrons'}
         availableProjections = {  'physicalDose'; 'RBExDose'; 'effect'; 'BED'}
 
     end
@@ -1108,7 +1108,7 @@ classdef matRad_PlanWidget < matRad_Widget
             contentPopUpQuantityOpt  = get(handles.popMenuQuantityOpt, 'String');
             contentPopUpBioModel = get(handles.popMenuBioModel, 'String');
             switch RadIdentifier
-                case 'photons'
+                case {'photons', 'neutrons'}
 
                     set(handles.popMenuQuantityOpt, 'Enable', 'on');
                     %                     ix = find(strcmp(contentPopUpQuantityOpt,'physicalDose'));
@@ -1313,7 +1313,7 @@ classdef matRad_PlanWidget < matRad_Widget
                 if  ismember('resultGUI', AllVarNames)
                     resultGUI = evalin('base', 'resultGUI');
                     radMode = allRadiationModes(get(hObject, 'Value'));
-                    if any(strcmp(radMode, {'photons', 'brachy', 'VHEE'}))
+                    if any(strcmp(radMode, {'photons', 'brachy', 'VHEE', 'neutrons'}))
                         if isfield(resultGUI, 'alpha')
                             resultGUI = rmfield(resultGUI, 'alpha');
                         end

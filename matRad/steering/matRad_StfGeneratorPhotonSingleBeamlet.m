@@ -18,7 +18,7 @@ classdef matRad_StfGeneratorPhotonSingleBeamlet < matRad_StfGeneratorPhotonRayBi
     properties (Constant)
         name = 'Photon Single Bixel';
         shortName = 'PhotonSingleBixel';
-        possibleRadiationModes = {'photons'};
+        possibleRadiationModes = {'photons', 'neutrons'};
     end  
     
     methods 

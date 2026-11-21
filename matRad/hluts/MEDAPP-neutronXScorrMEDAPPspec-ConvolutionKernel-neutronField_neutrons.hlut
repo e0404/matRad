@@ -1,0 +1,12 @@
+# matRad default HU lookup table
+# 
+# First column:    Hounsfield values (typically -1000...+3000)
+# Second column:   Cross section corr. for neutrons rel. to water
+-1024.0 0.003239
+-950.1  0.00324
+-950 0.249
+-170  0.25
+-169.99 0.949
+279.99 0.95
+280   0.909
+4000 0.91
