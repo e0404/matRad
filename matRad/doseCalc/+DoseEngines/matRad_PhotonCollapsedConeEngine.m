@@ -27,6 +27,8 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
     %     refitted if it differs)
     %   - kernelTilt: polar axis of the cones, 'beam' (beam axis, same transport lattice for all bixels of a beam) or
     %     'ray' (ray of each bixel, which causes lattice aliasing in the summed dose)
+    %   - beamForward: forward dose with a single transport of the weighted TERMA of all bixels of a beam (only with
+    %     kernelTilt 'beam'); without the cut-offs this equals the dose influence matrix times the weights
     %   - enableDijSampling: enable the lateral dij sampling
     %   - dijSampling: sampling parameters, see matRad_sampleDij
     %
@@ -73,6 +75,7 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
         kernelTilt = 'beam' % polar axis of the cones, 'beam' (beam axis) or 'ray' (ray of each bixel)
         numScatterExponentials = 1 % number of exponential terms of the scatter kernel (1 or 2)
         hardeningCorrection = true % use the fitted depth dependent effective attenuation of the TERMA
+        beamForward = true % forward dose with one transport per beam (kernelTilt 'beam' only)
     end
 
     properties (SetAccess = protected, GetAccess = public)
@@ -247,48 +250,155 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             bixel.physicalDose = cast(bixel.physicalDose, this.precision);
         end
 
+        function dij = calcDose(this, ct, cst, stf)
+            % Dose calculation. Forward calculations with the beam axis tilt
+            % transport the weighted TERMA of all bixels of a beam at once,
+            % all other calculations are performed bixel by bixel
+            if ~(this.calcDoseDirect && this.beamForward && strcmp(this.kernelTilt, 'beam'))
+                dij = calcDose@DoseEngines.matRad_PencilBeamEngineAbstract(this, ct, cst, stf);
+                return
+            end
+
+            dij = this.initDoseCalc(ct, cst, stf);
+            ct = matRad_getWorldAxes(ct);
+            bixelCounter = 0;
+            for shiftScen = 1:this.multScen.totNumShiftScen
+                ixShiftScen = find(this.multScen.linearMask(:, 2) == shiftScen, 1);
+                scenStf = stf;
+                for k = 1:numel(scenStf)
+                    scenStf(k).isoCenter = cast(scenStf(k).isoCenter + this.multScen.isoShift(ixShiftScen, :), this.precision);
+                end
+                for i = 1:dij.numOfBeams
+                    currBeam = this.initBeam(dij, ct, cst, scenStf, i);
+                    [dij, bixelCounter] = this.calcBeamForward(dij, currBeam, shiftScen, bixelCounter);
+                end
+            end
+        end
+
+        function [dij, bixelCounter] = calcBeamForward(this, dij, currBeam, shiftScen, bixelCounter)
+            % Accumulates the weighted TERMA of all bixels of a beam per
+            % scenario and transports it once
+            numVox = dij.doseGrid.numOfVoxels;
+            scenIdx = [];
+            acc = struct('terma', {}, 'mask', {}, 'boxLo', {}, 'boxHi', {}, 'ctScen', {});
+            dirs = [];
+            for j = 1:currBeam.numOfRays
+                currRay = this.initRay(currBeam, j);
+                dirs = currRay.cccDirections;
+                for ctScen = 1:this.multScen.numOfCtScen
+                    for rangeShiftScen = 1:this.multScen.totNumRangeScen
+                        fullScenIdx = this.multScen.sub2scenIx(ctScen, shiftScen, rangeShiftScen);
+                        if ~this.multScen.scenMask(fullScenIdx)
+                            continue
+                        end
+                        a = find(scenIdx == fullScenIdx, 1);
+                        if isempty(a)
+                            scenIdx(end + 1) = fullScenIdx; %#ok<AGROW>
+                            a = numel(scenIdx);
+                            acc(a).terma = zeros(numVox, 1);
+                            acc(a).mask = false(numVox, 1);
+                            acc(a).boxLo = inf(1, 3);
+                            acc(a).boxHi = -inf(1, 3);
+                        end
+                        scenRay = this.extractSingleScenarioRay(currRay, fullScenIdx);
+                        acc(a).ctScen = scenRay.ctScen;
+                        terma = this.rayTerma(scenRay);
+                        acc(a).mask(scenRay.ix) = true;
+                        for k = 1:currRay.numOfBixels
+                            acc(a).terma(scenRay.ix) = acc(a).terma(scenRay.ix) + scenRay.weight(k) * terma;
+                        end
+                        if any(terma > 0)
+                            [lo, hi] = this.sourceBox(scenRay.ix, terma);
+                            acc(a).boxLo = min(acc(a).boxLo, lo);
+                            acc(a).boxHi = max(acc(a).boxHi, hi);
+                        end
+                    end
+                end
+                for k = 1:currRay.numOfBixels
+                    bixelCounter = bixelCounter + 1;
+                    dij.w(bixelCounter, 1) = currRay.weight(k);
+                end
+                this.progressUpdate(bixelCounter, dij.totalNumOfBixels);
+            end
+
+            dij.beamNum(currBeam.beamIndex) = currBeam.beamIndex;
+            dij.rayNum(currBeam.beamIndex) = currBeam.beamIndex;
+            dij.bixelNum(currBeam.beamIndex) = currBeam.beamIndex;
+            for a = 1:numel(scenIdx)
+                if ~isfinite(acc(a).boxLo(1))
+                    continue
+                end
+                sourceIx = find(acc(a).terma ~= 0);
+                outIx = find(acc(a).mask);
+                dose = this.transportOnBox(sourceIx, acc(a).terma(sourceIx), acc(a).boxLo, acc(a).boxHi, ...
+                                           acc(a).ctScen, dirs, outIx);
+                dij.physicalDose{scenIdx(a)}(outIx, currBeam.beamIndex) = dij.physicalDose{scenIdx(a)}(outIx, currBeam.beamIndex) + ...
+                    cast(dose, this.precision);
+            end
+        end
+
         function dose = calcBixelDose(this, currRay)
             % Computes TERMA, transports it on the sub-volume around the
             % bixel and returns the dose on the ray voxels
+            terma = this.rayTerma(currRay);
+            if ~any(terma > 0)
+                dose = zeros(numel(currRay.ix), 1);
+                return
+            end
+            [boxLo, boxHi] = this.sourceBox(currRay.ix, terma);
+            dose = this.transportOnBox(currRay.ix, terma, boxLo, boxHi, currRay.ctScen, currRay.cccDirections, currRay.ix);
+        end
+
+        function terma = rayTerma(this, currRay)
+            % TERMA of a bixel on the voxels of its ray
             sigma = this.penumbraFWHM / sqrt(8 * log(2));
             terma = this.calcTerma(currRay.SAD, this.hardeningMu0, sigma, currRay.bixelWidth, ...
                                    this.machine.data.primaryFluence, currRay.rayPos_bev, double(currRay.radDepths), ...
                                    double(currRay.geoDepths), double(currRay.isoLatDists), this.hardeningBeta);
+        end
 
-            dose = zeros(numel(currRay.ix), 1);
-            if ~any(terma > 0)
-                return
-            end
+        function [boxLo, boxHi] = sourceBox(this, ix, terma)
+            % Sub-volume (array subscripts) extending scatterCutOff around
+            % the voxels with relevant TERMA
+            dims = this.doseGridDimensions();
+            res = [this.doseGrid.resolution.y this.doseGrid.resolution.x this.doseGrid.resolution.z];
+            isSource = terma > 1e-6 * max(terma);
+            [i1, i2, i3] = ind2sub(dims, ix(isSource));
+            sub = [i1(:) i2(:) i3(:)];
+            margin = ceil(this.scatterCutOff ./ res);
+            boxLo = max(min(sub, [], 1) - margin, 1);
+            boxHi = min(max(sub, [], 1) + margin, dims);
+        end
 
-            rho = this.densityCubes{currRay.ctScen};
+        function dose = transportOnBox(this, sourceIx, terma, boxLo, boxHi, ctScen, dirs, outIx)
+            % Transports the TERMA given on sourceIx within the sub-volume
+            % [boxLo, boxHi] and returns the normalized dose on outIx
+            rho = this.densityCubes{ctScen};
             dims = size(rho);
             res = [this.doseGrid.resolution.y this.doseGrid.resolution.x this.doseGrid.resolution.z];
-
-            [i1, i2, i3] = ind2sub(dims, currRay.ix(:));
-            sub = [i1 i2 i3];
-            isSource = terma > 1e-6 * max(terma);
-            margin = ceil(this.scatterCutOff ./ res);
-            boxLo = max(min(sub(isSource, :), [], 1) - margin, 1);
-            boxHi = min(max(sub(isSource, :), [], 1) + margin, dims);
             boxDims = boxHi - boxLo + 1;
 
-            inBox = all(sub >= repmat(boxLo, size(sub, 1), 1) & sub <= repmat(boxHi, size(sub, 1), 1), 2);
-            local = sub(inBox, :) - repmat(boxLo - 1, nnz(inBox), 1);
-            localIx = sub2ind(boxDims, local(:, 1), local(:, 2), local(:, 3));
-
+            [inSource, sourceLocal] = this.boxIndices(sourceIx, dims, boxLo, boxHi);
             termaBox = zeros(boxDims);
-            termaBox(localIx) = terma(inBox);
+            termaBox(sourceLocal) = terma(inSource);
             rhoBox = rho(boxLo(1):boxHi(1), boxLo(2):boxHi(2), boxLo(3):boxHi(3));
 
-            w = this.directionWeights;
-            doseBox = this.transport(termaBox, rhoBox, res, currRay.cccDirections, w, boxLo - 1);
+            doseBox = this.transport(termaBox, rhoBox, res, dirs, this.directionWeights, boxLo - 1);
 
-            dose(inBox) = this.normalizationFactor * doseBox(localIx);
+            [isOutInBox, outLocal] = this.boxIndices(outIx, dims, boxLo, boxHi);
+            dose = zeros(numel(outIx), 1);
+            dose(isOutInBox) = this.normalizationFactor * doseBox(outLocal);
 
             if ~this.ignoreInvalidValues && any(~isfinite(dose) | dose < 0)
                 matRad_cfg = MatRad_Config.instance();
                 matRad_cfg.dispError('Invalid numerical values in collapsed cone dose calculation.');
             end
+        end
+
+        function dims = doseGridDimensions(this)
+            % Dimensions of the dose grid
+            dims = size(this.densityCubes{1});
+            dims(end + 1:3) = 1;
         end
 
         function dose = transport(this, terma, rho, voxelSize, dirs, w, origin)
@@ -366,6 +476,16 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             if ~isempty(msgs)
                 msg = strjoin(msgs, ' ');
             end
+        end
+
+        function [inBox, localIx] = boxIndices(ix, dims, boxLo, boxHi)
+            % Selects the linear grid indices ix inside the sub-volume
+            % [boxLo, boxHi] and returns their linear indices in it
+            [i1, i2, i3] = ind2sub(dims, ix(:));
+            sub = [i1 i2 i3];
+            inBox = all(sub >= repmat(boxLo, size(sub, 1), 1) & sub <= repmat(boxHi, size(sub, 1), 1), 2);
+            local = sub(inBox, :) - repmat(boxLo - 1, nnz(inBox), 1);
+            localIx = sub2ind(boxHi - boxLo + 1, local(:, 1), local(:, 2), local(:, 3));
         end
 
         function fileName = defaultKernelFile()

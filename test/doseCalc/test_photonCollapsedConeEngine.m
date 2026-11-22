@@ -87,6 +87,7 @@ assertTrue(all(full(sum(D, 1)) > 0));
 
 function test_forwardEqualsDijTimesWeights
 [ct, cst, pln, stf] = helper_waterBox(16, 6, 4, 12);
+pln.propDoseCalc.beamForward = false;
 dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
 w = linspace(0.5, 1.5, dij.totalNumOfBixels)';
 resultGUI = matRad_calcDoseForward(ct, cst, stf, pln, w);
@@ -95,6 +96,21 @@ doseDij = reshape(full(dij.physicalDose{1} * w), dij.doseGrid.dimensions);
 assertElementsAlmostEqual(resultGUI.physicalDose, doseDij, 'absolute', 1e-10 * max(doseDij(:)));
 assertTrue(all(resultGUI.physicalDose(:) >= 0));
 assertFalse(any(isnan(resultGUI.physicalDose(:))));
+
+function test_beamForwardEqualsDijTimesWeights
+[ct, cst, pln, stf] = helper_waterBox(16, 6, 4, 12);
+ct.cubeHU{1}(7:9, :, :) = -700;
+pln.propStf.gantryAngles = [0 120];
+pln.propStf.couchAngles = [0 0];
+stf = matRad_generateStf(ct, cst, pln);
+pln.propDoseCalc.scatterCutOff = 1000;
+pln.propDoseCalc.geometricLateralCutOff = 1000;
+dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
+w = linspace(0.5, 1.5, dij.totalNumOfBixels)';
+resultGUI = matRad_calcDoseForward(ct, cst, stf, pln, w);
+doseDij = reshape(full(dij.physicalDose{1} * w), dij.doseGrid.dimensions);
+assertElementsAlmostEqual(resultGUI.physicalDose, doseDij, 'absolute', 1e-10 * max(doseDij(:)));
+assertElementsAlmostEqual(resultGUI.w, w);
 
 function test_mexMatchesMatlabEngine
 if exist('matRad_collapsedConeMex', 'file') ~= 3
