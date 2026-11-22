@@ -25,7 +25,7 @@ aB = linspace(0.002, 0.02, 16);
 
 function test_referenceDoseFiniteAndNonNegative
 [terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
-dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, aA, wB, aB);
+dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB]);
 assertEqual(size(dose), size(terma));
 assertTrue(all(isfinite(dose(:))));
 assertTrue(all(dose(:) >= 0));
@@ -36,14 +36,14 @@ if exist('matRad_collapsedConeMex', 'file') ~= 3
     moxunit_throw_test_skipped_exception('matRad_collapsedConeMex not compiled');
 end
 [terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
-doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, aA, wB, aB);
-doseMex = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, wA, aA, wB, aB);
+doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB]);
+doseMex = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB]);
 relTol = 1e-12;
 assertElementsAlmostEqual(doseMex, doseRef, 'absolute', relTol * max(doseRef(:)));
 
 origin = [5 -3 7];
-doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, aA, wB, aB, origin);
-doseMex = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, wA, aA, wB, aB, origin, 2);
+doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], origin);
+doseMex = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], origin, 2);
 assertElementsAlmostEqual(doseMex, doseRef, 'absolute', relTol * max(doseRef(:)));
 
 function test_subVolumeConsistency
@@ -51,13 +51,27 @@ function test_subVolumeConsistency
 dims = size(terma);
 terma(:) = 0;
 terma(6:8, 7:10, 5:7) = 1 + reshape(1:36, [3 4 3]) / 36;
-doseFull = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, aA, wB, aB);
+doseFull = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB]);
 lo = [3 4 2];
 hi = dims - [1 2 1];
 doseSub = matRad_collapsedConeTransport(terma(lo(1):hi(1), lo(2):hi(2), lo(3):hi(3)), ...
                                         rho(lo(1):hi(1), lo(2):hi(2), lo(3):hi(3)), ...
-                                        voxelSize, dirs, wA, aA, wB, aB, lo - 1);
+                                        voxelSize, dirs, [wA; wB], [aA; aB], lo - 1);
 assertElementsAlmostEqual(doseSub, doseFull(lo(1):hi(1), lo(2):hi(2), lo(3):hi(3)), 'absolute', 1e-15);
+
+function test_componentLinearity
+[terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
+wC = 0.5 * wB;
+aC = 3 * aB;
+doseAll = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB; wC], [aA; aB; aC]);
+doseSum = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, aA) + ...
+          matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wB, aB) + ...
+          matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wC, aC);
+assertElementsAlmostEqual(doseAll, doseSum, 'absolute', 1e-12 * max(doseAll(:)));
+if exist('matRad_collapsedConeMex', 'file') == 3
+    doseMex = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, [wA; wB; wC], [aA; aB; aC]);
+    assertElementsAlmostEqual(doseMex, doseAll, 'absolute', 1e-12 * max(doseAll(:)));
+end
 
 function test_energyConservationShortRange
 dims = [41 41 41];
@@ -69,7 +83,7 @@ wA = 0.05 * ones(1, 12);
 wB = 0.03 * ones(1, 12);
 aA = 2 * ones(1, 12);
 aB = 1 * ones(1, 12);
-dose = matRad_collapsedConeTransport(terma, rho, [2 2 2], dirs, wA, aA, wB, aB);
+dose = matRad_collapsedConeTransport(terma, rho, [2 2 2], dirs, [wA; wB], [aA; aB]);
 assertElementsAlmostEqual(sum(dose(:)), sum(terma(:)) * sum(wA + wB), 'relative', 1e-6);
 
 function test_equilibriumEachVoxelVisitedOnce
@@ -78,7 +92,7 @@ terma = ones(dims);
 rho = ones(dims);
 dirs = helper_randomDirections(6);
 for d = 1:size(dirs, 2)
-    dose = matRad_collapsedConeTransport(terma, rho, [2 2 2], dirs(:, d), 0.1, 3, 0, 1);
+    dose = matRad_collapsedConeTransport(terma, rho, [2 2 2], dirs(:, d), [0.1; 0], [3; 1]);
     assertTrue(max(dose(:)) <= 0.1 * (1 + 1e-12));
     assertElementsAlmostEqual(median(dose(:)), 0.1, 'relative', 1e-6);
 end
@@ -88,8 +102,8 @@ dims = [60 5 5];
 terma = zeros(dims);
 terma(5, 3, 3) = 1;
 dirs = [1; 0; 0];
-doseWater = matRad_collapsedConeTransport(terma, ones(dims), [1 1 1], dirs, 0, 1, 1, 0.1);
-doseHalf = matRad_collapsedConeTransport(terma, 0.5 * ones(dims), [2 1 1], dirs, 0, 1, 1, 0.1);
+doseWater = matRad_collapsedConeTransport(terma, ones(dims), [1 1 1], dirs, [0; 1], [1; 0.1]);
+doseHalf = matRad_collapsedConeTransport(terma, 0.5 * ones(dims), [2 1 1], dirs, [0; 1], [1; 0.1]);
 assertElementsAlmostEqual(doseHalf(:, 3, 3), doseWater(:, 3, 3), 'relative', 1e-12);
 
 function test_axisDirectionMirrorSymmetry
@@ -100,8 +114,8 @@ rho = ones(dims);
 for ax = 1:3
     axisDir = zeros(3, 1);
     axisDir(ax) = 1;
-    doseForward = matRad_collapsedConeTransport(terma, rho, [2 3 2.5], axisDir, 0.1, 0.3, 0.05, 0.05);
-    doseBackward = matRad_collapsedConeTransport(terma, rho, [2 3 2.5], -axisDir, 0.1, 0.3, 0.05, 0.05);
+    doseForward = matRad_collapsedConeTransport(terma, rho, [2 3 2.5], axisDir, [0.1; 0.05], [0.3; 0.05]);
+    doseBackward = matRad_collapsedConeTransport(terma, rho, [2 3 2.5], -axisDir, [0.1; 0.05], [0.3; 0.05]);
     assertElementsAlmostEqual(doseBackward, flip(doseForward, ax), 'absolute', 1e-15);
 end
 
@@ -129,6 +143,22 @@ kernel = matRad_fitCollapsedConeKernel(edk, 12, 1.5);
 assertEqual(kernel.minRadius, 1.5);
 assertElementsAlmostEqual(kernel.a, 0.3 * ones(1, 12), 'relative', 1e-4);
 assertElementsAlmostEqual(sum(kernel.A), sum(edk.primary(:)), 'relative', 1e-12);
+
+function test_fitCollapsedConeKernelTwoScatterTerms
+edk.angleEdges = 0:3.75:180;
+edk.radiusEdges = 10 * [0 0.05 0.1 0.15 0.2 0.3 0.4 0.5 0.6 0.8 1 1.5 2 3 4 5 6 8 10 15 20 30 40 50 60];
+r1 = edk.radiusEdges(1:end - 1);
+r2 = edk.radiusEdges(2:end);
+shell = @(att) exp(-att * r1) - exp(-att * r2);
+edk.primary = 0.02 * ones(48, 1) * shell(0.3);
+edk.scatter = ones(48, 1) * (0.006 * shell(0.1) + 0.004 * shell(0.02));
+kernel = matRad_fitCollapsedConeKernel(edk, 12, 0, 2);
+assertEqual(size(kernel.B), [2 12]);
+assertElementsAlmostEqual(sum(kernel.B(:)), sum(edk.scatter(:)), 'relative', 1e-10);
+assertElementsAlmostEqual(kernel.b(1, :), 0.1 * ones(1, 12), 'relative', 0.02);
+assertElementsAlmostEqual(kernel.b(2, :), 0.02 * ones(1, 12), 'relative', 0.02);
+assertElementsAlmostEqual(kernel.B(1, :) ./ sum(kernel.B, 1), 0.6 * ones(1, 12), 'relative', 0.02);
+assertTrue(all(kernel.residual.scatterCum < 1e-3));
 
 function test_fitCollapsedConeKernelInvalidBins
 edk.angleEdges = 0:3.75:180;

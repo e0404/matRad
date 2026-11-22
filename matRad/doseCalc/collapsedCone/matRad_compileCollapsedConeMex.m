@@ -135,7 +135,7 @@ function [success, msg] = matRad_testCollapsedConeMex()
 clear('matRad_collapsedConeMex');
 msg = '';
 try
-    dose = matRad_collapsedConeMex(ones(2, 2, 2), ones(2, 2, 2), [1 1 1], [0; 0; 1], 1, 1, 0, 1);
+    dose = matRad_collapsedConeMex(ones(2, 2, 2), ones(2, 2, 2), [1 1 1], [0; 0; 1], 1, 1);
     success = isequal(size(dose), [2 2 2]) && all(isfinite(dose(:)));
     if ~success
         msg = 'unexpected result of the test call';

@@ -23,6 +23,9 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
     %     useMex              use the compiled transport if available
     %     numThreads          number of OpenMP threads of the mex file
     %                         (0 = default)
+    %     numScatterExponentials number of exponential terms of the
+    %                         scatter kernel (1 or 2; the stored kernel is
+    %                         refitted if it differs)
     %     kernelTilt          polar axis of the cones: 'beam' (beam axis,
     %                         same transport lattice for all bixels of a
     %                         beam) or 'ray' (ray of each bixel, which
@@ -71,6 +74,7 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
         randomSeed = 0
         ignoreInvalidValues = false
         kernelTilt = 'beam'
+        numScatterExponentials = 1
     end
 
     properties (SetAccess = protected, GetAccess = public)
@@ -149,7 +153,7 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
 
             this.effectiveLateralCutOff = max(this.geometricLateralCutOff, this.scatterCutOff) + bixelWidth / sqrt(2);
 
-            this.kernel = this.loadKernel(this.kernelFile, this.numPolarAngles);
+            this.kernel = this.loadKernel(this.kernelFile, this.numPolarAngles, this.numScatterExponentials);
             [this.localDirections, this.directionWeights] = this.getConeDirections(this.kernel, this.numAzimuthalAngles);
 
             this.densityCubes = cell(1, numel(this.cubeWED));
@@ -278,9 +282,9 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             % Dispatches the transport to the mex file or the MATLAB
             % implementation
             if this.mexAvailable
-                dose = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, w.A, w.a, w.B, w.b, origin, this.numThreads);
+                dose = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, w.weights, w.att, origin, this.numThreads);
             else
-                dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, w.A, w.a, w.B, w.b, origin);
+                dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, w.weights, w.att, origin);
             end
         end
 
@@ -348,35 +352,42 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             fileName = fullfile(fileparts(which('matRad_fitCollapsedConeKernel')), 'matRad_collapsedConeKernel_6MV.mat');
         end
 
-        function kernel = loadKernel(fileName, numPolarAngles)
+        function kernel = loadKernel(fileName, numPolarAngles, numScatterExponentials)
             % Loads the kernel data and refits it if a different number of
-            % polar bins is requested
+            % polar bins or scatter exponentials is requested
             matRad_cfg = MatRad_Config.instance();
+            if nargin < 3
+                numScatterExponentials = 1;
+            end
             data = load(fileName, 'ccKernel');
             if ~isfield(data, 'ccKernel')
                 matRad_cfg.dispError('Kernel file %s does not contain a collapsed cone kernel!', fileName);
             end
-            if data.ccKernel.fit.numPolarAngles == numPolarAngles
-                kernel = data.ccKernel.fit;
-            else
-                minRadius = 0;
-                if isfield(data.ccKernel.fit, 'minRadius')
-                    minRadius = data.ccKernel.fit.minRadius;
-                end
-                kernel = matRad_fitCollapsedConeKernel(data.ccKernel.cones, numPolarAngles, minRadius);
+            fit = data.ccKernel.fit;
+            storedScatterExponentials = size(fit.B, 1);
+            if fit.numPolarAngles == numPolarAngles && storedScatterExponentials == numScatterExponentials
+                kernel = fit;
+                kernel.numScatterExponentials = storedScatterExponentials;
+                return
             end
+            if ~isfield(data.ccKernel, 'cones')
+                matRad_cfg.dispError('Kernel file %s cannot be refitted, it contains no conical kernel data.', fileName);
+            end
+            minRadius = 0;
+            if isfield(fit, 'minRadius')
+                minRadius = fit.minRadius;
+            end
+            kernel = matRad_fitCollapsedConeKernel(data.ccKernel.cones, numPolarAngles, minRadius, numScatterExponentials);
         end
 
         function [dirs, weights] = getConeDirections(kernel, numAzimuthalAngles)
             % Returns the cone directions in the local frame (polar axis
-            % along z) and the kernel parameters per direction
+            % along z) and the weights and attenuation coefficients of all
+            % kernel components per direction (components x directions)
             [theta, phi] = ndgrid(kernel.polarAngles, ((1:numAzimuthalAngles) - 0.5) * 360 / numAzimuthalAngles);
             dirs = [sind(theta(:))' .* cosd(phi(:))'; sind(theta(:))' .* sind(phi(:))'; cosd(theta(:))'];
-            perDir = @(v) reshape(repmat(v(:), 1, numAzimuthalAngles), 1, []);
-            weights.A = perDir(kernel.A) / numAzimuthalAngles;
-            weights.a = perDir(kernel.a);
-            weights.B = perDir(kernel.B) / numAzimuthalAngles;
-            weights.b = perDir(kernel.b);
+            weights.weights = repmat([kernel.A; kernel.B], 1, numAzimuthalAngles) / numAzimuthalAngles;
+            weights.att = repmat([kernel.a; kernel.b], 1, numAzimuthalAngles);
         end
 
         function dirs = tiltDirections(localDirs, axisWorld, lateralWorld)
@@ -458,7 +469,7 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             terma = mu * exp(-mu * z(:));
             dirs = [cosd(kernel.polarAngles); sind(kernel.polarAngles); zeros(1, kernel.numPolarAngles)];
             dose = matRad_collapsedConeTransport(terma, ones(numVox, 1), [dz 1e9 1e9], dirs, ...
-                                                 kernel.A, kernel.a, kernel.B, kernel.b);
+                                                 [kernel.A; kernel.B], [kernel.a; kernel.b]);
             dd = interp1(z, dose, depths, 'linear');
         end
 

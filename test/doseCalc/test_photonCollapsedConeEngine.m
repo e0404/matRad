@@ -71,6 +71,9 @@ total = sum(kernel.A + kernel.B);
 assertTrue(total > 0.9 && total < 1);
 kernel6 = DoseEngines.matRad_PhotonCollapsedConeEngine.loadKernel(fileName, 6);
 assertElementsAlmostEqual(sum(kernel6.A + kernel6.B), total, 'relative', 1e-10);
+kernel2 = DoseEngines.matRad_PhotonCollapsedConeEngine.loadKernel(fileName, 12, 2);
+assertEqual(size(kernel2.B), [2 12]);
+assertElementsAlmostEqual(sum(kernel2.A) + sum(kernel2.B(:)), total, 'relative', 1e-10);
 
 function test_dijSmallBox
 [ct, cst, pln, stf] = helper_waterBox(16, 6, 4, 12);

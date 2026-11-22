@@ -2,17 +2,19 @@
  * matRad_collapsedConeMex: collapsed cone convolution transport kernel
  *
  * call:
- *   dose = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, A, a, B, b)
- *   dose = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, A, a, B, b, origin)
- *   dose = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, A, a, B, b, origin, numThreads)
+ *   dose = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, weights, att)
+ *   dose = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, weights, att, origin)
+ *   dose = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, weights, att, origin, numThreads)
  *
  * input:
  *   terma:       3D double array of TERMA
  *   rho:         3D double array of relative electron densities (same size)
  *   voxelSize:   voxel size along the three array dimensions [mm]
  *   dirs:        3 x nDirs unit transport directions in array axes
- *   A, a, B, b:  1 x nDirs kernel weights and attenuation coefficients
- *                [1/mm of water] per direction
+ *   weights:     nComponents x nDirs kernel weights of the exponential
+ *                components (e.g. primary and scatter) per direction
+ *   att:         nComponents x nDirs attenuation coefficients [1/mm of
+ *                water]
  *   origin:      (optional) zero based index of the first voxel of the
  *                arrays in a global grid. The transport lattice is anchored
  *                to the global grid, so that results of sub-volumes of the
@@ -85,8 +87,10 @@ inline long roundShift(double x)
 }
 
 void transportDirection(const double* terma, const double* rho, double* dose, const Grid& grid, const double dir[3],
-                        const Component& ca, const Component& cb)
+                        const std::vector<Component>& comps)
 {
+    const std::size_t numComps = comps.size();
+    std::vector<double> flow(numComps);
     int k = 0;
     double best = -1.0;
     for (int ax = 0; ax < 3; ++ax) {
@@ -123,8 +127,7 @@ void transportDirection(const double* terma, const double* rho, double* dose, co
 
     for (long j0 = minLine2; j0 <= maxLine2; ++j0) {
         for (long i0 = minLine1; i0 <= maxLine1; ++i0) {
-            double pa = 0.0;
-            double pb = 0.0;
+            std::fill(flow.begin(), flow.end(), 0.0);
             for (long q = 0; q < nk; ++q) {
                 const long p = forward ? q : nk - 1 - q;
                 const long i = i0 + sh1[p];
@@ -136,17 +139,28 @@ void transportDirection(const double* terma, const double* rho, double* dose, co
                 const double dt = step * rho[ix];
                 const double t = terma[ix];
                 double d = 0.0;
-                depositStep(dt, t, ca, pa, d);
-                depositStep(dt, t, cb, pb, d);
+                for (std::size_t c = 0; c < numComps; ++c) {
+                    depositStep(dt, t, comps[c], flow[c], d);
+                }
                 dose[ix] += d;
             }
         }
     }
 }
 
+std::vector<Component> directionComponents(const double* weights, const double* att, long d, long numComps)
+{
+    std::vector<Component> comps(numComps);
+    for (long c = 0; c < numComps; ++c) {
+        comps[c].weight = weights[d * numComps + c];
+        comps[c].att = att[d * numComps + c];
+    }
+    return comps;
+}
+
 void transportAll(const double* terma, const double* rho, double* dose, const Grid& grid, const double* dirs,
-                  const double* wA, const double* aA, const double* wB, const double* aB, long numDirs,
-                  std::size_t numVox, int numThreads)
+                  const double* weights, const double* att, long numComps, long numDirs, std::size_t numVox,
+                  int numThreads)
 {
 #ifdef _OPENMP
     if (numThreads <= 0) {
@@ -161,9 +175,8 @@ void transportAll(const double* terma, const double* rho, double* dose, const Gr
             buffers[tid].assign(numVox, 0.0);
 #pragma omp for schedule(static)
             for (long d = 0; d < numDirs; ++d) {
-                const Component ca = {wA[d], aA[d]};
-                const Component cb = {wB[d], aB[d]};
-                transportDirection(terma, rho, buffers[tid].data(), grid, dirs + 3 * d, ca, cb);
+                transportDirection(terma, rho, buffers[tid].data(), grid, dirs + 3 * d,
+                                   directionComponents(weights, att, d, numComps));
             }
         }
         for (int t = 0; t < numThreads; ++t) {
@@ -180,9 +193,7 @@ void transportAll(const double* terma, const double* rho, double* dose, const Gr
     (void)numThreads;
 #endif
     for (long d = 0; d < numDirs; ++d) {
-        const Component ca = {wA[d], aA[d]};
-        const Component cb = {wB[d], aB[d]};
-        transportDirection(terma, rho, dose, grid, dirs + 3 * d, ca, cb);
+        transportDirection(terma, rho, dose, grid, dirs + 3 * d, directionComponents(weights, att, d, numComps));
     }
 }
 
@@ -190,8 +201,8 @@ void transportAll(const double* terma, const double* rho, double* dose, const Gr
 
 void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
 {
-    if (nrhs < 8 || nrhs > 10) {
-        mexErrMsgIdAndTxt("matRad:collapsedConeMex:nrhs", "Eight to ten inputs required.");
+    if (nrhs < 6 || nrhs > 8) {
+        mexErrMsgIdAndTxt("matRad:collapsedConeMex:nrhs", "Six to eight inputs required.");
     }
     if (nlhs > 1) {
         mexErrMsgIdAndTxt("matRad:collapsedConeMex:nlhs", "One output allowed.");
@@ -222,31 +233,32 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
         mexErrMsgIdAndTxt("matRad:collapsedConeMex:dirs", "Directions must be a 3 x nDirs array.");
     }
     const long numDirs = static_cast<long>(mxGetN(prhs[3]));
-    for (int i = 4; i < 8; ++i) {
-        if (mxGetNumberOfElements(prhs[i]) != static_cast<std::size_t>(numDirs)) {
-            mexErrMsgIdAndTxt("matRad:collapsedConeMex:kernel", "Kernel parameters must have one value per direction.");
-        }
+    const long numComps = static_cast<long>(mxGetM(prhs[4]));
+    if (static_cast<long>(mxGetN(prhs[4])) != numDirs || mxGetM(prhs[5]) != mxGetM(prhs[4]) ||
+        mxGetN(prhs[5]) != mxGetN(prhs[4])) {
+        mexErrMsgIdAndTxt("matRad:collapsedConeMex:kernel",
+                          "Kernel weights and attenuation coefficients must be nComponents x nDirs arrays.");
     }
 
     const double* s = mxGetPr(prhs[2]);
     for (int d = 0; d < 3; ++d) {
         grid.s[d] = s[d];
     }
-    if (nrhs > 8 && !mxIsEmpty(prhs[8])) {
-        if (mxGetNumberOfElements(prhs[8]) != 3) {
+    if (nrhs > 6 && !mxIsEmpty(prhs[6])) {
+        if (mxGetNumberOfElements(prhs[6]) != 3) {
             mexErrMsgIdAndTxt("matRad:collapsedConeMex:origin", "Origin must have three elements.");
         }
-        const double* o = mxGetPr(prhs[8]);
+        const double* o = mxGetPr(prhs[6]);
         for (int d = 0; d < 3; ++d) {
             grid.origin[d] = static_cast<long>(o[d]);
         }
     }
     int numThreads = 0;
-    if (nrhs > 9) {
-        numThreads = static_cast<int>(mxGetScalar(prhs[9]));
+    if (nrhs > 7) {
+        numThreads = static_cast<int>(mxGetScalar(prhs[7]));
     }
 
     plhs[0] = mxCreateNumericArray(numDims, dims, mxDOUBLE_CLASS, mxREAL);
     transportAll(mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetPr(plhs[0]), grid, mxGetPr(prhs[3]), mxGetPr(prhs[4]),
-                 mxGetPr(prhs[5]), mxGetPr(prhs[6]), mxGetPr(prhs[7]), numDirs, numVox, numThreads);
+                 mxGetPr(prhs[5]), numComps, numDirs, numVox, numThreads);
 }
