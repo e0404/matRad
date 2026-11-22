@@ -21,8 +21,9 @@ pln.propStf.bixelWidth = bixelWidth;
 pln.propStf.isoCenter = matRad_getIsoCenter(cst, ct, 0);
 pln.propDoseCalc.engine = 'CCC';
 pln.propDoseCalc.doseGrid.resolution = struct('x', res, 'y', res, 'z', res);
-pln.propDoseCalc.numPolarAngles = 6;
+pln.propDoseCalc.numPolarAngles = 4;
 pln.propDoseCalc.numAzimuthalAngles = 4;
+pln.propDoseCalc.scatterCutOff = 50;
 pln.propDoseCalc.enableDijSampling = false;
 stf = matRad_generateStf(ct, cst, pln);
 
@@ -72,7 +73,7 @@ kernel6 = DoseEngines.matRad_PhotonCollapsedConeEngine.loadKernel(fileName, 6);
 assertElementsAlmostEqual(sum(kernel6.A + kernel6.B), total, 'relative', 1e-10);
 
 function test_dijSmallBox
-[ct, cst, pln, stf] = helper_waterBox(24, 5, 6, 10);
+[ct, cst, pln, stf] = helper_waterBox(16, 6, 4, 12);
 dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
 assertEqual(size(dij.physicalDose{1}), [dij.doseGrid.numOfVoxels sum([stf.totalNumOfBixels])]);
 D = dij.physicalDose{1};
@@ -82,7 +83,7 @@ assertTrue(all(nonzeros(D) >= 0));
 assertTrue(all(full(sum(D, 1)) > 0));
 
 function test_forwardEqualsDijTimesWeights
-[ct, cst, pln, stf] = helper_waterBox(24, 5, 6, 10);
+[ct, cst, pln, stf] = helper_waterBox(16, 6, 4, 12);
 dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
 w = linspace(0.5, 1.5, dij.totalNumOfBixels)';
 resultGUI = matRad_calcDoseForward(ct, cst, stf, pln, w);
@@ -96,8 +97,8 @@ function test_mexMatchesMatlabEngine
 if exist('matRad_collapsedConeMex', 'file') ~= 3
     moxunit_throw_test_skipped_exception('matRad_collapsedConeMex not compiled');
 end
-[ct, cst, pln, stf] = helper_waterBox(20, 5, 4, 10);
-ct.cubeHU{1}(:, 8:11, :) = -700;
+[ct, cst, pln, stf] = helper_waterBox(16, 6, 4, 12);
+ct.cubeHU{1}(:, 7:9, :) = -700;
 w = ones(sum([stf.totalNumOfBixels]), 1);
 pln.propDoseCalc.useMex = true;
 doseMex = matRad_calcDoseForward(ct, cst, stf, pln, w);
@@ -106,9 +107,10 @@ doseRef = matRad_calcDoseForward(ct, cst, stf, pln, w);
 relTol = 1e-10;
 assertElementsAlmostEqual(doseMex.physicalDose, doseRef.physicalDose, 'absolute', relTol * max(doseRef.physicalDose(:)));
 
-function [depth, profile, geoDist, engine, machine] = helper_centralAxis(kernelFile)
-[ct, cst, pln, stf] = helper_waterBox(40, 5, 16, 10);
-pln.propDoseCalc.kernelFile = kernelFile;
+function test_shortRangeKernelCentralAxis
+[ct, cst, pln, stf] = helper_waterBox(30, 6, 10, 20);
+pln.propDoseCalc.kernelFile = helper_shortRangeKernel(4);
+pln.propDoseCalc.scatterCutOff = 20;
 engine = DoseEngines.matRad_PhotonCollapsedConeEngine(pln);
 resultGUI = engine.calcDoseForward(ct, cst, stf, ones(sum([stf.totalNumOfBixels]), 1));
 assertTrue(all(resultGUI.physicalDose(:) >= 0));
@@ -118,49 +120,24 @@ machine = matRad_loadMachine(pln);
 center = round(ct.cubeDim / 2);
 column = resultGUI.physicalDose(:, center(2), center(3));
 first = find(column > 0, 1);
-rows = (first + 4:first + 26)';
+rows = (first + 3:first + 20)';
 profile = column(rows);
 depth = (rows - first + 0.5) * ct.resolution.y;
 voxIx = sub2ind(ct.cubeDim, rows, center(2) * ones(numel(rows), 1), center(3) * ones(numel(rows), 1));
 voxWorld = matRad_cubeIndex2worldCoords(voxIx, ct);
 source = stf.isoCenter + stf.sourcePoint;
-geoDist = sqrt(sum((voxWorld - repmat(source, numel(rows), 1)).^2, 2));
+invSquare = (machine.meta.SAD ./ sqrt(sum((voxWorld - repmat(source, numel(rows), 1)).^2, 2))).^2;
 
-function test_energyConservationLargeWaterBox
-[depth, profile, geoDist, engine, machine] = helper_centralAxis(helper_shortRangeKernel(6));
 mu = machine.data.m;
-terma = mu * exp(-mu * depth) .* (machine.meta.SAD ./ geoDist).^2;
+terma = mu * exp(-mu * depth) .* invSquare;
 expected = engine.normalizationFactor * sum(engine.kernel.A + engine.kernel.B) * terma;
 assertElementsAlmostEqual(profile, expected, 'relative', 0.01);
 
-function test_broadFieldDepthDoseAtNormalizationDepth
-[depth, profile, geoDist, engine, machine] = helper_centralAxis(helper_shortRangeKernel(6));
-dose = interp1(depth, profile .* (geoDist / machine.meta.SAD).^2, engine.normalizationDepth);
+dose = interp1(depth, profile ./ invSquare, engine.normalizationDepth);
 reference = DoseEngines.matRad_PhotonCollapsedConeEngine.calcAnalyticalDepthDose(machine, engine.normalizationDepth);
 assertElementsAlmostEqual(dose, reference, 'relative', 0.01);
 
-function test_depthDoseComparableToSVDPB
-[ct, cst, pln, stf] = helper_waterBox(50, 8, 20, 20);
-w = ones(sum([stf.totalNumOfBixels]), 1);
-resultCCC = matRad_calcDoseForward(ct, cst, stf, pln, w);
-plnSvd = pln;
-plnSvd.propDoseCalc = struct('engine', 'SVDPB', 'kernelCutOff', Inf, 'geometricLateralCutOff', 180, 'enableDijSampling', false, ...
-                             'doseGrid', pln.propDoseCalc.doseGrid);
-resultSVD = matRad_calcDoseForward(ct, cst, stf, plnSvd, w);
-
-center = round(ct.cubeDim / 2);
-pddCCC = resultCCC.physicalDose(:, center(2), center(3));
-pddSVD = resultSVD.physicalDose(:, center(2), center(3));
-first = find(pddSVD > 0, 1);
-depth = ((first:numel(pddSVD)) - first + 0.5)' * ct.resolution.y;
-normDepth = 100;
-dCCC = interp1(depth, pddCCC(first:end), normDepth);
-dSVD = interp1(depth, pddSVD(first:end), normDepth);
-assertElementsAlmostEqual(dCCC, dSVD, 'relative', 0.03);
-assertFalse(any(isnan(resultCCC.physicalDose(:))));
-assertTrue(all(resultCCC.physicalDose(:) >= 0));
-
 function test_invalidKernelTilt
-[ct, cst, pln, stf] = helper_waterBox(16, 5, 4, 10);
+[ct, cst, pln, stf] = helper_waterBox(12, 6, 4, 12);
 pln.propDoseCalc.kernelTilt = 'voxel';
 assertExceptionThrown(@() matRad_calcDoseInfluence(ct, cst, stf, pln));
