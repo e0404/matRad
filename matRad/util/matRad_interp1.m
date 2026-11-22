@@ -104,7 +104,7 @@ elseif isGriddedInterpolantAvailable
         queryPoints  = {x};
     end
 
-    if isgpuarray(x)
+    if matRad_isgpuarrayCompat(x)
         samplePoints = cellfun(@gpuArray,samplePoints,'UniformOutput',false);
         yi = gpuArray(yi);
     end
