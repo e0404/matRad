@@ -43,11 +43,12 @@ Raw EGSnrc output is not part of the repository.
    matRad_rc;
    addpath('tools/collapsedConeKernels');
    matRad_buildCollapsedConeKernel('/path/outside/the/repository/edk_runs', ...
-       fullfile(getenv('HEN_HOUSE'), 'spectra', 'egsnrc', 'mohan6.spectrum'), [], 12, 1.5);
+       fullfile(getenv('HEN_HOUSE'), 'spectra', 'egsnrc', 'mohan6.spectrum'), [], 12, 1.5, 200);
    ```
 
-   The last two arguments are the number of polar bins of the stored fit and
-   the smallest radius included in the fit (1.5 mm, half of a 3 mm voxel).
+   The last three arguments are the number of polar bins of the stored fit,
+   the smallest radius included in the fit (1.5 mm, half of a 3 mm voxel) and
+   the largest radius included in the fit of the scatter component (200 mm).
 
 ## Method
 
@@ -63,7 +64,12 @@ Raw EGSnrc output is not part of the repository.
   the primary and scatter energy fractions of the bin from the Monte Carlo
   data; `a` and `b` are fitted to the normalized cumulative radial energy
   distribution of each component for r >= 1.5 mm. Energy deposited closer to
-  the interaction point stays in the source voxel of the transport.
+  the interaction point stays in the source voxel of the transport. The
+  scatter is fitted only up to 200 mm: EDKnrc scores inside a 60 cm sphere,
+  so the normalized cumulative scatter of the data reaches 1 at 60 cm (the
+  escaping energy is missing), which a single exponential cannot follow, and
+  distances of patient size matter most for the dose. The scatter build-up
+  near the origin cannot be represented by positive exponentials.
 - No renormalization is applied: the energy escaping the 60 cm sphere is
   reported as missing fraction, `sum(A + B) = 1 - missing`. Absolute dose
   normalization is performed by the dose engine against the machine data.

@@ -1,4 +1,4 @@
-function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius)
+function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius, scatterMaxRadius)
 % matRad_buildCollapsedConeKernel builds the collapsed cone kernel data file
 % from monoenergetic EGSnrc EDKnrc runs
 %
@@ -12,6 +12,7 @@ function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFil
 %   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile)
 %   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles)
 %   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius)
+%   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius, scatterMaxRadius)
 %
 % input:
 %   runDir:         folder with the EDKnrc .egslst files
@@ -23,6 +24,8 @@ function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFil
 %                   Default: 12
 %   minRadius:      (optional) smallest radius [mm] included in the fit.
 %                   Default: 0
+%   scatterMaxRadius: (optional) largest radius [mm] included in the fit
+%                   of the scatter component. Default: Inf
 %
 % output:
 %   ccKernel:       kernel struct as stored in outFile
@@ -48,8 +51,11 @@ end
 if nargin < 4 || isempty(numPolarAngles)
     numPolarAngles = 12;
 end
-if nargin < 5
+if nargin < 5 || isempty(minRadius)
     minRadius = 0;
+end
+if nargin < 6
+    scatterMaxRadius = Inf;
 end
 
 files = dir(fullfile(runDir, '*.egslst'));
@@ -71,7 +77,7 @@ matRad_reportEdkStatistics(mono);
 matRad_cfg.dispInfo('Polyenergetic kernel (%s):\n', spectrum.title);
 polyStats = matRad_reportEdkStatistics(poly);
 
-fit = matRad_fitCollapsedConeKernel(poly, numPolarAngles, minRadius);
+fit = matRad_fitCollapsedConeKernel(poly, numPolarAngles, minRadius, 1, scatterMaxRadius);
 matRad_reportFit(fit);
 
 ccKernel = struct();

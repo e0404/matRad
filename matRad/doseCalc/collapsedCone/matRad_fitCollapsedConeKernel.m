@@ -1,4 +1,4 @@
-function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius, numScatterExponentials)
+function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius, numScatterExponentials, scatterMaxRadius)
 % matRad_fitCollapsedConeKernel collapses a conical energy deposition kernel
 % into polar bins and fits a sum of exponentials per component
 %
@@ -11,12 +11,13 @@ function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius, 
 % renormalization, escaping energy stays missing). The attenuation
 % coefficients and the split of the scatter energy between its terms are
 % fitted to the normalized cumulative radial energy distribution of each
-% component.
+% component, for the scatter optionally only up to scatterMaxRadius.
 %
 % call:
 %   kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles)
 %   kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius)
 %   kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius, numScatterExponentials)
+%   kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius, numScatterExponentials, scatterMaxRadius)
 %
 % input:
 %   edk:                    conical kernel struct with fields angleEdges
@@ -28,10 +29,13 @@ function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius, 
 %                           fit and in the residuals. Default: 0
 %   numScatterExponentials: (optional) number of exponential terms of the
 %                           scatter component (1 or 2). Default: 1
+%   scatterMaxRadius:       (optional) largest radius [mm] included in the
+%                           fit of the scatter component. Default: Inf
 %
 % output:
 %   kernel:         struct with fields
-%                     numPolarAngles, minRadius, numScatterExponentials
+%                     numPolarAngles, minRadius, numScatterExponentials,
+%                     scatterMaxRadius
 %                     polarEdges      bin edges [deg]
 %                     polarAngles     solid angle bisector of each bin [deg]
 %                     A, a            primary weight and attenuation
@@ -40,7 +44,7 @@ function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius, 
 %                                     coefficients (nTerms x nBins)
 %                     residual        struct with, per bin, the maximum
 %                                     absolute error of the normalized
-%                                     cumulative energy over all radii
+%                                     cumulative energy for r >= minRadius
 %                                     (primaryCum, scatterCum), for
 %                                     r <= 10 mm (primaryCumNear,
 %                                     scatterCumNear) and for r >= 100 mm
@@ -73,6 +77,9 @@ end
 if nargin < 4 || isempty(numScatterExponentials)
     numScatterExponentials = 1;
 end
+if nargin < 5 || isempty(scatterMaxRadius)
+    scatterMaxRadius = Inf;
+end
 if ~any(numScatterExponentials == [1 2])
     matRad_cfg.dispError('Only one or two scatter exponentials are supported.');
 end
@@ -87,6 +94,7 @@ kernel = struct();
 kernel.numPolarAngles = numPolarAngles;
 kernel.minRadius = minRadius;
 kernel.numScatterExponentials = numScatterExponentials;
+kernel.scatterMaxRadius = scatterMaxRadius;
 kernel.polarEdges = edk.angleEdges(1:conesPerBin:end);
 cosEdges = cosd(kernel.polarEdges);
 kernel.polarAngles = acosd(0.5 * (cosEdges(1:end - 1) + cosEdges(2:end)));
@@ -94,8 +102,9 @@ kernel.polarAngles = acosd(0.5 * (cosEdges(1:end - 1) + cosEdges(2:end)));
 rOuter = edk.radiusEdges(2:end);
 comps = {'primary', 'scatter'};
 numTerms = [1 numScatterExponentials];
+maxRadius = [Inf scatterMaxRadius];
 inFit = rOuter >= minRadius;
-masks = {true(size(rOuter)), inFit & rOuter <= 10, inFit & rOuter >= 100};
+masks = {inFit, inFit & rOuter <= 10, inFit & rOuter >= 100};
 suffix = {'Cum', 'CumNear', 'CumFar'};
 
 for c = 1:2
@@ -112,7 +121,8 @@ for c = 1:2
             continue
         end
         cumData = cumsum(y) / energy;
-        [frac, att(:, p)] = matRad_fitCumulativeExponentials(rOuter(inFit), cumData(inFit), numTerms(c));
+        sel = inFit & rOuter <= maxRadius(c);
+        [frac, att(:, p)] = matRad_fitCumulativeExponentials(rOuter(sel), cumData(sel), numTerms(c));
         weight(:, p) = energy * frac;
         model = 1 - frac' * exp(-att(:, p) * rOuter);
         for m = 1:3

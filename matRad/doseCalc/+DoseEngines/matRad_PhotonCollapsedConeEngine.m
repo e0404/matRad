@@ -377,7 +377,12 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             if isfield(fit, 'minRadius')
                 minRadius = fit.minRadius;
             end
-            kernel = matRad_fitCollapsedConeKernel(data.ccKernel.cones, numPolarAngles, minRadius, numScatterExponentials);
+            scatterMaxRadius = Inf;
+            if isfield(fit, 'scatterMaxRadius')
+                scatterMaxRadius = fit.scatterMaxRadius;
+            end
+            kernel = matRad_fitCollapsedConeKernel(data.ccKernel.cones, numPolarAngles, minRadius, numScatterExponentials, ...
+                                                   scatterMaxRadius);
         end
 
         function [dirs, weights] = getConeDirections(kernel, numAzimuthalAngles)

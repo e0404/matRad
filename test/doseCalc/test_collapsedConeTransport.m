@@ -139,8 +139,10 @@ assertElementsAlmostEqual(kernel.a, 0.3 * ones(1, 12), 'relative', 1e-4);
 assertElementsAlmostEqual(kernel.b, 0.02 * ones(1, 12), 'relative', 1e-3);
 assertTrue(all(kernel.residual.primaryCum < 1e-4));
 
-kernel = matRad_fitCollapsedConeKernel(edk, 12, 1.5);
+kernel = matRad_fitCollapsedConeKernel(edk, 12, 1.5, 1, 200);
 assertEqual(kernel.minRadius, 1.5);
+assertEqual(kernel.scatterMaxRadius, 200);
+assertElementsAlmostEqual(kernel.b, 0.02 * ones(1, 12), 'relative', 1e-3);
 assertElementsAlmostEqual(kernel.a, 0.3 * ones(1, 12), 'relative', 1e-4);
 assertElementsAlmostEqual(sum(kernel.A), sum(edk.primary(:)), 'relative', 1e-12);
 
