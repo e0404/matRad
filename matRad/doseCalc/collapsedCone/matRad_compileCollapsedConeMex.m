@@ -1,4 +1,4 @@
-function success = matRad_compileCollapsedConeMex(dest, useOpenMP, staticRuntime)
+function success = matRad_compileCollapsedConeMex(varargin)
 % matRad_compileCollapsedConeMex compiles the collapsed cone transport mex
 % file for the current platform (MATLAB mex or Octave mkoctfile --mex)
 %
@@ -9,23 +9,24 @@ function success = matRad_compileCollapsedConeMex(dest, useOpenMP, staticRuntime
 %
 % call:
 %   matRad_compileCollapsedConeMex()
-%   matRad_compileCollapsedConeMex(dest)
-%   matRad_compileCollapsedConeMex(dest, useOpenMP)
-%   matRad_compileCollapsedConeMex(dest, useOpenMP, staticRuntime)
+%   matRad_compileCollapsedConeMex('Name', value, ...)
 %   success = matRad_compileCollapsedConeMex(...)
 %
-% input:
-%   dest:           (optional) destination folder of the mex file.
-%                   Default: location of this file
-%   useOpenMP:      (optional) compile with OpenMP support. Default: true
-%   staticRuntime:  (optional) link libstdc++ and libgcc statically
-%                   (MATLAB on Linux only). Needed when the system compiler
-%                   is newer than the one supported by the running MATLAB
-%                   release and the mex file conflicts with the C++ runtime
-%                   shipped with MATLAB. Default: false
+% input (name-value pairs, all optional):
+%   dest:           destination folder of the mex file. Default: location
+%                   of this file
+%   useOpenMP:      compile with OpenMP support. Default: true
+%   staticRuntime:  link libstdc++ and libgcc statically (MATLAB on Linux
+%                   only). Needed when the system compiler is newer than
+%                   the one supported by the running MATLAB release and the
+%                   mex file conflicts with the C++ runtime shipped with
+%                   MATLAB. Default: false
 %
 % output:
 %   success:        true if the compiled mex file can be called
+%
+% example:
+%   matRad_compileCollapsedConeMex('staticRuntime', true)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -43,15 +44,15 @@ function success = matRad_compileCollapsedConeMex(dest, useOpenMP, staticRuntime
 matRad_cfg = MatRad_Config.instance();
 
 sourceFolder = fileparts(mfilename('fullpath'));
-if nargin < 1 || isempty(dest)
-    dest = sourceFolder;
-end
-if nargin < 2 || isempty(useOpenMP)
-    useOpenMP = true;
-end
-if nargin < 3 || isempty(staticRuntime)
-    staticRuntime = false;
-end
+
+p = inputParser();
+addParameter(p, 'dest', sourceFolder);
+addParameter(p, 'useOpenMP', true);
+addParameter(p, 'staticRuntime', false);
+parse(p, varargin{:});
+dest = p.Results.dest;
+useOpenMP = p.Results.useOpenMP;
+staticRuntime = p.Results.staticRuntime;
 
 if staticRuntime && ~(matRad_cfg.isMatlab && isunix && ~ismac)
     matRad_cfg.dispWarning('Static C++ runtime linking is only supported for MATLAB on Linux and will be ignored.');

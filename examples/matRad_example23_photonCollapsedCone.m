@@ -35,8 +35,8 @@ matRad_cfg = MatRad_Config.instance();
 % result but is slower. The mex file only needs to be compiled once.
 %
 % With MATLAB on Linux and a compiler newer than the one supported by your
-% MATLAB release, use matRad_compileCollapsedConeMex([], true, true) to link
-% the C++ runtime statically.
+% MATLAB release, use matRad_compileCollapsedConeMex('staticRuntime', true)
+% to link the C++ runtime statically.
 if exist('matRad_collapsedConeMex', 'file') ~= 3
     try
         matRad_compileCollapsedConeMex();

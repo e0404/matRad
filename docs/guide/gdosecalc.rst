@@ -105,9 +105,9 @@ The transport is implemented as C++ mex file ``matRad_collapsedConeMex`` with op
 
 .. code-block:: matlab
 
-    matRad_compileCollapsedConeMex();                 % mex (MATLAB) or mkoctfile --mex (Octave), with OpenMP
-    matRad_compileCollapsedConeMex([], false);        % without OpenMP
-    matRad_compileCollapsedConeMex([], true, true);   % MATLAB on Linux: link libstdc++/libgcc statically
+    matRad_compileCollapsedConeMex();                         % mex (MATLAB) or mkoctfile --mex (Octave), with OpenMP
+    matRad_compileCollapsedConeMex('useOpenMP', false);       % without OpenMP
+    matRad_compileCollapsedConeMex('staticRuntime', true);    % MATLAB on Linux: link libstdc++/libgcc statically
 
 The static C++ runtime is needed when the system compiler is newer than the one supported by the MATLAB release.
 
