@@ -1,16 +1,19 @@
-function dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, aA, wB, aB)
+function dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, aA, wB, aB, origin)
 % matRad_collapsedConeTransport MATLAB reference implementation of the
 % collapsed cone convolution transport (same algorithm as
 % matRad_collapsedConeMex)
 %
 % For each direction the volume is traversed plane by plane along the
 % dominant axis on a sheared lattice, so that every voxel is visited exactly
-% once per direction. Along each line the Ahnesjo recursion is applied to
+% once per direction. The lattice is anchored to a global grid through the
+% origin of the arrays, so that sub-volumes of the same grid give consistent
+% results. Along each line the Ahnesjo recursion is applied to
 % the primary (A,a) and scatter (B,b) components with the radiological step
 % length dt = (voxel size / |cos to dominant axis|) * rho.
 %
 % call:
 %   dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, A, a, B, b)
+%   dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, A, a, B, b, origin)
 %
 % input:
 %   terma:      3D array of TERMA
@@ -19,6 +22,8 @@ function dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, a
 %   dirs:       3 x nDirs unit transport directions in array axes
 %   A, a, B, b: 1 x nDirs kernel weights and attenuation coefficients
 %               [1/mm of water] per direction
+%   origin:     (optional) zero based index of the first voxel of the arrays
+%               in the global grid. Default: [0 0 0]
 %
 % output:
 %   dose:       3D array of deposited dose (same size as terma)
@@ -39,6 +44,10 @@ function dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, a
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if nargin < 9 || isempty(origin)
+    origin = [0 0 0];
+end
+
 terma = double(terma);
 rho = double(rho);
 n = ones(1, 3);
@@ -47,45 +56,45 @@ s = double(voxelSize(:)');
 dose = zeros(size(terma));
 
 for d = 1:size(dirs, 2)
-    dose = matRad_transportDirection(dose, terma, rho, n, s, double(dirs(:, d)'), ...
+    dose = matRad_transportDirection(dose, terma, rho, n, s, double(origin(:)'), double(dirs(:, d)'), ...
                                      [wA(d) aA(d)], [wB(d) aB(d)]);
 end
 
 end
 
-function dose = matRad_transportDirection(dose, terma, rho, n, s, direction, ca, cb)
+function dose = matRad_transportDirection(dose, terma, rho, n, s, origin, direction, ca, cb)
 [~, k] = max(abs(direction) ./ s);
 t1 = mod(k, 3) + 1;
 t2 = mod(k + 1, 3) + 1;
 stride = [1 n(1) n(1) * n(2)];
-
-step = s(k) / abs(direction(k));
-delta1 = direction(t1) * s(k) / (abs(direction(k)) * s(t1));
-delta2 = direction(t2) * s(k) / (abs(direction(k)) * s(t2));
 nk = n(k);
 
-q = 0:nk - 1;
-sh1 = floor(q * delta1 + 0.5);
-sh2 = floor(q * delta2 + 0.5);
+step = s(k) / abs(direction(k));
+sigma1 = direction(t1) * s(k) / (direction(k) * s(t1));
+sigma2 = direction(t2) * s(k) / (direction(k) * s(t2));
 
-[i0, j0] = ndgrid(-max(sh1(end), 0):n(t1) - 1 - min(sh1(end), 0), ...
-                  -max(sh2(end), 0):n(t2) - 1 - min(sh2(end), 0));
+globalPlane = (0:nk - 1) + origin(k);
+sh1 = floor(globalPlane * sigma1 + 0.5) - origin(t1);
+sh2 = floor(globalPlane * sigma2 + 0.5) - origin(t2);
+
+[i0, j0] = ndgrid(-max(sh1):n(t1) - 1 - min(sh1), -max(sh2):n(t2) - 1 - min(sh2));
 i0 = i0(:);
 j0 = j0(:);
 pa = zeros(size(i0));
 pb = zeros(size(i0));
 
-for iq = 1:nk
-    i = i0 + sh1(iq);
-    j = j0 + sh2(iq);
+if direction(k) > 0
+    planes = 0:nk - 1;
+else
+    planes = nk - 1:-1:0;
+end
+
+for plane = planes
+    i = i0 + sh1(plane + 1);
+    j = j0 + sh2(plane + 1);
     valid = find(i >= 0 & i < n(t1) & j >= 0 & j < n(t2));
     if isempty(valid)
         continue
-    end
-    if direction(k) > 0
-        plane = iq - 1;
-    else
-        plane = nk - iq;
     end
     ix = 1 + plane * stride(k) + i(valid) * stride(t1) + j(valid) * stride(t2);
     dt = step * rho(ix);

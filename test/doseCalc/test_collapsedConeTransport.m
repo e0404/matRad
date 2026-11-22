@@ -41,6 +41,24 @@ doseMex = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, wA, aA, wB, aB);
 relTol = 1e-12;
 assertElementsAlmostEqual(doseMex, doseRef, 'absolute', relTol * max(doseRef(:)));
 
+origin = [5 -3 7];
+doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, aA, wB, aB, origin);
+doseMex = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, wA, aA, wB, aB, origin, 2);
+assertElementsAlmostEqual(doseMex, doseRef, 'absolute', relTol * max(doseRef(:)));
+
+function test_subVolumeConsistency
+[terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
+dims = size(terma);
+terma(:) = 0;
+terma(6:8, 7:10, 5:7) = 1 + reshape(1:36, [3 4 3]) / 36;
+doseFull = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, wA, aA, wB, aB);
+lo = [3 4 2];
+hi = dims - [1 2 1];
+doseSub = matRad_collapsedConeTransport(terma(lo(1):hi(1), lo(2):hi(2), lo(3):hi(3)), ...
+                                        rho(lo(1):hi(1), lo(2):hi(2), lo(3):hi(3)), ...
+                                        voxelSize, dirs, wA, aA, wB, aB, lo - 1);
+assertElementsAlmostEqual(doseSub, doseFull(lo(1):hi(1), lo(2):hi(2), lo(3):hi(3)), 'absolute', 1e-15);
+
 function test_energyConservationShortRange
 dims = [41 41 41];
 terma = zeros(dims);
