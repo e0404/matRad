@@ -359,7 +359,11 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             if data.ccKernel.fit.numPolarAngles == numPolarAngles
                 kernel = data.ccKernel.fit;
             else
-                kernel = matRad_fitCollapsedConeKernel(data.ccKernel.cones, numPolarAngles);
+                minRadius = 0;
+                if isfield(data.ccKernel.fit, 'minRadius')
+                    minRadius = data.ccKernel.fit.minRadius;
+                end
+                kernel = matRad_fitCollapsedConeKernel(data.ccKernel.cones, numPolarAngles, minRadius);
             end
         end
 

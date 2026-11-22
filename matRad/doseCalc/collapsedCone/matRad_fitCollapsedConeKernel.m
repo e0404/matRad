@@ -1,4 +1,4 @@
-function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles)
+function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius)
 % matRad_fitCollapsedConeKernel collapses a conical energy deposition kernel
 % into polar bins and fits the Ahnesjo two-exponential parametrization
 %
@@ -13,11 +13,14 @@ function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles)
 %
 % call:
 %   kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles)
+%   kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius)
 %
 % input:
 %   edk:            conical kernel struct with fields angleEdges [deg],
 %                   radiusEdges [mm], primary and scatter (nCones x nShells)
 %   numPolarAngles: number of polar bins, must divide the number of cones
+%   minRadius:      (optional) smallest radius [mm] included in the fit
+%                   and in the residuals. Default: 0
 %
 % output:
 %   kernel:         struct with fields
@@ -25,12 +28,14 @@ function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles)
 %                     polarEdges      bin edges [deg]
 %                     polarAngles     solid angle bisector of each bin [deg]
 %                     A, a, B, b      fit parameters (a, b in 1/mm of water)
-%                     residual        struct with the maximum absolute error
-%                                     of the normalized cumulative energy
-%                                     (primaryCum, scatterCum) and the
-%                                     relative error of the energy within
-%                                     the kernel range (primaryEnergy,
-%                                     scatterEnergy) per bin
+%                     residual        struct with, per bin, the maximum
+%                                     absolute error of the normalized
+%                                     cumulative energy over all radii
+%                                     (primaryCum, scatterCum) and for
+%                                     r <= 10 mm (primaryCumNear,
+%                                     scatterCumNear), and the relative
+%                                     error of the energy within the kernel
+%                                     range (primaryEnergy, scatterEnergy)
 %
 % References
 %   [1] Ahnesjo, Med. Phys. 16, 577 (1989)
@@ -50,6 +55,10 @@ function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles)
 
 matRad_cfg = MatRad_Config.instance();
 
+if nargin < 3
+    minRadius = 0;
+end
+
 nCones = size(edk.primary, 1);
 if mod(nCones, numPolarAngles) ~= 0
     matRad_cfg.dispError('Number of polar angles (%d) must divide the number of kernel cones (%d).', numPolarAngles, nCones);
@@ -58,6 +67,7 @@ conesPerBin = nCones / numPolarAngles;
 
 kernel = struct();
 kernel.numPolarAngles = numPolarAngles;
+kernel.minRadius = minRadius;
 kernel.polarEdges = edk.angleEdges(1:conesPerBin:end);
 cosEdges = cosd(kernel.polarEdges);
 kernel.polarAngles = acosd(0.5 * (cosEdges(1:end - 1) + cosEdges(2:end)));
@@ -67,6 +77,9 @@ comps = {'primary', 'scatter'};
 amp = zeros(2, numPolarAngles);
 att = ones(2, numPolarAngles);
 cumErr = zeros(2, numPolarAngles);
+cumErrNear = zeros(2, numPolarAngles);
+inFit = rOuter >= minRadius;
+isNear = inFit & rOuter <= 10;
 energyErr = zeros(2, numPolarAngles);
 
 for c = 1:2
@@ -79,7 +92,8 @@ for c = 1:2
             continue
         end
         cumData = cumsum(y) / amp(c, p);
-        [att(c, p), cumErr(c, p)] = matRad_fitCumulativeExponential(rOuter, cumData);
+        [att(c, p), cumErr(c, p)] = matRad_fitCumulativeExponential(rOuter(inFit), cumData(inFit));
+        cumErrNear(c, p) = max(abs(1 - exp(-att(c, p) * rOuter(isNear)) - cumData(isNear)));
         energyErr(c, p) = -exp(-att(c, p) * rOuter(end));
     end
 end
@@ -90,6 +104,8 @@ kernel.B = amp(2, :);
 kernel.b = att(2, :);
 kernel.residual.primaryCum = cumErr(1, :);
 kernel.residual.scatterCum = cumErr(2, :);
+kernel.residual.primaryCumNear = cumErrNear(1, :);
+kernel.residual.scatterCumNear = cumErrNear(2, :);
 kernel.residual.primaryEnergy = energyErr(1, :);
 kernel.residual.scatterEnergy = energyErr(2, :);
 

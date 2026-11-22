@@ -1,4 +1,4 @@
-function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles)
+function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius)
 % matRad_buildCollapsedConeKernel builds the collapsed cone kernel data file
 % from monoenergetic EGSnrc EDKnrc runs
 %
@@ -11,6 +11,7 @@ function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFil
 %   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile)
 %   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile)
 %   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles)
+%   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius)
 %
 % input:
 %   runDir:         folder with the EDKnrc .egslst files
@@ -20,6 +21,8 @@ function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFil
 %                   matRad/doseCalc/collapsedCone/matRad_collapsedConeKernel_6MV.mat
 %   numPolarAngles: (optional) number of polar bins of the default fit.
 %                   Default: 12
+%   minRadius:      (optional) smallest radius [mm] included in the fit.
+%                   Default: 0
 %
 % output:
 %   ccKernel:       kernel struct as stored in outFile
@@ -42,8 +45,11 @@ matRad_cfg = MatRad_Config.instance();
 if nargin < 3 || isempty(outFile)
     outFile = fullfile(matRad_cfg.matRadSrcRoot, 'doseCalc', 'collapsedCone', 'matRad_collapsedConeKernel_6MV.mat');
 end
-if nargin < 4
+if nargin < 4 || isempty(numPolarAngles)
     numPolarAngles = 12;
+end
+if nargin < 5
+    minRadius = 0;
 end
 
 files = dir(fullfile(runDir, '*.egslst'));
@@ -65,7 +71,7 @@ matRad_reportEdkStatistics(mono);
 matRad_cfg.dispInfo('Polyenergetic kernel (%s):\n', spectrum.title);
 polyStats = matRad_reportEdkStatistics(poly);
 
-fit = matRad_fitCollapsedConeKernel(poly, numPolarAngles);
+fit = matRad_fitCollapsedConeKernel(poly, numPolarAngles, minRadius);
 matRad_reportFit(fit);
 
 ccKernel = struct();
@@ -89,14 +95,23 @@ end
 
 function matRad_reportFit(fit)
 matRad_cfg = MatRad_Config.instance();
-matRad_cfg.dispInfo('%7s %9s %9s %9s %9s %9s %9s %9s %9s\n', 'theta', 'A', 'a [1/mm]', 'B', 'b [1/mm]', ...
-                    'cumErrA', 'cumErrB', 'tailA', 'tailB');
+matRad_cfg.dispInfo(['Fit residuals: maximum absolute error of the normalized cumulative energy over all radii (cum) ' ...
+                     'and for r <= 1 cm (near), energy beyond the kernel range (tail)\n']);
+matRad_cfg.dispInfo('%7s %9s %9s %9s %9s %8s %8s %8s %8s %8s %8s\n', 'theta', 'A', 'a [1/mm]', 'B', 'b [1/mm]', ...
+                    'cumA', 'nearA', 'cumB', 'nearB', 'tailA', 'tailB');
+res = fit.residual;
 for p = 1:fit.numPolarAngles
-    matRad_cfg.dispInfo('%7.2f %9.3e %9.3e %9.3e %9.3e %8.1f%% %8.1f%% %8.2f%% %8.2f%%\n', fit.polarAngles(p), ...
-                        fit.A(p), fit.a(p), fit.B(p), fit.b(p), 100 * fit.residual.primaryCum(p), ...
-                        100 * fit.residual.scatterCum(p), 100 * fit.residual.primaryEnergy(p), ...
-                        100 * fit.residual.scatterEnergy(p));
+    matRad_cfg.dispInfo('%7.2f %9.3e %9.3e %9.3e %9.3e %7.1f%% %7.1f%% %7.1f%% %7.1f%% %7.2f%% %7.2f%%\n', ...
+                        fit.polarAngles(p), fit.A(p), fit.a(p), fit.B(p), fit.b(p), ...
+                        100 * res.primaryCum(p), 100 * res.primaryCumNear(p), 100 * res.scatterCum(p), ...
+                        100 * res.scatterCumNear(p), 100 * res.primaryEnergy(p), 100 * res.scatterEnergy(p));
 end
 matRad_cfg.dispInfo('sum(A) = %.4f, sum(B) = %.4f, sum(A+B) = %.4f, missing = %.4f\n', sum(fit.A), sum(fit.B), ...
                     sum(fit.A + fit.B), 1 - sum(fit.A + fit.B));
+forward = fit.polarAngles < 90;
+weighted = @(err, w, sel) sum(err(sel) .* w(sel)) / sum(w(sel));
+matRad_cfg.dispInfo('Energy weighted cumulative error for r <= 1 cm: primary forward %.2f%%, backward %.2f%%; ', ...
+                    100 * weighted(res.primaryCumNear, fit.A, forward), 100 * weighted(res.primaryCumNear, fit.A, ~forward));
+matRad_cfg.dispInfo('scatter forward %.2f%%, backward %.2f%%\n', ...
+                    100 * weighted(res.scatterCumNear, fit.B, forward), 100 * weighted(res.scatterCumNear, fit.B, ~forward));
 end

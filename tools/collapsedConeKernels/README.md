@@ -34,7 +34,8 @@ Raw EGSnrc output is not part of the repository.
    ./runEdknrc.sh /path/outside/the/repository/edk_runs
    ```
 
-   With 1e7 histories per energy the 9 jobs take about 1.5 h on 8 cores.
+   With 1e7 histories per energy the 9 jobs take about 2.7 h on 8 cores
+   (between 0.5 h for 0.25 MeV and 2.7 h for 6 MeV).
 
 3. Build the polyenergetic kernel and fit the collapsed cone parameters:
 
@@ -42,8 +43,11 @@ Raw EGSnrc output is not part of the repository.
    matRad_rc;
    addpath('tools/collapsedConeKernels');
    matRad_buildCollapsedConeKernel('/path/outside/the/repository/edk_runs', ...
-       fullfile(getenv('HEN_HOUSE'), 'spectra', 'egsnrc', 'mohan6.spectrum'));
+       fullfile(getenv('HEN_HOUSE'), 'spectra', 'egsnrc', 'mohan6.spectrum'), [], 12, 1.5);
    ```
+
+   The last two arguments are the number of polar bins of the stored fit and
+   the smallest radius included in the fit (1.5 mm, half of a 3 mm voxel).
 
 ## Method
 
@@ -58,7 +62,8 @@ Raw EGSnrc output is not part of the repository.
   `dE/dr = A a exp(-a r) + B b exp(-b r)` (r in mm of water). `A` and `B` are
   the primary and scatter energy fractions of the bin from the Monte Carlo
   data; `a` and `b` are fitted to the normalized cumulative radial energy
-  distribution of each component.
+  distribution of each component for r >= 1.5 mm. Energy deposited closer to
+  the interaction point stays in the source voxel of the transport.
 - No renormalization is applied: the energy escaping the 60 cm sphere is
   reported as missing fraction, `sum(A + B) = 1 - missing`. Absolute dose
   normalization is performed by the dose engine against the machine data.
