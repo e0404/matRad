@@ -1,12 +1,12 @@
-function [doseCube, letCube, loadFileName] = readSimulationOutput(runFolder,calcDoseDirect,calcLET)
+function [doseCube, letCube, loadFileName] = readSimulationOutput(runFolder, calcDoseDirect, calcLET)
 % FRED helper to read simulation output
 % call:
 %   readSimulationOutput(runFolder,calcDoseDirect, varargin)
-% 
+%
 % input:
 %   runFolder:          path to folder containing the simulation files
 %   calcDoseDirect:     boolean to trigger dij or .mhd reading
-%   
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2023-2026 the matRad development team.
@@ -24,9 +24,9 @@ matRad_cfg = MatRad_Config.instance();
 p = inputParser();
 addRequired(p, 'runFolder', @ischar);
 addRequired(p, 'calcDoseDirect', @islogical);
-addOptional(p, 'calcLET',false,@islogical);
+addOptional(p, 'calcLET', false, @islogical);
 
-parse(p, runFolder,calcDoseDirect, calcLET);
+parse(p, runFolder, calcDoseDirect, calcLET);
 
 runFolder       = p.Results.runFolder;
 calcDoseDirect  = p.Results.calcDoseDirect;
@@ -35,7 +35,7 @@ calcLET         = p.Results.calcLET;
 doseCube = [];
 letCube  = [];
 
-outFolder = fullfile(runFolder,'out');
+outFolder = fullfile(runFolder, 'out');
 
 if ~calcDoseDirect
     letCompatible = true;
@@ -43,15 +43,15 @@ if ~calcDoseDirect
     scoreIjFolder = fullfile(outFolder, 'scoreij');
     doseDijFile = 'Phantom.Dose.bin';
     letdDijFile = 'Phantom.LETd.bin';
-    if ~exist(scoreIjFolder,"dir")
+    if ~exist(scoreIjFolder, "dir")
         scoreIjFolder = outFolder;
         doseDijFile = 'Dij.bin';
         letCompatible = false;
     end
-    loadFileName = fullfile(scoreIjFolder,doseDijFile);
-    
+    loadFileName = fullfile(scoreIjFolder, doseDijFile);
+
     matRad_cfg.dispInfo('Looking for scorer-ij output in sub folder: %s\n', strrep(scoreIjFolder, '\', '\\'));
-    
+
     % read dij matrix
     if isfile(loadFileName)
         dijMatrices = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(loadFileName);
@@ -62,9 +62,8 @@ if ~calcDoseDirect
 
     if calcLET && letCompatible
 
-        
-        letdDijFileName = fullfile(scoreIjFolder,letdDijFile);
-        
+        letdDijFileName = fullfile(scoreIjFolder, letdDijFile);
+
         try
             dijMatrices = DoseEngines.matRad_ParticleFREDEngine.readSparseDijBin(letdDijFileName);
             % TODO: store nominator and denominator in dij and allow this
@@ -72,22 +71,22 @@ if ~calcDoseDirect
             % backProjection.
             dijNom = dijMatrices{1};
             dijDen = dijMatrices{2};
-            letCube = spfun(@(x) 1./x,dijDen);
-            letCube = letCube .* dijNom ./ 10; %divided by 10 to have keV/um
+            letCube = spfun(@(x) 1 ./ x, dijDen);
+            letCube = letCube .* dijNom ./ 10; % divided by 10 to have keV/um
         catch
-            matRad_cfg.dispError('unable to load file: %s',letdDijFileName);
+            matRad_cfg.dispError('unable to load file: %s', letdDijFileName);
         end
     end
 else
     scoreFolder = fullfile(outFolder, 'score');
     doseCubeFileName = 'Phantom.Dose.mhd';
     letdCubeFileName = 'Phantom.LETd.mhd';
-    if ~exist(scoreFolder,"dir")
+    if ~exist(scoreFolder, "dir")
         scoreFolder = outFolder;
         doseCubeFileName = 'Dose.mhd';
         letdCubeFileName = 'LETd.mhd';
     end
-    
+
     loadFileName = fullfile(scoreFolder, doseCubeFileName);
 
     matRad_cfg.dispInfo(sprintf('Looking for scorer file in sub folder: %s\n', strrep(scoreFolder, '\', '\\')));
@@ -99,15 +98,15 @@ else
     end
 
     if calcLET
-        try 
+        try
             letCube = matRad_readMHD(fullfile(scoreFolder, letdCubeFileName));
-            letCube = letCube ./ 10; %divided by 10 to have keV/um
+            letCube = letCube ./ 10; % divided by 10 to have keV/um
         catch
-            matRad_cfg.dispError('Unable to load file: %s',fullfile(letdDijFolder, letdCubeFileName));
+            matRad_cfg.dispError('Unable to load file: %s', fullfile(scoreFolder, letdCubeFileName));
         end
     end
-    
+
 end
 
-matRad_cfg.dispInfo('Loading succesful!\n');
+matRad_cfg.dispInfo('Loading successful!\n');
 end
