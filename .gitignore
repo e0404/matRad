@@ -8,3 +8,5 @@ coverage.json
 build/
 .doc/
 
+
+matRad/doseCalc/collapsedCone/*.mex*
