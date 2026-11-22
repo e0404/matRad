@@ -22,7 +22,10 @@ function results = matRad_validatePhotonCollapsedCone(varargin)
 % The convergence of
 % the CCC dose with respect to scatterCutOff is studied for a 20 x 20 cm
 % field in water.
-% Computation times are reported for all engines.
+% Computation times are reported for all engines. For every case and
+% engine the dose in a 7 x 7 voxel neighbourhood of the central axis and
+% in the two central planes containing the beam axis is stored (with the
+% Monte Carlo variance), so that the results can be re-analysed later.
 %
 % call:
 %   results = matRad_validatePhotonCollapsedCone()
@@ -181,6 +184,7 @@ for e = 1:numel(out.engines)
         row = first + round(d / res - 0.5);
         out.profiles.(name).(sprintf('d%d', d)) = squeeze(dose(row, :, center(3)))';
     end
+    out.stored.(name) = matRad_validationStore(resultGUI, center);
 end
 out.roughness = matRad_validationRoughness(out, slab);
 end
@@ -256,11 +260,26 @@ for f = 1:numel(fs.fieldSize)
         tStart = tic;
         resultGUI = matRad_validationForward(ct, cst, stf, plnE, ones(stf.totalNumOfBixels, 1));
         fs.time.(name)(f) = toc(tStart);
+        fs.stored.(name){f} = matRad_validationStore(resultGUI, round(ct.cubeDim / 2));
         [fs.cax.(name)(f), fs.caxRelStd.(name)(f)] = matRad_validationPointDose(resultGUI, ct, opts, 100, 0);
         if fs.fieldSize(f) == 100
             [fs.out.(name), fs.outRelStd.(name)] = matRad_validationPointDose(resultGUI, ct, opts, 100, outOfField);
         end
     end
+end
+end
+
+function stored = matRad_validationStore(resultGUI, center)
+lat = center(2) + (-3:3);
+lon = center(3) + (-3:3);
+stored.axis = resultGUI.physicalDose(:, lat, lon);
+stored.planeX = resultGUI.physicalDose(:, :, center(3));
+stored.planeZ = squeeze(resultGUI.physicalDose(:, center(2), :));
+stored.center = center;
+if isfield(resultGUI, 'physicalDose_MCvar')
+    stored.axisVar = resultGUI.physicalDose_MCvar(:, lat, lon);
+    stored.planeXVar = resultGUI.physicalDose_MCvar(:, :, center(3));
+    stored.planeZVar = squeeze(resultGUI.physicalDose_MCvar(:, center(2), :));
 end
 end
 
