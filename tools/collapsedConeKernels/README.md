@@ -43,12 +43,16 @@ Raw EGSnrc output is not part of the repository.
    matRad_rc;
    addpath('tools/collapsedConeKernels');
    matRad_buildCollapsedConeKernel('/path/outside/the/repository/edk_runs', ...
-       fullfile(getenv('HEN_HOUSE'), 'spectra', 'egsnrc', 'mohan6.spectrum'), [], 12, 1.5, 200);
+       fullfile(getenv('HEN_HOUSE'), 'spectra', 'egsnrc', 'mohan6.spectrum'), [], 12, 1.5, 200, 6);
    ```
 
-   The last three arguments are the number of polar bins of the stored fit,
-   the smallest radius included in the fit (1.5 mm, half of a 3 mm voxel) and
-   the largest radius included in the fit of the scatter component (200 mm).
+   The last four arguments are the number of polar bins of the stored fit,
+   the smallest radius included in the fit (1.5 mm, half of a 3 mm voxel),
+   the largest radius included in the fit of the scatter component (200 mm)
+   and the nominal energy of the beam (6 MV). The engine compares the nominal
+   energy with `machine.data.energy` and refuses kernels of another energy;
+   other energies need a new kernel generated with these scripts (with the
+   corresponding spectrum) and matching machine data.
 
 ## Method
 

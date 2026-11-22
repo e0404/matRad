@@ -153,7 +153,13 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
 
             this.effectiveLateralCutOff = max(this.geometricLateralCutOff, this.scatterCutOff) + bixelWidth / sqrt(2);
 
-            this.kernel = this.loadKernel(this.kernelFile, this.numPolarAngles, this.numScatterExponentials);
+            [this.kernel, kernelMeta] = this.loadKernel(this.kernelFile, this.numPolarAngles, this.numScatterExponentials);
+            [energyOk, energyMsg] = this.checkKernelEnergy(kernelMeta, this.machine);
+            if ~energyOk
+                matRad_cfg.dispError(energyMsg);
+            elseif ~isempty(energyMsg)
+                matRad_cfg.dispWarning(energyMsg);
+            end
             [this.localDirections, this.directionWeights] = this.getConeDirections(this.kernel, this.numAzimuthalAngles);
 
             this.densityCubes = cell(1, numel(this.cubeWED));
@@ -339,10 +345,18 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
                 msg = sprintf('Kernel file %s does not contain a collapsed cone kernel!', kernelFile);
                 return
             end
+            [energyOk, energyMsg] = DoseEngines.matRad_PhotonCollapsedConeEngine.checkKernelEnergy(kernelData.ccKernel.meta, machine);
+            if ~energyOk
+                msg = energyMsg;
+                return
+            end
 
             available = true;
 
             msgs = {};
+            if ~isempty(energyMsg)
+                msgs{end + 1} = energyMsg;
+            end
             if ~isfield(machine.data, 'penumbraFWHMatIso')
                 msgs{end + 1} = 'No penumbra given, generic value will be used!';
             end
@@ -359,7 +373,24 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             fileName = fullfile(fileparts(which('matRad_fitCollapsedConeKernel')), 'matRad_collapsedConeKernel_6MV.mat');
         end
 
-        function kernel = loadKernel(fileName, numPolarAngles, numScatterExponentials)
+        function [ok, msg] = checkKernelEnergy(kernelMeta, machine)
+            % Compares the nominal energy of the kernel with the energy of
+            % the machine; a kernel without nominal energy gives a warning
+            ok = true;
+            msg = '';
+            if ~isfield(kernelMeta, 'nominalEnergy') || ~isfield(machine.data, 'energy')
+                msg = 'Nominal energy of the collapsed cone kernel or the machine unknown, energies not checked.';
+                return
+            end
+            if abs(kernelMeta.nominalEnergy - machine.data.energy) > 1e-6
+                ok = false;
+                msg = sprintf(['Collapsed cone kernel for %g MV does not match the machine energy of %g MV. ' ...
+                               'Generate a kernel with tools/collapsedConeKernels and set kernelFile.'], ...
+                              kernelMeta.nominalEnergy, machine.data.energy);
+            end
+        end
+
+        function [kernel, meta] = loadKernel(fileName, numPolarAngles, numScatterExponentials)
             % Loads the kernel data and refits it if a different number of
             % polar bins or scatter exponentials is requested
             matRad_cfg = MatRad_Config.instance();
@@ -371,6 +402,10 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
                 matRad_cfg.dispError('Kernel file %s does not contain a collapsed cone kernel!', fileName);
             end
             fit = data.ccKernel.fit;
+            meta = struct();
+            if isfield(data.ccKernel, 'meta')
+                meta = data.ccKernel.meta;
+            end
             storedScatterExponentials = size(fit.B, 1);
             if fit.numPolarAngles == numPolarAngles && storedScatterExponentials == numScatterExponentials
                 kernel = fit;

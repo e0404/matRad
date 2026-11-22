@@ -1,4 +1,4 @@
-function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius, scatterMaxRadius)
+function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius, scatterMaxRadius, nominalEnergy)
 % matRad_buildCollapsedConeKernel builds the collapsed cone kernel data file
 % from monoenergetic EGSnrc EDKnrc runs
 %
@@ -13,6 +13,7 @@ function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFil
 %   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles)
 %   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius)
 %   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius, scatterMaxRadius)
+%   ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFile, numPolarAngles, minRadius, scatterMaxRadius, nominalEnergy)
 %
 % input:
 %   runDir:         folder with the EDKnrc .egslst files
@@ -26,6 +27,9 @@ function ccKernel = matRad_buildCollapsedConeKernel(runDir, spectrumFile, outFil
 %                   Default: 0
 %   scatterMaxRadius: (optional) largest radius [mm] included in the fit
 %                   of the scatter component. Default: Inf
+%   nominalEnergy:  (optional) nominal energy [MV] of the beam the spectrum
+%                   belongs to, compared with machine.data.energy by the
+%                   engine. Default: 6
 %
 % output:
 %   ccKernel:       kernel struct as stored in outFile
@@ -54,8 +58,11 @@ end
 if nargin < 5 || isempty(minRadius)
     minRadius = 0;
 end
-if nargin < 6
+if nargin < 6 || isempty(scatterMaxRadius)
     scatterMaxRadius = Inf;
+end
+if nargin < 7
+    nominalEnergy = 6;
 end
 
 files = dir(fullfile(runDir, '*.egslst'));
@@ -81,7 +88,8 @@ fit = matRad_fitCollapsedConeKernel(poly, numPolarAngles, minRadius, 1, scatterM
 matRad_reportFit(fit);
 
 ccKernel = struct();
-ccKernel.meta.description = 'Polyenergetic 6 MV collapsed cone kernel in water';
+ccKernel.meta.description = sprintf('Polyenergetic %g MV collapsed cone kernel in water', nominalEnergy);
+ccKernel.meta.nominalEnergy = nominalEnergy;
 ccKernel.meta.source = 'EGSnrc EDKnrc, source 0, 521icru.pegs4dat, H2O521ICRU';
 ccKernel.meta.spectrum = spectrum.title;
 ccKernel.meta.weighting = 'TERMA fraction (fluence * E * mu/rho of water)';

@@ -166,6 +166,27 @@ machine = matRad_loadMachine(pln);
 assertEqual(engine.hardeningBeta, 0);
 assertEqual(engine.hardeningMu0, machine.data.m);
 
+function test_kernelEnergyMismatch
+pln = struct('radiationMode', 'photons', 'machine', 'Generic');
+machine = matRad_loadMachine(pln);
+fileName = DoseEngines.matRad_PhotonCollapsedConeEngine.defaultKernelFile();
+data = load(fileName, 'ccKernel');
+[ok, msg] = DoseEngines.matRad_PhotonCollapsedConeEngine.checkKernelEnergy(data.ccKernel.meta, machine);
+assertTrue(ok);
+assertTrue(isempty(msg));
+
+machine.data.energy = 10;
+assertFalse(DoseEngines.matRad_PhotonCollapsedConeEngine.isAvailable(pln, machine));
+
+ccKernel = data.ccKernel;
+ccKernel.meta.nominalEnergy = 10;
+kernelFile = fullfile(helper_temporaryFolder('matRad_test_CCC'), 'kernel10MV.mat');
+save(kernelFile, 'ccKernel');
+[ct, cst, pln, stf] = helper_waterBox(12, 6, 4, 12);
+pln.propDoseCalc.kernelFile = kernelFile;
+engine = DoseEngines.matRad_PhotonCollapsedConeEngine(pln);
+assertExceptionThrown(@() engine.calcDoseInfluence(ct, cst, stf));
+
 function test_invalidKernelTilt
 [ct, cst, pln, stf] = helper_waterBox(12, 6, 4, 12);
 pln.propDoseCalc.kernelTilt = 'voxel';
