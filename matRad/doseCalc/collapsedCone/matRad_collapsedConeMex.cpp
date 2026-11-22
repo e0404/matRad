@@ -50,6 +50,8 @@
 
 namespace {
 
+const long maxComponents = 8;
+
 struct Component {
     double weight;
     double att;
@@ -87,10 +89,9 @@ inline long roundShift(double x)
 }
 
 void transportDirection(const double* terma, const double* rho, double* dose, const Grid& grid, const double dir[3],
-                        const std::vector<Component>& comps)
+                        const Component* comps, long numComps)
 {
-    const std::size_t numComps = comps.size();
-    std::vector<double> flow(numComps);
+    double flow[maxComponents];
     int k = 0;
     double best = -1.0;
     for (int ax = 0; ax < 3; ++ax) {
@@ -127,7 +128,9 @@ void transportDirection(const double* terma, const double* rho, double* dose, co
 
     for (long j0 = minLine2; j0 <= maxLine2; ++j0) {
         for (long i0 = minLine1; i0 <= maxLine1; ++i0) {
-            std::fill(flow.begin(), flow.end(), 0.0);
+            for (long c = 0; c < numComps; ++c) {
+                flow[c] = 0.0;
+            }
             for (long q = 0; q < nk; ++q) {
                 const long p = forward ? q : nk - 1 - q;
                 const long i = i0 + sh1[p];
@@ -139,7 +142,7 @@ void transportDirection(const double* terma, const double* rho, double* dose, co
                 const double dt = step * rho[ix];
                 const double t = terma[ix];
                 double d = 0.0;
-                for (std::size_t c = 0; c < numComps; ++c) {
+                for (long c = 0; c < numComps; ++c) {
                     depositStep(dt, t, comps[c], flow[c], d);
                 }
                 dose[ix] += d;
@@ -148,14 +151,12 @@ void transportDirection(const double* terma, const double* rho, double* dose, co
     }
 }
 
-std::vector<Component> directionComponents(const double* weights, const double* att, long d, long numComps)
+void directionComponents(const double* weights, const double* att, long d, long numComps, Component* comps)
 {
-    std::vector<Component> comps(numComps);
     for (long c = 0; c < numComps; ++c) {
         comps[c].weight = weights[d * numComps + c];
         comps[c].att = att[d * numComps + c];
     }
-    return comps;
 }
 
 void transportAll(const double* terma, const double* rho, double* dose, const Grid& grid, const double* dirs,
@@ -173,10 +174,11 @@ void transportAll(const double* terma, const double* rho, double* dose, const Gr
         {
             const int tid = omp_get_thread_num();
             buffers[tid].assign(numVox, 0.0);
+            Component comps[maxComponents];
 #pragma omp for schedule(static)
             for (long d = 0; d < numDirs; ++d) {
-                transportDirection(terma, rho, buffers[tid].data(), grid, dirs + 3 * d,
-                                   directionComponents(weights, att, d, numComps));
+                directionComponents(weights, att, d, numComps, comps);
+                transportDirection(terma, rho, buffers[tid].data(), grid, dirs + 3 * d, comps, numComps);
             }
         }
         for (int t = 0; t < numThreads; ++t) {
@@ -192,8 +194,10 @@ void transportAll(const double* terma, const double* rho, double* dose, const Gr
 #else
     (void)numThreads;
 #endif
+    Component comps[maxComponents];
     for (long d = 0; d < numDirs; ++d) {
-        transportDirection(terma, rho, dose, grid, dirs + 3 * d, directionComponents(weights, att, d, numComps));
+        directionComponents(weights, att, d, numComps, comps);
+        transportDirection(terma, rho, dose, grid, dirs + 3 * d, comps, numComps);
     }
 }
 
@@ -234,6 +238,9 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
     }
     const long numDirs = static_cast<long>(mxGetN(prhs[3]));
     const long numComps = static_cast<long>(mxGetM(prhs[4]));
+    if (numComps < 1 || numComps > maxComponents) {
+        mexErrMsgIdAndTxt("matRad:collapsedConeMex:components", "Between one and eight kernel components are supported.");
+    }
     if (static_cast<long>(mxGetN(prhs[4])) != numDirs || mxGetM(prhs[5]) != mxGetM(prhs[4]) ||
         mxGetN(prhs[5]) != mxGetN(prhs[4])) {
         mexErrMsgIdAndTxt("matRad:collapsedConeMex:kernel",
