@@ -167,6 +167,10 @@ The following fields configure the collapsed cone engine (``pln.propDoseCalc.eng
 
     Number of exponential terms of the scatter kernel; the kernel is refitted if it differs from the stored fit. Default: *1*.
 
+**pln.propDoseCalc.beamForward**
+
+    Forward dose with a single transport of the weighted TERMA of all bixels of a beam (only with ``kernelTilt = 'beam'``). Default: *true*.
+
 **pln.propDoseCalc.useMex** / **pln.propDoseCalc.numThreads**
 
     Use the compiled transport if available, and the number of OpenMP threads (*0*: default). Default: *true* / *0*.
