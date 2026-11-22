@@ -9,7 +9,7 @@ function dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, weigh
 % origin of the arrays, so that sub-volumes of the same grid give consistent
 % results. Along each line the Ahnesjo recursion is applied to every
 % exponential kernel component with the radiological step length
-% dt = (voxel size / |cos to dominant axis|) * rho.
+% dt = rho * voxel size / abs(cosine to the dominant axis).
 %
 % call:
 %   dose = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, weights, att)

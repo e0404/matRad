@@ -3,8 +3,7 @@ function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius, 
 % into polar bins and fits a sum of exponentials per component
 %
 % For each polar bin the energy fraction deposited per unit radial distance
-% r (mm of water) is modeled as
-%   dE/dr = A a exp(-a r) + sum_k B_k b_k exp(-b_k r)
+% r (mm of water) is modeled as dE/dr = A a exp(-a r) + sum_k B_k b_k exp(-b_k r),
 % where (A,a) describe the primary and (B_k,b_k) the scatter component with
 % numScatterExponentials terms. A and sum_k B_k are the primary and scatter
 % energy fractions of the bin found in the Monte Carlo data (no
@@ -33,25 +32,19 @@ function kernel = matRad_fitCollapsedConeKernel(edk, numPolarAngles, minRadius, 
 %                           fit of the scatter component. Default: Inf
 %
 % output:
-%   kernel:         struct with fields
-%                     numPolarAngles, minRadius, numScatterExponentials,
-%                     scatterMaxRadius
-%                     polarEdges      bin edges [deg]
-%                     polarAngles     solid angle bisector of each bin [deg]
-%                     A, a            primary weight and attenuation
-%                                     coefficient (1 x nBins, 1/mm of water)
-%                     B, b            scatter weights and attenuation
-%                                     coefficients (nTerms x nBins)
-%                     residual        struct with, per bin, the maximum
-%                                     absolute error of the normalized
-%                                     cumulative energy for r >= minRadius
-%                                     (primaryCum, scatterCum), for
-%                                     r <= 10 mm (primaryCumNear,
-%                                     scatterCumNear) and for r >= 100 mm
-%                                     (primaryCumFar, scatterCumFar), and the
-%                                     fraction of the modeled energy beyond
-%                                     the kernel range (primaryEnergy,
-%                                     scatterEnergy, negative)
+%   kernel:         struct with the fit settings numPolarAngles, minRadius,
+%                   numScatterExponentials and scatterMaxRadius, the polar bin
+%                   edges polarEdges and solid angle bisectors polarAngles
+%                   [deg], the primary weight and attenuation coefficient A and
+%                   a (1 x nBins, 1/mm of water), the scatter weights and
+%                   attenuation coefficients B and b (nTerms x nBins), and the
+%                   struct residual with, per bin, the maximum absolute error
+%                   of the normalized cumulative energy for r >= minRadius
+%                   (primaryCum, scatterCum), r <= 10 mm (primaryCumNear,
+%                   scatterCumNear) and r >= 100 mm (primaryCumFar,
+%                   scatterCumFar), and the negative fraction of the modeled
+%                   energy beyond the kernel range (primaryEnergy,
+%                   scatterEnergy)
 %
 % References
 %   [1] Ahnesjo, Med. Phys. 16, 577 (1989)

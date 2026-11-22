@@ -12,30 +12,23 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
     %   machine at a reference depth in water.
     %
     %   Configurable properties (pln.propDoseCalc):
-    %     numPolarAngles      number of polar cone bins (divisor of 48)
-    %     numAzimuthalAngles  number of azimuthal cones per polar bin
-    %     scatterCutOff       lateral margin [mm] of the transport sub-volume
-    %                         around the TERMA of each bixel. Dose is
-    %                         stored within max(geometricLateralCutOff,
-    %                         scatterCutOff) around each ray
-    %     normalizationDepth  depth [mm] of the absolute dose normalization
-    %     kernelFile          kernel data file (default: 6 MV water kernel)
-    %     useMex              use the compiled transport if available
-    %     numThreads          number of OpenMP threads of the mex file
-    %                         (0 = default)
-    %     hardeningCorrection use the depth dependent effective attenuation
-    %                         mu(d) = mu0 / (1 + beta d) of the TERMA, with
-    %                         mu0 and beta fitted so that the broad field
-    %                         depth dose matches the machine data
-    %     numScatterExponentials number of exponential terms of the
-    %                         scatter kernel (1 or 2; the stored kernel is
-    %                         refitted if it differs)
-    %     kernelTilt          polar axis of the cones: 'beam' (beam axis,
-    %                         same transport lattice for all bixels of a
-    %                         beam) or 'ray' (ray of each bixel, which
-    %                         causes lattice aliasing in the summed dose)
-    %     enableDijSampling   enable the lateral dij sampling
-    %     dijSampling         sampling parameters, see matRad_sampleDij
+    %
+    %   - numPolarAngles: number of polar cone bins (divisor of 48)
+    %   - numAzimuthalAngles: number of azimuthal cones per polar bin
+    %   - scatterCutOff: lateral margin [mm] of the transport sub-volume around the TERMA of each bixel; dose is stored
+    %     within max(geometricLateralCutOff, scatterCutOff) around each ray
+    %   - normalizationDepth: depth [mm] of the absolute dose normalization
+    %   - kernelFile: kernel data file (default: 6 MV water kernel)
+    %   - useMex: use the compiled transport if available
+    %   - numThreads: number of OpenMP threads of the mex file (0 = default)
+    %   - hardeningCorrection: use the depth dependent effective attenuation mu0 / (1 + beta d) of the TERMA, with mu0
+    %     and beta fitted so that the broad field depth dose matches the machine data
+    %   - numScatterExponentials: number of exponential terms of the scatter kernel (1 or 2; the stored kernel is
+    %     refitted if it differs)
+    %   - kernelTilt: polar axis of the cones, 'beam' (beam axis, same transport lattice for all bixels of a beam) or
+    %     'ray' (ray of each bixel, which causes lattice aliasing in the summed dose)
+    %   - enableDijSampling: enable the lateral dij sampling
+    %   - dijSampling: sampling parameters, see matRad_sampleDij
     %
     %   Limitations: the spectral hardening of the TERMA is approximated by a
     %   depth dependent effective attenuation coefficient (no off-axis
