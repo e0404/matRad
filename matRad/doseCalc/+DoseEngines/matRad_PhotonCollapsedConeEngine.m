@@ -23,6 +23,10 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
     %     useMex              use the compiled transport if available
     %     numThreads          number of OpenMP threads of the mex file
     %                         (0 = default)
+    %     hardeningCorrection use the depth dependent effective attenuation
+    %                         mu(d) = mu0 / (1 + beta d) of the TERMA, with
+    %                         mu0 and beta fitted so that the broad field
+    %                         depth dose matches the machine data
     %     numScatterExponentials number of exponential terms of the
     %                         scatter kernel (1 or 2; the stored kernel is
     %                         refitted if it differs)
@@ -33,10 +37,10 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
     %     enableDijSampling   enable the lateral dij sampling
     %     dijSampling         sampling parameters, see matRad_sampleDij
     %
-    %   Limitations: the TERMA uses a single effective attenuation
-    %   coefficient (no spectral hardening or off-axis softening) and the
-    %   kernel is computed in water and scaled with the relative electron
-    %   density.
+    %   Limitations: the spectral hardening of the TERMA is approximated by a
+    %   depth dependent effective attenuation coefficient (no off-axis
+    %   softening, no spectral kernel) and the kernel is computed in water
+    %   and scaled with the relative electron density.
     %
     % References
     %   [1] Ahnesjo, Med. Phys. 16, 577 (1989)
@@ -75,6 +79,7 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
         ignoreInvalidValues = false
         kernelTilt = 'beam'
         numScatterExponentials = 1
+        hardeningCorrection = true
     end
 
     properties (SetAccess = protected, GetAccess = public)
@@ -85,6 +90,8 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
         densityCubes
         localDirections
         directionWeights
+        hardeningMu0
+        hardeningBeta = 0
     end
 
     methods
@@ -170,9 +177,16 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
                                         'Run matRad_compileCollapsedConeMex to compile it.']);
             end
 
+            dz = min([dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z]);
+            this.hardeningMu0 = this.machine.data.m;
+            this.hardeningBeta = 0;
+            if this.hardeningCorrection
+                [this.hardeningMu0, this.hardeningBeta] = this.fitHardening(this.kernel, this.machine, dz, this.normalizationDepth);
+                matRad_cfg.dispInfo('Collapsed cone effective attenuation mu0 = %g 1/mm, beta = %g 1/mm.\n', ...
+                                    this.hardeningMu0, this.hardeningBeta);
+            end
             ddSvd = this.calcAnalyticalDepthDose(this.machine, this.normalizationDepth);
-            ddCcc = this.calcBroadFieldDepthDose(this.kernel, this.machine.data.m, this.normalizationDepth, ...
-                                                 min([dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z]));
+            ddCcc = this.calcBroadFieldDepthDose(this.kernel, this.hardeningMu0, this.normalizationDepth, dz, this.hardeningBeta);
             this.normalizationFactor = ddSvd / ddCcc;
             matRad_cfg.dispInfo('Collapsed cone normalization factor %g at %g mm depth.\n', this.normalizationFactor, this.normalizationDepth);
 
@@ -238,9 +252,9 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             % Computes TERMA, transports it on the sub-volume around the
             % bixel and returns the dose on the ray voxels
             sigma = this.penumbraFWHM / sqrt(8 * log(2));
-            terma = this.calcTerma(currRay.SAD, this.machine.data.m, sigma, currRay.bixelWidth, ...
+            terma = this.calcTerma(currRay.SAD, this.hardeningMu0, sigma, currRay.bixelWidth, ...
                                    this.machine.data.primaryFluence, currRay.rayPos_bev, double(currRay.radDepths), ...
-                                   double(currRay.geoDepths), double(currRay.isoLatDists));
+                                   double(currRay.geoDepths), double(currRay.isoLatDists), this.hardeningBeta);
 
             dose = zeros(numel(currRay.ix), 1);
             if ~any(terma > 0)
@@ -406,11 +420,12 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             dirs = dirsWorld([2 1 3], :);
         end
 
-        function terma = calcTerma(SAD, mu, sigma, bixelWidth, primaryFluence, rayPos, radDepths, geoDists, isoLatDists)
+        function terma = calcTerma(SAD, mu, sigma, bixelWidth, primaryFluence, rayPos, radDepths, geoDists, isoLatDists, beta)
             % Computes the TERMA of a bixel
             %
             % call:
             %   terma = calcTerma(SAD, mu, sigma, bixelWidth, primaryFluence, rayPos, radDepths, geoDists, isoLatDists)
+            %   terma = calcTerma(SAD, mu, sigma, bixelWidth, primaryFluence, rayPos, radDepths, geoDists, isoLatDists, beta)
             %
             % input:
             %   SAD:            source to axis distance [mm]
@@ -423,6 +438,8 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             %   geoDists:       distances from the source [mm]
             %   isoLatDists:    lateral distances to the ray at the
             %                   isocenter plane (x, z) [mm]
+            %   beta:           (optional) hardening coefficient [1/mm] of
+            %                   the attenuation mu / (1 + beta d). Default: 0
             %
             % output:
             %   terma:          TERMA per unit bixel weight
@@ -433,7 +450,10 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             r = sqrt((rayPos(1) + isoLatDists(:, 1)).^2 + (rayPos(3) + isoLatDists(:, 2)).^2);
             psiLat = psiLat .* interp1(primaryFluence(:, 1), primaryFluence(:, 2), r, 'linear', 0);
 
-            terma = psiLat .* (SAD ./ geoDists(:)).^2 .* mu .* exp(-mu * radDepths(:));
+            if nargin < 10
+                beta = 0;
+            end
+            terma = psiLat .* (SAD ./ geoDists(:)).^2 .* DoseEngines.matRad_PhotonCollapsedConeEngine.termaDepthFactor(mu, beta, radDepths(:));
             terma(~isfinite(terma)) = 0;
         end
 
@@ -465,16 +485,93 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             end
         end
 
-        function dd = calcBroadFieldDepthDose(kernel, mu, depths, dz)
+        function factor = termaDepthFactor(mu, beta, depths)
+            % TERMA per unit primary fluence in water as a function of the
+            % radiological depth for the attenuation mu / (1 + beta d)
+            if beta > 0
+                factor = mu ./ (1 + beta * depths) .* (1 + beta * depths).^(-mu / beta);
+            else
+                factor = mu * exp(-mu * depths);
+            end
+        end
+
+        function [mu0, beta] = fitHardening(kernel, machine, dz, refDepth)
+            % Fits mu0 and beta of the effective attenuation
+            % mu0 / (1 + beta d) so that the collapsed cone broad field depth
+            % dose matches the analytical SVD pencil beam depth dose of the
+            % machine between 10 and 300 mm (normalized at refDepth)
+            depths = (10:dz:300)';
+            reference = DoseEngines.matRad_PhotonCollapsedConeEngine.calcAnalyticalDepthDose(machine, [depths; refDepth]);
+            reference = reference / reference(end);
+            m = machine.data.m;
+            cost = @(mu, b) DoseEngines.matRad_PhotonCollapsedConeEngine.hardeningCost(kernel, mu, b, [depths; refDepth], dz, reference);
+            betaGrid = [0 logspace(-5, -2, 16)];
+            costGrid = zeros(size(betaGrid));
+            for i = 1:numel(betaGrid)
+                [~, costGrid(i)] = DoseEngines.matRad_PhotonCollapsedConeEngine.fitHardeningMu0(cost, m, betaGrid(i));
+            end
+            [~, iBest] = min(costGrid);
+            lo = betaGrid(max(iBest - 1, 1));
+            hi = betaGrid(min(iBest + 1, numel(betaGrid)));
+            beta = fminbnd(@(b) DoseEngines.matRad_PhotonCollapsedConeEngine.fitHardeningMu0Cost(cost, m, b), lo, hi, optimset('TolX', 1e-7, 'Display', 'off'));
+            mu0 = DoseEngines.matRad_PhotonCollapsedConeEngine.fitHardeningMu0(cost, m, beta);
+        end
+
+        function [mu0, c] = fitHardeningMu0(cost, m, beta)
+            % Optimal mu0 for a given hardening coefficient
+            [logMu, c] = fminbnd(@(l) cost(m * exp(l), beta), log(0.5), log(2), optimset('TolX', 1e-8, 'Display', 'off'));
+            mu0 = m * exp(logMu);
+        end
+
+        function c = fitHardeningMu0Cost(cost, m, beta)
+            % Cost of the optimal mu0 for a given hardening coefficient
+            [~, c] = DoseEngines.matRad_PhotonCollapsedConeEngine.fitHardeningMu0(cost, m, beta);
+        end
+
+        function cost = hardeningCost(kernel, mu, beta, depths, dz, reference)
+            % Relative squared deviation of the normalized broad field
+            % depth dose from the reference (last depth = normalization)
+            dd = DoseEngines.matRad_PhotonCollapsedConeEngine.calcBroadFieldDepthDose(kernel, mu, depths, dz, beta);
+            dd = dd / dd(end);
+            cost = sum(((dd(1:end - 1) - reference(1:end - 1)) ./ reference(1:end - 1)).^2);
+        end
+
+        function dd = calcBroadFieldDepthDose(kernel, mu, depths, dz, beta)
             % Collapsed cone broad field central axis depth dose in water
-            % (without inverse square), computed with the same transport on
-            % a one dimensional depth grid
+            % (without inverse square), computed with the recursion of the
+            % transport on a one dimensional depth grid
+            if nargin < 5
+                beta = 0;
+            end
             numVox = ceil((max(depths) + 300) / dz);
             z = ((1:numVox) - 0.5) * dz;
-            terma = mu * exp(-mu * z(:));
+            terma = DoseEngines.matRad_PhotonCollapsedConeEngine.termaDepthFactor(mu, beta, z(:));
             dirs = [cosd(kernel.polarAngles); sind(kernel.polarAngles); zeros(1, kernel.numPolarAngles)];
-            dose = matRad_collapsedConeTransport(terma, ones(numVox, 1), [dz 1e9 1e9], dirs, ...
-                                                 [kernel.A; kernel.B], [kernel.a; kernel.b]);
+            weights = [kernel.A; kernel.B];
+            att = [kernel.a; kernel.b];
+            steps = dz ./ abs(dirs(1, :));
+            dose = zeros(numVox, 1);
+            for forward = [true false]
+                sel = (dirs(1, :) > 0) == forward;
+                if ~any(sel)
+                    continue
+                end
+                w = weights(:, sel);
+                x = att(:, sel) .* repmat(steps(sel), size(att, 1), 1);
+                oneMinusE = -expm1(-x);
+                g = oneMinusE ./ x;
+                flow = zeros(size(w));
+                if forward
+                    order = 1:numVox;
+                else
+                    order = numVox:-1:1;
+                end
+                for i = order
+                    source = terma(i) * w;
+                    dose(i) = dose(i) + sum(sum(flow .* g + source .* (1 - g)));
+                    flow = flow .* (1 - oneMinusE) + source .* oneMinusE;
+                end
+            end
             dd = interp1(z, dose, depths, 'linear');
         end
 

@@ -131,14 +131,40 @@ voxWorld = matRad_cubeIndex2worldCoords(voxIx, ct);
 source = stf.isoCenter + stf.sourcePoint;
 invSquare = (machine.meta.SAD ./ sqrt(sum((voxWorld - repmat(source, numel(rows), 1)).^2, 2))).^2;
 
-mu = machine.data.m;
-terma = mu * exp(-mu * depth) .* invSquare;
+terma = DoseEngines.matRad_PhotonCollapsedConeEngine.termaDepthFactor(engine.hardeningMu0, engine.hardeningBeta, depth) .* invSquare;
 expected = engine.normalizationFactor * sum(engine.kernel.A + engine.kernel.B) * terma;
 assertElementsAlmostEqual(profile, expected, 'relative', 0.01);
 
 dose = interp1(depth, profile ./ invSquare, engine.normalizationDepth);
 reference = DoseEngines.matRad_PhotonCollapsedConeEngine.calcAnalyticalDepthDose(machine, engine.normalizationDepth);
 assertElementsAlmostEqual(dose, reference, 'relative', 0.01);
+
+function test_hardeningFit
+machine = matRad_loadMachine(struct('radiationMode', 'photons', 'machine', 'Generic'));
+fileName = DoseEngines.matRad_PhotonCollapsedConeEngine.defaultKernelFile();
+kernel = DoseEngines.matRad_PhotonCollapsedConeEngine.loadKernel(fileName, 12);
+[mu0, beta] = DoseEngines.matRad_PhotonCollapsedConeEngine.fitHardening(kernel, machine, 5, 100);
+assertTrue(mu0 > 0 && beta > 0);
+depths = [30 100 200 300];
+reference = DoseEngines.matRad_PhotonCollapsedConeEngine.calcAnalyticalDepthDose(machine, depths);
+reference = reference / reference(2);
+corrected = DoseEngines.matRad_PhotonCollapsedConeEngine.calcBroadFieldDepthDose(kernel, mu0, depths, 5, beta);
+corrected = corrected / corrected(2);
+mono = DoseEngines.matRad_PhotonCollapsedConeEngine.calcBroadFieldDepthDose(kernel, machine.data.m, depths, 5, 0);
+mono = mono / mono(2);
+assertTrue(max(abs(corrected ./ reference - 1)) < 0.02);
+assertTrue(max(abs(corrected ./ reference - 1)) < max(abs(mono ./ reference - 1)));
+assertElementsAlmostEqual(DoseEngines.matRad_PhotonCollapsedConeEngine.termaDepthFactor(0.005, 0, depths), ...
+                          0.005 * exp(-0.005 * depths), 'relative', 1e-14);
+
+function test_hardeningCorrectionDisabled
+[ct, cst, pln, stf] = helper_waterBox(12, 6, 4, 12);
+pln.propDoseCalc.hardeningCorrection = false;
+engine = DoseEngines.matRad_PhotonCollapsedConeEngine(pln);
+engine.calcDoseInfluence(ct, cst, stf);
+machine = matRad_loadMachine(pln);
+assertEqual(engine.hardeningBeta, 0);
+assertEqual(engine.hardeningMu0, machine.data.m);
 
 function test_invalidKernelTilt
 [ct, cst, pln, stf] = helper_waterBox(12, 6, 4, 12);
