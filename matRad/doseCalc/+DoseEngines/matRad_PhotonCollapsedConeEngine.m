@@ -53,38 +53,38 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     properties (Constant)
-        possibleRadiationModes = {'photons'}
-        name = 'Collapsed Cone Convolution'
-        shortName = 'CCC'
+        possibleRadiationModes = {'photons'} % radiation modes the engine can process
+        name = 'Collapsed Cone Convolution' % user readable name of the engine
+        shortName = 'CCC' % identifier used in pln.propDoseCalc.engine
     end
 
     properties (SetAccess = public, GetAccess = public)
-        numPolarAngles = 12
-        numAzimuthalAngles = 8
-        scatterCutOff = 150
-        normalizationDepth = 100
-        kernelFile
-        useMex = true
-        numThreads = 0
-        enableDijSampling = true
-        dijSampling
-        randomSeed = 0
-        ignoreInvalidValues = false
-        kernelTilt = 'beam'
-        numScatterExponentials = 1
-        hardeningCorrection = true
+        numPolarAngles = 12 % number of polar cone bins, must divide the 48 cones of the kernel data
+        numAzimuthalAngles = 8 % number of azimuthal cones per polar bin
+        scatterCutOff = 150 % lateral margin [mm] of the transport sub-volume around the TERMA of each bixel
+        normalizationDepth = 100 % depth [mm] of the absolute dose normalization to the machine depth dose
+        kernelFile % kernel data file, default: 6 MV water kernel in matRad/doseCalc/collapsedCone
+        useMex = true % use the compiled transport matRad_collapsedConeMex if available
+        numThreads = 0 % number of OpenMP threads of the mex file, 0 uses the OpenMP default
+        enableDijSampling = true % enable the lateral sampling of the dose influence matrix
+        dijSampling % struct with the dij sampling parameters, see matRad_sampleDij
+        randomSeed = 0 % seed of the random numbers used for the dij sampling
+        ignoreInvalidValues = false % do not raise an error for NaN, infinite or negative doses
+        kernelTilt = 'beam' % polar axis of the cones, 'beam' (beam axis) or 'ray' (ray of each bixel)
+        numScatterExponentials = 1 % number of exponential terms of the scatter kernel (1 or 2)
+        hardeningCorrection = true % use the fitted depth dependent effective attenuation of the TERMA
     end
 
     properties (SetAccess = protected, GetAccess = public)
-        kernel
-        normalizationFactor
-        penumbraFWHM
-        mexAvailable = false
-        densityCubes
-        localDirections
-        directionWeights
-        hardeningMu0
-        hardeningBeta = 0
+        kernel % fitted kernel (polar bins, A, a, B, b) used for the transport
+        normalizationFactor % absolute dose normalization factor
+        penumbraFWHM % penumbra FWHM [mm] at the isocenter from the machine data
+        mexAvailable = false % true if the compiled transport is used
+        densityCubes % relative electron density cubes on the dose grid, one per CT scenario
+        localDirections % cone directions in the local frame with the polar axis along z
+        directionWeights % kernel weights and attenuation coefficients per component and direction
+        hardeningMu0 % surface attenuation coefficient [1/mm] of the effective TERMA attenuation
+        hardeningBeta = 0 % hardening coefficient [1/mm] of the effective TERMA attenuation
     end
 
     methods
