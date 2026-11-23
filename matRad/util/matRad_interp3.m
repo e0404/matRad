@@ -1,4 +1,4 @@
-function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)
+function y = matRad_interp3(xi, yi, zi, x, xq, yq, zq, mode, extrapVal)
 % interpolates 3-D data (table lookup)
 %
 % call:
@@ -35,9 +35,7 @@ function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 [env, ~] = matRad_getEnvironment();
-
 
 if nargin < 8
     mode = 'linear';
@@ -47,7 +45,7 @@ if nargin < 9
     extrapVal = NaN;
 end
 
-if isequal(xi,xq) && isequal(yi,yq) && isequal(zi,zq)
+if isequal(xi, xq) && isequal(yi, yq) && isequal(zi, zq)
     y = x;
 else
     if ischar(extrapVal)
@@ -64,17 +62,16 @@ else
     end
     switch env
         case 'MATLAB'
-            y = interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal);
+            y = interp3(xi, yi, zi, x, xq, yq, zq, mode, extrapVal);
         case 'OCTAVE'
-            %If we do a vector query with similar sizes only don't create a meshgrid
-            if isequal(size(xq),size(yq),size(zq))
-                y = interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal);
+            % If we do a vector query with similar sizes only don't create a meshgrid
+            if isequal(size(xq), size(yq), size(zq))
+                y = interp3(xi, yi, zi, x, xq, yq, zq, mode, extrapVal);
             else
-                %Here we require a meshgrid to force octave to return the correct size
-                %Maybe the same thing could be achieved with a reshape?
-                [xqMesh,yqMesh,zqMesh] = meshgrid(xq,yq,zq);
-                y = interp3(xi,yi,zi,x,xqMesh,yqMesh,zqMesh,mode,extrapVal);
+                % Here we require a meshgrid to force octave to return the correct size
+                % Maybe the same thing could be achieved with a reshape?
+                [xqMesh, yqMesh, zqMesh] = meshgrid(xq, yq, zq);
+                y = interp3(xi, yi, zi, x, xqMesh, yqMesh, zqMesh, mode, extrapVal);
             end
     end
 end
-
