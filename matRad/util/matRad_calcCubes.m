@@ -1,4 +1,4 @@
-function resultGUI = matRad_calcCubes(w,dij,scenNum)
+function resultGUI = matRad_calcCubes(w, dij, scenNum)
 % matRad computation of all cubes for the resultGUI struct
 % which is used as result container and for visualization in matRad's GUI
 %
@@ -30,6 +30,8 @@ function resultGUI = matRad_calcCubes(w,dij,scenNum)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%| pragma Justify(metric, "cyc", "Pre-existing complexity; refactoring is out of scope for this bugfix.");
+
 matRad_cfg = MatRad_Config.instance();
 
 if nargin < 3
@@ -38,8 +40,8 @@ end
 
 resultGUI.w = w;
 
-if isfield(dij,'numParticlesPerMU')
-    resultGUI.MU = (w.*1e6) ./ dij.numParticlesPerMU;
+if isfield(dij, 'numParticlesPerMU')
+    resultGUI.MU = (w .* 1e6) ./ dij.numParticlesPerMU;
 end
 
 % get bixel - beam correspondence
@@ -47,20 +49,19 @@ for i = 1:dij.numOfBeams
     beamInfo(i).suffix = ['_beam', num2str(i)];
     beamInfo(i).logIx  = (dij.beamNum == i);
 end
-beamInfo(dij.numOfBeams+1).suffix = '';
-beamInfo(dij.numOfBeams+1).logIx  = true(size(resultGUI.w,1),1);
+beamInfo(dij.numOfBeams + 1).suffix = '';
+beamInfo(dij.numOfBeams + 1).logIx  = true(size(resultGUI.w, 1), 1);
 
-[ctScen,~] = ind2sub(size(dij.physicalDose),scenNum);
-
+[ctScen, ~] = ind2sub(size(dij.physicalDose), scenNum);
 
 %% Physical Dose
-doseFields = {'physicalDose','doseToWater'};
-doseQuantities = {'','_std','_batchStd', '_MCvar'};
+doseFields = {'physicalDose', 'doseToWater'};
+doseQuantities = {'', '_std', '_batchStd', '_MCvar'};
 % compute physical dose for all beams individually and together
 for j = 1:length(doseFields)
     for k = 1:length(doseQuantities)
         % Check if combination is a field in dij, otherwise skip
-        if isfield(dij,[doseFields{j} doseQuantities{k}])
+        if isfield(dij, [doseFields{j} doseQuantities{k}])
             fieldName = [doseFields{j} doseQuantities{k}];
             if ~isempty(strfind(lower(doseQuantities{k}), 'std'))
                 % Standard deviation fields are added quadratically with squared weights
@@ -92,35 +93,33 @@ for j = 1:length(doseFields)
     end
 end
 
-if ~isfield(dij,'doseWeightingThreshold')
+if ~isfield(dij, 'doseWeightingThreshold')
     dij.doseWeightingThreshold = 0.01;
 end
-absoluteDoseWeightingThreshold = dij.doseWeightingThreshold*max(resultGUI.physicalDose(:));
-
-
+absoluteDoseWeightingThreshold = dij.doseWeightingThreshold * max(resultGUI.physicalDose(:));
 
 %% LET
 % consider LET
-if isfield(dij,'mLETDose')
+if isfield(dij, 'mLETDose')
     for i = 1:length(beamInfo)
-        LETDoseCube                                 = reshape(full(dij.mLETDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)),dij.doseGrid.dimensions);
+        LETDoseCube                                 = ...
+            reshape(full(dij.mLETDose{scenNum} * (resultGUI.w .* beamInfo(i).logIx)), dij.doseGrid.dimensions);
         resultGUI.(['LET', beamInfo(i).suffix])     = zeros(dij.doseGrid.dimensions);
         ix                                          = resultGUI.(['physicalDose', beamInfo(i).suffix]) > absoluteDoseWeightingThreshold;
-        resultGUI.(['LET', beamInfo(i).suffix])(ix) = LETDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
+        resultGUI.(['LET', beamInfo(i).suffix])(ix) = LETDoseCube(ix) ./ resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
     end
 end
 
-
 %% RBE weighted dose
 % consider RBE for protons and skip varRBE calculation
-if isfield(dij,'RBE') && isscalar(dij.RBE)
+if isfield(dij, 'RBE') && isscalar(dij.RBE)
     for i = 1:length(beamInfo)
         resultGUI.(['RBExDose', beamInfo(i).suffix]) = resultGUI.(['physicalDose', beamInfo(i).suffix]) * dij.RBE;
     end
-elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(dij)))
+elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr), 'alpha')), fieldnames(dij)))
     % Load RBE models if MonteCarlo was calculated for multiple models
-    if isfield(dij,'RBE_models')
-        RBE_model = cell(1,length(dij.RBE_models));
+    if isfield(dij, 'RBE_models')
+        RBE_model = cell(1, length(dij.RBE_models));
         for i = 1:length(dij.RBE_models)
             RBE_model{i} = ['_' dij.RBE_models{i}];
         end
@@ -131,7 +130,7 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
     % Loop through RBE models
     for j = 1:length(RBE_model)
         % Check if combination is a field in dij, otherwise skip
-        if isfield(dij,['mAlphaDose' RBE_model{j}])
+        if isfield(dij, ['mAlphaDose' RBE_model{j}])
             for i = 1:length(beamInfo)
                 % Get weights of current beam
                 wBeam = (resultGUI.w .* beamInfo(i).logIx);
@@ -141,16 +140,25 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
                 ixWeighted = dij.bx{ctScen} ~= 0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > absoluteDoseWeightingThreshold;
 
                 % Calculate effect from alpha- and sqrtBetaDose
-                resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])                = full(dij.(['mAlphaDose' RBE_model{j}]){scenNum} * wBeam + (dij.(['mSqrtBetaDose' RBE_model{j}]){scenNum} * wBeam).^2);
-                resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])                = reshape(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix]),dij.doseGrid.dimensions);
+                resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])                = ...
+                    full(dij.(['mAlphaDose' RBE_model{j}]){scenNum} * wBeam + (dij.(['mSqrtBetaDose' RBE_model{j}]){scenNum} * wBeam).^2);
+                resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])                = ...
+                    reshape(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix]), dij.doseGrid.dimensions);
 
                 % Calculate RBExDose from the effect
-                resultGUI.(['RBExDose', RBE_model{j}, beamInfo(i).suffix])                 = zeros(size(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])));
-                resultGUI.(['RBExDose', RBE_model{j}, beamInfo(i).suffix])(ix)             = (sqrt(dij.ax{ctScen}(ix).^2 + 4 .* dij.bx{ctScen}(ix) .* resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])(ix)) - dij.ax{ctScen}(ix))./(2.*dij.bx{ctScen}(ix));
+                resultGUI.(['RBExDose', RBE_model{j}, beamInfo(i).suffix])                 = ...
+                    zeros(size(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])));
+                resultGUI.(['RBExDose', RBE_model{j}, beamInfo(i).suffix])(ix)             = ...
+                    (sqrt(dij.ax{ctScen}(ix).^2 + 4 .* dij.bx{ctScen}(ix) .* ...
+                          resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])(ix)) - dij.ax{ctScen}(ix)) ./ ...
+                    (2 .* dij.bx{ctScen}(ix));
 
                 % Divide RBExDose with the physicalDose to get the plain RBE cube
-                resultGUI.(['RBE', RBE_model{j}, beamInfo(i).suffix])                   = zeros(size(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])));
-                resultGUI.(['RBE', RBE_model{j}, beamInfo(i).suffix])(ixWeighted)               = resultGUI.(['RBExDose', RBE_model{j}, beamInfo(i).suffix])(ixWeighted)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ixWeighted);
+                resultGUI.(['RBE', RBE_model{j}, beamInfo(i).suffix])                   = ...
+                    zeros(size(resultGUI.(['effect', RBE_model{j}, beamInfo(i).suffix])));
+                resultGUI.(['RBE', RBE_model{j}, beamInfo(i).suffix])(ixWeighted)               = ...
+                    resultGUI.(['RBExDose', RBE_model{j}, beamInfo(i).suffix])(ixWeighted) ./ ...
+                    resultGUI.(['physicalDose', beamInfo(i).suffix])(ixWeighted);
 
                 % Initialize alpha/beta cubes
                 resultGUI.(['alpha', RBE_model{j}, beamInfo(i).suffix])                 = zeros(dij.doseGrid.dimensions);
@@ -160,12 +168,14 @@ elseif any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldna
 
                 % Calculate alpha and weighted alphaDose
                 AlphaDoseCube                                                           = full(dij.(['mAlphaDose' RBE_model{j}]){scenNum} * wBeam);
-                resultGUI.(['alpha', RBE_model{j}, beamInfo(i).suffix])(ix)             = AlphaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
+                resultGUI.(['alpha', RBE_model{j}, beamInfo(i).suffix])(ix)             = AlphaDoseCube(ix) ./ ...
+                    resultGUI.(['physicalDose', beamInfo(i).suffix])(ix);
                 resultGUI.(['alphaDoseCube', RBE_model{j}, beamInfo(i).suffix])(ix)     = AlphaDoseCube(ix);
 
                 % Calculate beta and weighted sqrtBetaDose
                 SqrtBetaDoseCube                                                        = full(dij.(['mSqrtBetaDose' RBE_model{j}]){scenNum} * wBeam);
-                resultGUI.(['beta', RBE_model{j}, beamInfo(i).suffix])(ix)              = (SqrtBetaDoseCube(ix)./resultGUI.(['physicalDose', beamInfo(i).suffix])(ix)).^2;
+                resultGUI.(['beta', RBE_model{j}, beamInfo(i).suffix])(ix)              = ...
+                    (SqrtBetaDoseCube(ix) ./ resultGUI.(['physicalDose', beamInfo(i).suffix])(ix)).^2;
                 resultGUI.(['SqrtBetaDoseCube', RBE_model{j}, beamInfo(i).suffix])(ix)  = SqrtBetaDoseCube(ix);
             end
         end
@@ -175,14 +185,15 @@ end
 %% Calculate Biological Effective Dose (BED)
 
 % When depth Dependent alpha beta values are calculated in dij calculation
-if isfield(dij,'ax') && isfield(dij,'bx')
+if isfield(dij, 'ax') && isfield(dij, 'bx')
     ixWeighted = dij.ax{ctScen} > 0 & dij.bx{ctScen} > 0 & resultGUI.(['physicalDose', beamInfo(i).suffix])(:) > absoluteDoseWeightingThreshold;
 
-    if isfield(dij,'mAlphaDose') && isfield(dij,'mSqrtBetaDose')
+    if isfield(dij, 'mAlphaDose') && isfield(dij, 'mSqrtBetaDose')
         for i = 1:length(beamInfo)
             % photon equivaluent BED = n * effect / alphax
             resultGUI.(['BED', beamInfo(i).suffix]) = zeros(dij.doseGrid.dimensions);
-            resultGUI.(['BED', beamInfo(i).suffix])(ixWeighted) = full(resultGUI.(['effect', beamInfo(i).suffix])(ixWeighted) ./dij.ax{ctScen}(ixWeighted));
+            resultGUI.(['BED', beamInfo(i).suffix])(ixWeighted) = ...
+                full(resultGUI.(['effect', beamInfo(i).suffix])(ixWeighted) ./ dij.ax{ctScen}(ixWeighted));
             resultGUI.(['BED', beamInfo(i).suffix]) = reshape(resultGUI.(['BED', beamInfo(i).suffix]), dij.doseGrid.dimensions);
         end
         matRad_cfg.dispWarning('Photon Equiavlent BED calculated');
@@ -195,9 +206,9 @@ if isfield(dij,'ax') && isfield(dij,'bx')
             else
                 dose = resultGUI.(['physicalDose', beamInfo(i).suffix]);
             end
-            effect = dij.ax{ctScen}.* dose(:) + dij.bx{ctScen}.*dose(:).^2;
+            effect = dij.ax{ctScen} .* dose(:) + dij.bx{ctScen} .* dose(:).^2;
             resultGUI.(['BED', beamInfo(i).suffix]) = zeros(dij.doseGrid.dimensions);
-            resultGUI.(['BED', beamInfo(i).suffix])(ixWeighted) = effect(ixWeighted)./dij.ax{ctScen}(ixWeighted);
+            resultGUI.(['BED', beamInfo(i).suffix])(ixWeighted) = effect(ixWeighted) ./ dij.ax{ctScen}(ixWeighted);
             resultGUI.(['BED', beamInfo(i).suffix]) = reshape(resultGUI.(['BED', beamInfo(i).suffix]), dij.doseGrid.dimensions);
         end
         if isfield(resultGUI, 'RBExDose')
@@ -206,45 +217,43 @@ if isfield(dij,'ax') && isfield(dij,'bx')
     end
 end
 
-%add some dij meta
-if isfield(dij,'meta') && isstruct(dij.meta)
+% add some dij meta
+if isfield(dij, 'meta') && isstruct(dij.meta)
     resultGUI.meta = dij.meta;
 end
 
-
 %% Final processing
 % Remove suffix for RBExDose if there's only one available
-if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr),'alpha')), fieldnames(dij))) && isfield(dij,'RBE_models') && length(dij.RBE_models) == 1
+if any(cellfun(@(teststr) ~isempty(strfind(lower(teststr), 'alpha')), fieldnames(dij))) && isfield(dij, 'RBE_models') && length(dij.RBE_models) == 1
     % Get fieldnames that include the specified RBE model
     fnames = fieldnames(resultGUI);
-    fnames = fnames(cellfun(@(teststr) ~isempty(strfind(lower(teststr),lower(dij.RBE_models{1}))), fnames));
+    fnames = fnames(cellfun(@(teststr) ~isempty(strfind(lower(teststr), lower(dij.RBE_models{1}))), fnames));
 
     % Rename fields and remove model specifier if there's only one
     for f = 1:length(fnames)
-        resultGUI.(erase(fnames{f},['_',dij.RBE_models{1}])) = resultGUI.(fnames{f});
+        resultGUI.(erase(fnames{f}, ['_', dij.RBE_models{1}])) = resultGUI.(fnames{f});
     end
 
     % Remove old fields
-    resultGUI = rmfield(resultGUI,fnames);
+    resultGUI = rmfield(resultGUI, fnames);
 end
 
 % group similar fields together
 resultGUI = orderfields(resultGUI);
 
 % interpolation if dose grid does not match ct grid
-if isfield(dij,'ctGrid') && any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
+if isfield(dij, 'ctGrid') && any(dij.ctGrid.dimensions ~= dij.doseGrid.dimensions)
     myFields = fieldnames(resultGUI);
     for i = 1:numel(myFields)
         if numel(resultGUI.(myFields{i})) == dij.doseGrid.numOfVoxels
 
             % interpolate!
-            resultGUI.(myFields{i}) = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
-                resultGUI.(myFields{i}), ...
-                dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear',0);
+            resultGUI.(myFields{i}) = matRad_interp3(dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, ...
+                                                     resultGUI.(myFields{i}), ...
+                                                     dij.ctGrid.x, dij.ctGrid.y', dij.ctGrid.z, 'linear', 0);
 
         end
     end
 end
-
 
 end
