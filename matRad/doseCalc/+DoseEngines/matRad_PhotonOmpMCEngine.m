@@ -162,13 +162,20 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     this.getOmpMCsource(tmpStf);
 
                     % Book keeping for dij
-                    counter = 0;
-                    for i = 1:dij.numOfBeams
-                        for j = 1:tmpStf(i).numOfRays
-                            counter = counter + 1;
-                            dij.beamNum(counter)  = i;
-                            dij.rayNum(counter)   = j;
-                            dij.bixelNum(counter) = j;
+                    if this.calcDoseDirect
+                        % one dij column per beam in forward calculation
+                        dij.beamNum  = (1:dij.numOfBeams)';
+                        dij.rayNum   = (1:dij.numOfBeams)';
+                        dij.bixelNum = (1:dij.numOfBeams)';
+                    else
+                        counter = 0;
+                        for i = 1:dij.numOfBeams
+                            for j = 1:tmpStf(i).numOfRays
+                                counter = counter + 1;
+                                dij.beamNum(counter)  = i;
+                                dij.rayNum(counter)   = j;
+                                dij.bixelNum(counter) = j;
+                            end
                         end
                     end
 
@@ -192,17 +199,21 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         matRad_cfg.dispError(errorString);
                     end
 
-                    %Calibrate the dose with above factor
-                    dij.physicalDose{scenarioIx} = dij.physicalDose{scenarioIx} * calibrationFactor;
-                    if isfield(dij,'physicalDose_MCvar')
-                        dij.physicalDose_MCvar{scenarioIx} = dij.physicalDose_MCvar{scenarioIx} * calibrationFactor^2;
+                    % Calibrate the dose with above factor
+                    scenIx = {ctScen, shiftScen, rangeShiftScen};
+                    dij.physicalDose{scenIx{:}} = dij.physicalDose{scenIx{:}} * calibrationFactor;
+                    if isfield(dij, 'physicalDose_MCvar')
+                        dij.physicalDose_MCvar{scenIx{:}} = dij.physicalDose_MCvar{scenIx{:}} * calibrationFactor^2;
                     end
 
                     if this.calcDoseDirect
-                        dij.physicalDose{scenarioIx} = dij.physicalDose{scenarioIx} .* this.directWeights';
+                        % weight the beamlets and accumulate them per beam, such that
+                        % the dij has one column per beam
+                        dij.physicalDose{scenIx{:}} = dij.physicalDose{scenIx{:}} * this.getBeamAggregationMatrix(stf, 1);
 
-                        if isfield(dij,'physicalDose_MCvar')
-                            dij.physicalDose_MCvar{scenarioIx} = dij.physicalDose_MCvar{scenarioIx} .* (this.directWeights').^2;
+                        if isfield(dij, 'physicalDose_MCvar')
+                            % beamlets are statistically independent: variances add up weighted with the squared weights
+                            dij.physicalDose_MCvar{scenIx{:}} = dij.physicalDose_MCvar{scenIx{:}} * this.getBeamAggregationMatrix(stf, 2);
                         end
                     end
                 end
@@ -213,15 +224,12 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             dij = initDoseCalc@DoseEngines.matRad_MonteCarloEngineAbstract(this,ct,cst,stf);
 
-            % set up arrays for book keeping
-            dij.bixelNum = NaN*ones(dij.totalNumOfBixels,1);
-            dij.rayNum   = NaN*ones(dij.totalNumOfBixels,1);
-            dij.beamNum  = NaN*ones(dij.totalNumOfBixels,1);
-
             if this.calcDoseDirect
                 this.numHistoriesPerBeamlet = ceil(this.numHistoriesDirect / dij.totalNumOfBixels); %Use ceil to avoid 0 when number of histories is small
                 matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispWarning('The ompMC engine implements beamlet-wise calculation only at the moment, so we will set the histories per bemlet to numHistoriesDirect/numBeamlets: %d!');
+                matRad_cfg.dispWarning(['The ompMC engine implements beamlet-wise calculation only at the moment, ', ...
+                                        'so we will set the histories per beamlet to numHistoriesDirect/numBeamlets: %d!'], ...
+                                       this.numHistoriesPerBeamlet);
             end
 
             dij.numHistoriesPerBeamlet = this.numHistoriesPerBeamlet;
@@ -248,6 +256,27 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
     end
 
     methods (Access = private)
+
+        function aggregationMatrix = getBeamAggregationMatrix(this, stf, weightExponent)
+            % Sparse matrix that accumulates (weighted) bixel columns per beam
+            %
+            % call:
+            %   aggregationMatrix = this.getBeamAggregationMatrix(stf, weightExponent)
+            %
+            % input:
+            %   stf:                matRad steering information struct
+            %   weightExponent:     exponent applied to the direct weights
+            %                       (1 for dose, 2 for the variance)
+            % output:
+            %   aggregationMatrix:  sparse matrix (numOfBixels x numOfBeams), such that
+            %                       beamlets * aggregationMatrix yields one column per beam
+
+            numBixelsPerBeam = [stf(:).totalNumOfBixels];
+            bixelBeamIx = repelem(1:numel(stf), numBixelsPerBeam);
+            weights = this.directWeights(:).^weightExponent;
+            aggregationMatrix = sparse(1:numel(bixelBeamIx), bixelBeamIx, weights, numel(bixelBeamIx), numel(stf));
+        end
+
         function setOmpMCoptions(obj)
             matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
 
