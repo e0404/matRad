@@ -36,9 +36,9 @@ if ~isfield(ct,'resampled')
     % Perform resampling to dose grid
     for s = 1:ct.numOfCtScen
         cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
-            dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
+            dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear','nearest');
         cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cube{s}, ...
-            dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
+            dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear','nearest');
     end
 
     % Allocate temporary resampled CT

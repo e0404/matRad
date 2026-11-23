@@ -120,6 +120,10 @@ The following properties of the pln struct can additionally be adjusted. If they
 **pln.propDoseCalc.doseGrid.resolution**
 
     Specifies the resolution for the dose calculation. Default: x direction: *3* mm, y direction: *3* mm, z direction: *3* mm.
+    The dose grid is centered on the CT and covers it completely: the number of dose voxels along each axis is the smallest one that spans the CT volume (``ceil(numel(ct.x) * ct.resolution.x / doseGrid.resolution.x)`` in x direction, analogously for y and z).
+    If the extent of the CT is not a multiple of the dose grid resolution, the outermost dose voxels therefore reach slightly beyond the CT, and data is resampled between the grids using the nearest edge value outside of the voxel centers.
+    If the dose grid resolution equals the CT resolution along an axis, the dose grid is identical to the CT grid along this axis.
+    Instead of a resolution only, the voxel center coordinates ``pln.propDoseCalc.doseGrid.x``, ``.y`` and ``.z`` can be provided directly, in which case the dose grid is used as given.
 
 **pln.propDoseCalc.defaultLateralCutOff**
 

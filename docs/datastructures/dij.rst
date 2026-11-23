@@ -12,6 +12,10 @@ Starting from version 3.1.0, the dose grid has been separated from the CT grid, 
 
     The resolution of an individual voxel in the dose/ct cube in [mm] in x-, y-, and z-direction (Note that the default value for the doseGrid resolution is 2.5 mm, 2.5 mm and 3 mm in x-, y- and z- directions, and is not assigned equal to the ct resolution).
 
+**dij.doseGrid.x, y, z - dij.ctGrid.x, y, z**
+
+    The voxel center coordinates of the dose/ct grid in world coordinates in [mm]. Unless the dose grid is provided by the user, it is centered on the CT grid and covers the CT completely (see :ref:`pln.propDoseCalc.doseGrid.resolution <pln>`); for equal resolutions, the dose grid axis is identical to the CT axis.
+
 **dij.doseGrid.dimensions - dij.ctGrid.dimensions**
 
     The resulting dose/ct cube dimension in voxels.

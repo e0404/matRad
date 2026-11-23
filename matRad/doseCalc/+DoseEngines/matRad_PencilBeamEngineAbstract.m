@@ -186,7 +186,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                     dij.ctGrid.x,dij.ctGrid.y,dij.ctGrid.z, ...
                     cube, ...
                     dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, ...
-                    'linear'), this.cubeWED, 'UniformOutput', false);
+                    'linear', 'nearest'), this.cubeWED, 'UniformOutput', false);
                 this.rayTracer = matRad_RayTracerSiddon(cubesForTracing, dij.doseGrid);
             else
                 this.rayTracer = matRad_RayTracerSiddon(this.cubeWED,dij.ctGrid);
@@ -288,7 +288,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
 
                 if ~this.traceOnDoseGrid
                     currBeam.radDepthCube = cellfun(@(rD) matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, rD, ...
-                        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest'),currBeam.radDepthCube,'UniformOutput',false);
+                        dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'nearest','nearest'),currBeam.radDepthCube,'UniformOutput',false);
                 end
 
                 this.radDepthCubes(i,:) = currBeam.radDepthCube(:);
@@ -336,7 +336,7 @@ classdef (Abstract) matRad_PencilBeamEngineAbstract < DoseEngines.matRad_DoseEng
                 radDepthCube(V(~isnan(radDepthVctGrid{1}))) = radDepthVctGrid{ctScenNum}(~isnan(radDepthVctGrid{1}));
 
                 % interpolate cube - cube is now stored in Y X Z
-                coarseRadDepthCube          = matRad_interp3(ctGrid.x,ctGrid.y',ctGrid.z,radDepthCube,doseGrid.x,doseGrid.y',doseGrid.z);
+                coarseRadDepthCube          = matRad_interp3(ctGrid.x,ctGrid.y',ctGrid.z,radDepthCube,doseGrid.x,doseGrid.y',doseGrid.z,'linear','nearest');
                 radDepthVdoseGrid{ctScenNum}  = coarseRadDepthCube(Vcoarse);
             end
         end

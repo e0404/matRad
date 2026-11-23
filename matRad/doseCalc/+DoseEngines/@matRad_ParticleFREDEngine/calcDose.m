@@ -41,7 +41,7 @@ dij = this.initDoseCalc(ct, cst, stf);
 for ctIdx = 1:this.multScen.numOfCtScen
     this.HUcube{ctIdx} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z, ...
                                          ct.cubeHU{ctIdx}, ...
-                                         dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear');
+                                         dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear', 'nearest');
 end
 
 % Force HU clamping if values are found outside of available range

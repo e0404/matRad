@@ -11,7 +11,10 @@ function y = matRad_interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal)
 %   x:          data
 %   xq,yq,zq:   coordinates of quer points as a grid
 %   mode:       optional interpolation mode (default linear)
-%   extrapVal:  (optional) value for extrapolation
+%   extrapVal:  (optional) value for extrapolation (default NaN). Can also
+%               be the string 'nearest', which assigns query points outside
+%               of the grid the value of the nearest grid boundary
+%               (replication of the edge values, no NaNs are created)
 %
 % output:
 %   y: interpolated data
@@ -47,6 +50,18 @@ end
 if isequal(xi,xq) && isequal(yi,yq) && isequal(zi,zq)
     y = x;
 else
+    if ischar(extrapVal)
+        if ~strcmp(extrapVal, 'nearest')
+            matRad_cfg = MatRad_Config.instance();
+            matRad_cfg.dispError('Unknown extrapolation mode ''%s'', use a numeric value or ''nearest''!', extrapVal);
+        end
+        % Clamp the query points to the grid so that interpolation never
+        % leaves the domain
+        xq = min(max(xq, min(xi(:))), max(xi(:)));
+        yq = min(max(yq, min(yi(:))), max(yi(:)));
+        zq = min(max(zq, min(zi(:))), max(zi(:)));
+        extrapVal = NaN;
+    end
     switch env
         case 'MATLAB'
             y = interp3(xi,yi,zi,x,xq,yq,zq,mode,extrapVal);

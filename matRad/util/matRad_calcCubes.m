@@ -224,13 +224,29 @@ resultGUI = orderfields(resultGUI);
 % interpolation if dose grid does not match ct grid
 if isfield(dij,'ctGrid') && any(dij.ctGrid.dimensions~=dij.doseGrid.dimensions)
     myFields = fieldnames(resultGUI);
+
+    % The dose grid covers the CT, but its outermost voxel centers can lie
+    % beyond the CT voxel centers and vice versa. Voxels between the outermost
+    % dose voxel center and the dose grid boundary take the value of the
+    % outermost dose voxel (nearest extrapolation), whereas CT voxels outside
+    % of the dose grid volume (e.g. for user-provided dose grids) get zero dose.
+    inDoseGrid = true(dij.ctGrid.dimensions);
+    halfRes = [dij.doseGrid.resolution.x dij.doseGrid.resolution.y dij.doseGrid.resolution.z] / 2;
+    outsideX = dij.ctGrid.x < min(dij.doseGrid.x) - halfRes(1) | dij.ctGrid.x > max(dij.doseGrid.x) + halfRes(1);
+    outsideY = dij.ctGrid.y < min(dij.doseGrid.y) - halfRes(2) | dij.ctGrid.y > max(dij.doseGrid.y) + halfRes(2);
+    outsideZ = dij.ctGrid.z < min(dij.doseGrid.z) - halfRes(3) | dij.ctGrid.z > max(dij.doseGrid.z) + halfRes(3);
+    inDoseGrid(:, outsideX, :) = false;
+    inDoseGrid(outsideY, :, :) = false;
+    inDoseGrid(:, :, outsideZ) = false;
+
     for i = 1:numel(myFields)
         if numel(resultGUI.(myFields{i})) == dij.doseGrid.numOfVoxels
 
             % interpolate!
             resultGUI.(myFields{i}) = matRad_interp3(dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z, ...
                 resultGUI.(myFields{i}), ...
-                dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear',0);
+                dij.ctGrid.x,dij.ctGrid.y',dij.ctGrid.z,'linear','nearest');
+            resultGUI.(myFields{i})(~inDoseGrid) = 0;
 
         end
     end
