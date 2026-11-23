@@ -747,13 +747,13 @@ classdef matRad_ParticleFREDEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
         end
 
-        function dijMats = readSparseDataV3(fID, fileFormatVersion, cubeDim, numberOfBixels, nComponents)
+        function dijMatrices = readSparseDataV3(fID, fileFormatVersion, cubeDim, numberOfBixels, nComponents)
             matRad_cfg = MatRad_Config.instance();
 
             allBixelMeta = fread(fID, [3 numberOfBixels], "uint32"); % (#bixels, PBidx, FID, PBID)
 
             % Size information for each component
-            componentDataSize = fread(f, nComponents, "uint32");
+            componentDataSize = fread(fID, nComponents, "uint32");
 
             % Data
             dijMatrices  = cell(1, nComponents);
