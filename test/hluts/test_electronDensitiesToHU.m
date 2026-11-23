@@ -39,6 +39,17 @@ ct = helper_createWaterCt();
 ctOut = matRad_electronDensitiesToHU(ct);
 assertTrue(isstruct(ctOut));
 assertEqual(ctOut.cube, ct.cube);
+% the default photon HLUT maps water (density 1) to 0 HU
+assertTrue(isfield(ctOut, 'cubeHU'));
+assertElementsAlmostEqual(ctOut.cubeHU{1}, zeros(ct.cubeDim), 'absolute', 1e-10);
+
+function test_defaultHlutAirPlateauUsesLowestHU
+% the default HLUT maps -1024 and -999 HU to the density 0.001
+ct = helper_createWaterCt();
+ct.cube{1}(1) = 0.001;
+ctOut = matRad_electronDensitiesToHU(ct, 'photons');
+assertElementsAlmostEqual(ctOut.cubeHU{1}(1), -1024, 'absolute', 1e-10);
+assertElementsAlmostEqual(ctOut.cubeHU{1}(2), 0, 'absolute', 1e-10);
 
 function test_noRadiationModeEqualsPhotons
 ct = helper_createWaterCt();
@@ -104,11 +115,27 @@ ctOut = matRad_electronDensitiesToHU(ct);
 assertElementsAlmostEqual(ctOut.cubeHU{1}(1), max(ct.hlut(:, 1)), 'absolute', 1e-10);
 assertElementsAlmostEqual(ctOut.cubeHU{1}(2), min(ct.hlut(:, 1)), 'absolute', 1e-10);
 
-function test_nonBijectiveHlutSkipsReconversion
+function test_densityPlateauUsesLowestHU
+% several HU values with the same density: the lowest HU value is used and
+% the remaining HLUT is interpolated as usual
 ct = helper_createWaterCt();
-hlut = helper_bijectiveHlut();
-hlut(2, 2) = hlut(1, 2); % duplicate density
-ct.hlut = hlut;
+ct.hlut = [-1000 0.001; -500 0.5; 0 1; 50 1; 100 1; 1000 2];
+ct.cube{1}(1) = 0.75;
+ct.cube{1}(2) = 1.5;
+ctOut = matRad_electronDensitiesToHU(ct);
+assertElementsAlmostEqual(ctOut.cubeHU{1}(1), -250, 'absolute', 1e-10);
+assertElementsAlmostEqual(ctOut.cubeHU{1}(2), 500, 'absolute', 1e-10);
+assertElementsAlmostEqual(ctOut.cubeHU{1}(3), 0, 'absolute', 1e-10);
+
+function test_unsortedHlutIsSorted
+ct = helper_createWaterCt();
+ct.hlut = flipud(helper_bijectiveHlut());
+ctOut = matRad_electronDensitiesToHU(ct);
+assertElementsAlmostEqual(ctOut.cubeHU{1}, zeros(ct.cubeDim), 'absolute', 1e-10);
+
+function test_decreasingDensitiesSkipReconversion
+ct = helper_createWaterCt();
+ct.hlut = [-1000 0.001; 0 1; 100 0.9; 1000 2];
 ctOut = matRad_electronDensitiesToHU(ct);
 assertFalse(isfield(ctOut, 'cubeHU'));
 assertEqual(ctOut.cube, ct.cube);

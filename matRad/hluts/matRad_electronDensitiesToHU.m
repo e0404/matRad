@@ -2,8 +2,10 @@ function ct = matRad_electronDensitiesToHU(ct, radiationMode)
 % matRad function to calculate recalculate HU values from equivalent densities
 % This is done to provide downward compatibility to previous matRad
 % versions where HU values were not automatically saved during the
-% import process. HU values can only be calculated if the HLUT is
-% bijective.
+% import process. HU values can only be calculated if the densities of the
+% HLUT do not decrease with increasing HU. If several HU values map to the
+% same density (e.g. the air plateau of the default HLUT), the lowest of
+% these HU values is used and a warning is issued.
 %
 % call:
 %   ct = matRad_electronDensitiesToHU(ct)
@@ -53,8 +55,23 @@ else
     hlut = matRad_loadHLUT(ct, radiationMode);
 end
 
+% the HLUT can only be inverted if the densities do not decrease with HU
+hlut = sortrows(hlut, [1 2]);
+isInvertible = all(diff(hlut(:, 2)) >= 0);
+
+% plateaus (several HU values with the same density) are not bijective:
+% use the lowest HU value of each plateau ('first' is needed for Octave)
+if isInvertible
+    [~, uniqueIx] = unique(hlut(:, 2), 'first');
+    if numel(uniqueIx) < size(hlut, 1)
+        matRad_cfg.dispWarning(['HLUT is not bijective, several HU values map to the same density. ', ...
+                                'Using the lowest HU value for each of these densities.']);
+        hlut = hlut(uniqueIx, :);
+    end
+end
+
 % interpolate rel. electron dens. to HU based on lookup table
-if isequal(hlut(:, 2), unique(hlut(:, 2))) && isequal(hlut(:, 1), unique(hlut(:, 1)))
+if isInvertible
 
     for i = 1:ct.numOfCtScen
         % Manual adjustments if ct data is corrupt. If some values are out of range
@@ -72,5 +89,5 @@ if isequal(hlut(:, 2), unique(hlut(:, 2))) && isequal(hlut(:, 1), unique(hlut(:,
     end
 
 else
-    matRad_cfg.dispInfo('Reconversion of HU values could not be done because HLUT is not bijective.\n');
+    matRad_cfg.dispWarning('Reconversion of HU values could not be done because the densities of the HLUT decrease with HU.');
 end
