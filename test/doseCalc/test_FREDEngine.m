@@ -75,15 +75,27 @@ assertTrue(all(cellfun(@isfile, {fullfile(planFolder, 'plan.inp'), ...
                                  fullfile(runFolder, 'fred.inp') ...
                                 })));
 
-function test_loadDij
+function test_loadDijFormat20
+helper_loadDijAndCompareLET('');
+
+function test_loadDijFormat21
+helper_loadDijAndCompareLET('fileFormat21');
+
+function test_loadDijFormat31
+helper_loadDijAndCompareLET('fileFormat31');
+
+function helper_loadDijAndCompareLET(fixtureFolder)
+% Loads the FRED fixture in fixtureFolder (relative to test/testData/FRED_data) both
+% as dose influence matrix and as forward cube and checks that the forward LETd agrees
+% with the LETd recomputed from the dij (both in keV/um)
 
 matRad_cfg = MatRad_Config.instance();
-load(['protons_testData.mat']);
+load('protons_testData.mat');
 pln.machine = 'Generic';
 pln.propDoseCalc.engine = 'FRED';
 pln.propDoseCalc.useGPU = true;
 pln.propDoseCalc.calcLET = true;
-pln.propDoseCalc.externalCalculation = fullfile(matRad_cfg.matRadRoot, 'test', 'testData', 'FRED_data');
+pln.propDoseCalc.externalCalculation = fullfile(matRad_cfg.matRadRoot, 'test', 'testData', 'FRED_data', fixtureFolder);
 
 % Test dij-load
 dijFredLoad         = matRad_calcDoseInfluence(ct, cst, stf, pln);
@@ -95,14 +107,21 @@ forwardDoseFredLoad = matRad_calcDoseForward(ct, cst, stf, pln, w);
 resultGUI = matRad_calcCubes(w, dijFredLoad, 1);
 
 nBixels = sum([stf(:).totalNumOfBixels]);
-nVoxles = prod(ct.cubeDim);
+nVoxels = prod(ct.cubeDim);
 
 % Assert basic parameters
 assertEqual(dijFredLoad.externalCalculationLodPath{1}, fullfile(pln.propDoseCalc.externalCalculation, 'MCrun', 'out', 'scoreij', 'Phantom.Dose.bin'));
-assertEqual(size(dijFredLoad.physicalDose{1}), [nVoxles, nBixels]);
+assertEqual(size(dijFredLoad.physicalDose{1}), [nVoxels, nBixels]);
 assertEqual(size(forwardDoseFredLoad.physicalDose), size(resultGUI.physicalDose));
-assertEqual(size(dijFredLoad.mLETDose{1}), [nVoxles, nBixels]);
+assertEqual(size(dijFredLoad.mLETDose{1}), [nVoxels, nBixels]);
 assertEqual(size(forwardDoseFredLoad.LET), size(resultGUI.LET));
+
+% Forward LETd (read from the .mhd cube) and dij LETd (recomputed from the scorer-ij
+% output) are separate, noisy FRED outputs, so only their mean is compared. A missing
+% or duplicated keV/um conversion of either one changes it by a factor of 10
+mask = forwardDoseFredLoad.LET > 0;
+assertTrue(any(mask(:)));
+assertElementsAlmostEqual(mean(forwardDoseFredLoad.LET(mask)), mean(resultGUI.LET(mask)), 'relative', 0.1);
 
 function test_bioCalculation
 
@@ -113,7 +132,7 @@ pln.bioModel = matRad_bioModel('protons', 'MCN');
 
 pln.propDoseCalc.engine = 'FRED';
 pln.propDoseCalc.useGPU = true;
-pln.propDoseCalc.externalCalculation = fullfile(matRad_cfg.matRadRoot, 'test', 'testData', 'FRED_data');
+pln.propDoseCalc.externalCalculation = fullfile(matRad_cfg.matRadRoot, 'test', 'testData', 'FRED_data', 'fileFormat31');
 
 % Test dij-load
 dijFredLoad         = matRad_calcDoseInfluence(ct, cst, stf, pln);
