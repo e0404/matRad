@@ -4,7 +4,7 @@ test_functions=localfunctions();
 
 initTestSuite;
 
-%Add automated instance tests for avaiable models
+%Add automated instance tests for available models
 ct.numOfCtScen = 5;
 models = {matRad_NominalScenario(),matRad_WorstCaseScenarios(),matRad_ImportanceScenarios(),matRad_RandomScenarios(),...
     matRad_NominalScenario(ct),matRad_WorstCaseScenarios(ct),matRad_ImportanceScenarios(ct),matRad_RandomScenarios(ct)};
@@ -44,6 +44,103 @@ function test_scenarioAbstractStaticAvailableModels()
         model = matRad_ScenarioModel.create(availableTypes{i});
         assertTrue(isa(model,'matRad_ScenarioModel'));
         assertEqual(model.shortName,availableTypes{i});
+    end
+
+function models = helper_allModels(ct)
+    models = {matRad_NominalScenario(ct),matRad_WorstCaseScenarios(ct),matRad_ImportanceScenarios(ct),matRad_RandomScenarios(ct)};
+
+function helper_assertConsistentScenarioIndexing(model)
+    % scenario number s (row of linearMask/scenForProb/scenProb) <-> full
+    % scenario index into scenMask must round trip for every scenario
+    scenIx = model.scenNum2scenIx();
+    assertEqual(numel(scenIx),model.totNumScen);
+    assertEqual(sort(scenIx),find(model.scenMask));
+    assertEqual(model.linearMask(:,1),model.scenForProb(:,1));
+    for s = 1:model.totNumScen
+        sub = model.linearMask(s,:);
+        assertEqual(model.sub2scenIx(sub(1),sub(2),sub(3)),scenIx(s));
+        assertEqual(model.scenNum(scenIx(s)),s);
+    end
+    assertEqual(model.scenNum(scenIx),(1:model.totNumScen)');
+
+function test_scenarioIndexingMultipleCtScenarios
+    % Regression test for #935: the scenario number of a full scenario
+    % index was its position in find(scenMask) instead of its row in
+    % linearMask
+    ct.numOfCtScen = 4;
+    models = helper_allModels(ct);
+    for m = 1:numel(models)
+        helper_assertConsistentScenarioIndexing(models{m});
+    end
+
+function test_scenarioIndexingSparseCtScenarios
+    % Only a subset of the CT scenarios, not in ascending order
+    ct.numOfCtScen = 4;
+    models = helper_allModels(ct);
+    for m = 1:numel(models)
+        model = models{m};
+        model.ctScenProb = [3 0.5; 1 0.5];
+        assertEqual(model.numOfCtScen,2);
+        assertEqual(unique(model.linearMask(:,1))',[1 3]);
+        helper_assertConsistentScenarioIndexing(model);
+    end
+
+function test_scenNumOfInactiveScenario
+    ct.numOfCtScen = 3;
+    model = matRad_WorstCaseScenarios(ct);
+    model.ctScenProb = [2 1];
+    assertTrue(isempty(model.scenNum(model.sub2scenIx(1,1,1))));
+    assertEqual(model.scenNum(model.sub2scenIx(2,1,1)),1);
+
+function test_sub2scenIxCtScenReference
+    ct.numOfCtScen = 4;
+    models = helper_allModels(ct);
+    for m = 1:numel(models)
+        model = models{m};
+        model.ctScenProb = [3 0.5; 1 0.5];
+        % CT scenario id is the default
+        assertEqual(model.sub2scenIx(3,1,1),3);
+        assertEqual(model.sub2scenIx(3,1,1,'id'),3);
+        assertEqual(model.sub2scenIx(1,1,1,'id'),1);
+        % position in ctScenProb
+        assertEqual(model.sub2scenIx(1,1,1,'position'),3);
+        assertEqual(model.sub2scenIx(2,1,1,'position'),1);
+        assertExceptionThrown(@() model.sub2scenIx(3,1,1,'position'),'matRad:Error');
+        assertExceptionThrown(@() model.sub2scenIx(5,1,1),'matRad:Error');
+        assertExceptionThrown(@() model.sub2scenIx(1,model.totNumShiftScen+1,1),'matRad:Error');
+        assertExceptionThrown(@() model.sub2scenIx(1,1,1,'foo'),'matRad:Error');
+    end
+
+function test_extractSingleScenarioSparseCtScenarios
+    % Adapted from #905: the CT scenario id is not the row in ctScenProb
+    ct.numOfCtScen = 3;
+    model = matRad_RandomScenarios(ct);
+    model.ctScenProb = [2 1];
+
+    scenario = model.extractSingleScenario(1);
+
+    assertEqual(scenario.ctScenProb,[2 1]);
+    assertEqual(scenario.ctScenIx,2);
+    assertEqual(scenario.sub2scenIx(2,1,1),2);
+    assertEqual(scenario.sub2scenIx(1,1,1,'position'),2);
+    assertEqual(scenario.scenNum(2),1);
+    assertExceptionThrown(@() scenario.sub2scenIx(2,1,1,'position'),'matRad:Error');
+
+    ct.numOfCtScen = 4;
+    models = helper_allModels(ct);
+    for m = 1:numel(models)
+        model = models{m};
+        model.ctScenProb = [3 0.25; 1 0.75];
+        for s = 1:model.totNumScen
+            scenario = model.extractSingleScenario(s);
+            ctScenId = model.linearMask(s,1);
+            assertEqual(scenario.ctScenProb,model.ctScenProb(model.ctScenProb(:,1) == ctScenId,:));
+            assertEqual(scenario.linearMask,[ctScenId 1 1]);
+            assertEqual(scenario.scenForProb,model.scenForProb(s,:));
+            assertEqual(scenario.absRangeShift,model.absRangeShift(s));
+            assertEqual(scenario.relRangeShift,model.relRangeShift(s));
+            assertEqual(scenario.isoShift,model.isoShift(s,:));
+        end
     end
 
 
@@ -105,4 +202,3 @@ function instanceTest_TYPE(model)
 function instanceTest_wcFactor(model)
     %assertWarning(@() model.wcFactor,'matRad:Deprecated');
     assertEqual(model.TYPE,model.shortName);
-
