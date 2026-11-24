@@ -103,9 +103,10 @@ dij.doseGrid = this.doseGrid;
 
 % One can provide the dose grid directly (in the future, variable grids would be possible with this)
 if ~all(isfield(dij.doseGrid, {'x', 'y', 'z'}))
-    dij.doseGrid.x = dij.ctGrid.x(1):this.doseGrid.resolution.x:dij.ctGrid.x(end);
-    dij.doseGrid.y = dij.ctGrid.y(1):this.doseGrid.resolution.y:dij.ctGrid.y(end);
-    dij.doseGrid.z = dij.ctGrid.z(1):this.doseGrid.resolution.z:dij.ctGrid.z(end);
+    % centered on the CT and covering it completely, so the outermost
+    % dose voxel centers can lie beyond the CT voxel centers (resampling
+    % between the grids has to extrapolate with the nearest edge value)
+    [dij.doseGrid.x, dij.doseGrid.y, dij.doseGrid.z] = matRad_createDoseGridAxes(dij.ctGrid, this.doseGrid.resolution);
 end
 
 dij.doseGrid.dimensions  = [numel(dij.doseGrid.y) numel(dij.doseGrid.x) numel(dij.doseGrid.z)];
@@ -177,7 +178,7 @@ for s = 1:ct.numOfCtScen
 
     % interpolate cube
     tmpVdoseGridScen{s} = find(matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y,   dij.ctGrid.z, tmpCube, ...
-                                              dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'nearest'));
+                                              dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'nearest', 'nearest'));
 end
 this.VdoseGrid = unique(vertcat(tmpVdoseGridScen{:}));
 this.VdoseGridScenIx = cellfun(@(c) ismember(this.VdoseGrid, c), tmpVdoseGridScen, 'UniformOutput', false);

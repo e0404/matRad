@@ -185,15 +185,15 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
             end
 
-            % The offset of the dose grid of MCsquare
-            mcSquareAddIsoCenterOffset = [dij.doseGrid.resolution.x / 2 dij.doseGrid.resolution.y / 2 dij.doseGrid.resolution.z / 2] - ...
-                [dij.ctGrid.resolution.x   dij.ctGrid.resolution.y   dij.ctGrid.resolution.z];
+            % The offset of the dose grid of MCsquare: it places the corner of the first voxel at the origin, while the cube
+            % coordinates of matRad place the center of the first voxel at one resolution step from the origin
+            mcSquareAddIsoCenterOffset = -[dij.doseGrid.resolution.x / 2 dij.doseGrid.resolution.y / 2 dij.doseGrid.resolution.z / 2];
 
             % for MCsquare we explicitly downsample the ct to the dose grid (might not
             % be necessary in future MCsquare versions with separated grids)
             for s = 1:dij.numOfScenarios
                 HUcube{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z, ct.cubeHU{s}, ...
-                                            dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear');
+                                            dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear', 'nearest');
             end
 
             % set absolute calibration factor
@@ -287,7 +287,7 @@ classdef matRad_ParticleMCsquareEngine < DoseEngines.matRad_MonteCarloEngineAbst
 
                         stfFieldMCsquare = [];
 
-                        stfFieldMCsquare.isoCenter             = matRad_world2cubeCoords(stf(i).isoCenter, ct) + isoCenterShift;  % MCsquare uses the isoCenter in cubeCoords
+                        stfFieldMCsquare.isoCenter             = matRad_world2cubeCoords(stf(i).isoCenter, dij.doseGrid) + isoCenterShift;  % MCsquare uses the isoCenter in cubeCoords
                         stfFieldMCsquare.gantryAngle           = mod(180 - stf(i).gantryAngle, 360); % Different MCsquare geometry
                         stfFieldMCsquare.couchAngle            = stf(i).couchAngle;
                         stfFieldMCsquare.energies              = unique([stf(i).ray.energy]);

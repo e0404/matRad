@@ -1,4 +1,4 @@
-function [ctR] = matRad_resampleCTtoGrid(ct,dij)
+function [ctR] = matRad_resampleCTtoGrid(ct, dij)
 % function to resample the ct grid for example for faster MC computation
 %
 % call:
@@ -25,20 +25,20 @@ function [ctR] = matRad_resampleCTtoGrid(ct,dij)
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-matRad_cfg = MatRad_Config.instance(); %Instance of matRad configuration class
+matRad_cfg = MatRad_Config.instance(); % Instance of matRad configuration class
 
 % Check if CT has already been resampled
-if ~isfield(ct,'resampled')
+if ~isfield(ct, 'resampled')
     % Allpcate resampled cubes
-    cubeHUresampled = cell(1,ct.numOfCtScen);
-    cubeResampled = cell(1,ct.numOfCtScen);
+    cubeHUresampled = cell(1, ct.numOfCtScen);
+    cubeResampled = cell(1, ct.numOfCtScen);
 
     % Perform resampling to dose grid
     for s = 1:ct.numOfCtScen
-        cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cubeHU{s}, ...
-            dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
-        cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z,ct.cube{s}, ...
-            dij.doseGrid.x,dij.doseGrid.y',dij.doseGrid.z,'linear');
+        cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z, ct.cubeHU{s}, ...
+                                             dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear', 'nearest');
+        cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z, ct.cube{s}, ...
+                                           dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear', 'nearest');
     end
 
     % Allocate temporary resampled CT

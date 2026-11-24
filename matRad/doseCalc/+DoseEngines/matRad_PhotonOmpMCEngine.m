@@ -344,7 +344,7 @@ classdef matRad_PhotonOmpMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             for s = 1:ct.numOfCtScen
 
                 obj.cubeHU{s} =  matRad_interp3(ctGrid.x, ctGrid.y', ctGrid.z, ct.cubeHU{s}, ...
-                                                doseGrid.x, doseGrid.y', doseGrid.z, 'nearest');
+                                                doseGrid.x, doseGrid.y', doseGrid.z, 'nearest', 'nearest');
 
                 % projecting out of bounds HU values where necessary
                 if max(obj.cubeHU{s}(:)) > material{end, 3}
