@@ -241,8 +241,9 @@ end
 % group similar fields together
 resultGUI = orderfields(resultGUI);
 
-% interpolation if dose grid does not match ct grid
-if isfield(dij, 'ctGrid') && any(dij.ctGrid.dimensions ~= dij.doseGrid.dimensions)
+% interpolation if dose grid does not match ct grid (the dimensions alone are
+% not sufficient, a slightly coarser dose grid can have the same dimensions)
+if isfield(dij, 'ctGrid') && ~matRad_isSameGrid(dij.ctGrid, dij.doseGrid)
     myFields = fieldnames(resultGUI);
 
     % The dose grid covers the CT, but its outermost voxel centers can lie

@@ -95,3 +95,33 @@ dij = helper_createDij(1, [1; 1], 1);
 resultGUI = matRad_calcCubes(ones(2, 1), dij);
 assertElementsAlmostEqual(resultGUI.physicalDose_std, sqrt(2) * 0.1, 'absolute', 1e-12);
 assertElementsAlmostEqual(resultGUI.physicalDose_MCvar, 2 * 0.01, 'absolute', 1e-12);
+
+function test_calcCubesResamplesDoseGridWithSameDimensions
+% a dose grid at 3.1 mm on a CT with 22 voxels at 3 mm has the same
+% dimensions as the CT, but different voxel positions, so the dose still
+% has to be resampled to the CT grid (#937)
+ctGrid.resolution = struct('x', 3, 'y', 3, 'z', 3);
+ctGrid.x = 3 * (1:22);
+ctGrid.y = 3 * (1:4);
+ctGrid.z = 3 * (1:4);
+ctGrid.dimensions = [numel(ctGrid.y) numel(ctGrid.x) numel(ctGrid.z)];
+ctGrid.numOfVoxels = prod(ctGrid.dimensions);
+
+doseGrid.resolution = struct('x', 3.1, 'y', 3, 'z', 3);
+[doseGrid.x, doseGrid.y, doseGrid.z] = matRad_createDoseGridAxes(ctGrid, doseGrid.resolution);
+doseGrid.dimensions = [numel(doseGrid.y) numel(doseGrid.x) numel(doseGrid.z)];
+doseGrid.numOfVoxels = prod(doseGrid.dimensions);
+assertEqual(doseGrid.dimensions, ctGrid.dimensions);
+
+% dose linear in x, so linear interpolation is exact
+[xDose, ~, ~] = meshgrid(doseGrid.x, doseGrid.y, doseGrid.z);
+dij.numOfBeams = 1;
+dij.beamNum = 1;
+dij.ctGrid = ctGrid;
+dij.doseGrid = doseGrid;
+dij.physicalDose = {sparse(xDose(:))};
+
+resultGUI = matRad_calcCubes(1, dij);
+[xCt, ~, ~] = meshgrid(ctGrid.x, ctGrid.y, ctGrid.z);
+assertEqual(size(resultGUI.physicalDose), ctGrid.dimensions);
+assertElementsAlmostEqual(resultGUI.physicalDose, xCt, 'absolute', 1e-10);
