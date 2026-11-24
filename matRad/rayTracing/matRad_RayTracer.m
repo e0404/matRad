@@ -169,7 +169,7 @@ classdef matRad_RayTracer < handle
             rayMatrixScale = 1 + rayMx_bev_y / stfElement.SAD;
 
             % set up list with bev coordinates for calculation of radiological depth
-            if matRad_cfg.isMatlab && isgpuarray(rotCoordsV)
+            if matRad_isgpuarrayCompat(rotCoordsV)
                 coords = zeros(nCubeVox, 3, matRad_underlyingTypeCompat(rotCoordsV), 'gpuArray');
             else
                 coords = zeros(nCubeVox, 3, matRad_underlyingTypeCompat(rotCoordsV));
@@ -228,7 +228,7 @@ classdef matRad_RayTracer < handle
                 z_dist > -raySelection & z_dist <= raySelection;
 
             % set up rad depth cube for results
-            if matRad_cfg.isMatlab && isgpuarray(rotCoordsV)
+            if matRad_isgpuarrayCompat(rotCoordsV)
                 radDepthCubeTemplate = NaN(cubeDim, matRad_underlyingTypeCompat(l), 'gpuArray');
             else
                 radDepthCubeTemplate = NaN(cubeDim, matRad_underlyingTypeCompat(l));

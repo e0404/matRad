@@ -82,8 +82,10 @@ for  i = 1:size(cst, 1)
 
                 switch robustness
                     case 'none' % if conventional opt: just sum objectives of nominal dose
-                        for ixScen = useNominalCtScen
-                            d_i = d{ixScen}(cst{i, 4}{useScen(ixScen)});
+                        for s = useNominalCtScen
+                            ixScen = useScen(s);
+                            ixContour = contourScen(s);
+                            d_i = d{ixScen}(cst{i, 4}{ixContour});
                             f = f + objective.penalty * objective.computeDoseObjectiveFunction(d_i);
                         end
 

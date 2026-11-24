@@ -62,29 +62,31 @@ for j = 1:length(doseFields)
     for k = 1:length(doseQuantities)
         % Check if combination is a field in dij, otherwise skip
         if isfield(dij, [doseFields{j} doseQuantities{k}])
-            % Handle standard deviation fields and add quadratically
-            if ~isempty(strfind(lower(doseQuantities{1}), 'std'))
+            fieldName = [doseFields{j} doseQuantities{k}];
+            if ~isempty(strfind(lower(doseQuantities{k}), 'std'))
+                % Standard deviation fields are added quadratically with squared weights
                 for i = 1:length(beamInfo)
-                    resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix]) = ...
-                        sqrt(reshape(full(dij.([doseFields{j} doseQuantities{k}]){scenNum}.^2 * (resultGUI.w .* beamInfo(i).logIx)), ...
-                                     dij.doseGrid.dimensions));
-                    resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix])(isnan(resultGUI.([doseFields{j}, ...
-                                                                                                         doseQuantities{k}, ...
-                                                                                                         beamInfo(i).suffix]))) = 0;
+                    wBeam = resultGUI.w .* beamInfo(i).logIx;
+                    cube = full(dij.(fieldName){scenNum}.^2 * (wBeam.^2));
+                    cube = sqrt(reshape(cube, dij.doseGrid.dimensions));
+                    cube(isnan(cube)) = 0;
+                    resultGUI.([fieldName, beamInfo(i).suffix]) = cube;
                 end
-                % Handle normal fields as usual
-            elseif ~isempty(strfind(lower(doseQuantities{1}), 'var'))
+            elseif ~isempty(strfind(lower(doseQuantities{k}), 'var'))
+                % Variance fields scale with the squared weights
                 for i = 1:length(beamInfo)
-                    resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix]) = ...
-                        reshape(full(dij.([doseFields{j} doseQuantities{k}]){scenNum} * (resultGUI.w .* beamInfo(i).logIx)), dij.doseGrid.dimensions);
-                    resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix])(isnan(resultGUI.([doseFields{j}, ...
-                                                                                                         doseQuantities{k}, ...
-                                                                                                         beamInfo(i).suffix]))) = 0;
+                    wBeam = resultGUI.w .* beamInfo(i).logIx;
+                    cube = full(dij.(fieldName){scenNum} * (wBeam.^2));
+                    cube = reshape(cube, dij.doseGrid.dimensions);
+                    cube(isnan(cube)) = 0;
+                    resultGUI.([fieldName, beamInfo(i).suffix]) = cube;
                 end
             else
+                % Handle normal fields as usual
                 for i = 1:length(beamInfo)
-                    resultGUI.([doseFields{j}, doseQuantities{k}, beamInfo(i).suffix]) = ...
-                        reshape(full(dij.([doseFields{j} doseQuantities{k}]){scenNum} * (resultGUI.w .* beamInfo(i).logIx)), dij.doseGrid.dimensions);
+                    wBeam = resultGUI.w .* beamInfo(i).logIx;
+                    cube = full(dij.(fieldName){scenNum} * wBeam);
+                    resultGUI.([fieldName, beamInfo(i).suffix]) = reshape(cube, dij.doseGrid.dimensions);
                 end
             end
         end
