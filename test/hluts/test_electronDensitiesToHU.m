@@ -116,16 +116,37 @@ assertElementsAlmostEqual(ctOut.cubeHU{1}(1), max(ct.hlut(:, 1)), 'absolute', 1e
 assertElementsAlmostEqual(ctOut.cubeHU{1}(2), min(ct.hlut(:, 1)), 'absolute', 1e-10);
 
 function test_densityPlateauUsesLowestHU
-% several HU values with the same density: the lowest HU value is used and
-% the remaining HLUT is interpolated as usual
+% several HU values with the same density: the lowest HU value is used for
+% densities on the plateau, while the segments below and above the plateau
+% are inverted exactly (the segment above starts at the highest HU value)
 ct = helper_createWaterCt();
 ct.hlut = [-1000 0.001; -500 0.5; 0 1; 50 1; 100 1; 1000 2];
 ct.cube{1}(1) = 0.75;
 ct.cube{1}(2) = 1.5;
+ct.cube{1}(4) = NaN;
 ctOut = matRad_electronDensitiesToHU(ct);
 assertElementsAlmostEqual(ctOut.cubeHU{1}(1), -250, 'absolute', 1e-10);
-assertElementsAlmostEqual(ctOut.cubeHU{1}(2), 500, 'absolute', 1e-10);
+assertElementsAlmostEqual(ctOut.cubeHU{1}(2), 550, 'absolute', 1e-10);
 assertElementsAlmostEqual(ctOut.cubeHU{1}(3), 0, 'absolute', 1e-10);
+assertTrue(isnan(ctOut.cubeHU{1}(4)));
+
+function test_roundTripWithDefaultHlutPlateau
+% HU values above the air plateau of the default HLUT (-1024 and -999 HU
+% both map to 0.001) are reconstructed exactly. -500 HU was reconstructed as
+% about -511 HU if the plateau was reduced to its lowest HU value.
+ct = helper_createWaterCt();
+ct = rmfield(ct, 'cube');
+huRange = linspace(-998, 2900, 20 * 20 * 20);
+huRange(1:3) = [-500, -999, -1024];
+ct.cubeHU = {reshape(huRange, ct.cubeDim)};
+ct = matRad_calcWaterEqD(ct, 'photons');
+huOriginal = ct.cubeHU{1};
+huOriginal(huOriginal == -999) = -1024;
+
+ct = rmfield(ct, 'cubeHU');
+ct = matRad_electronDensitiesToHU(ct);
+assertElementsAlmostEqual(ct.cubeHU{1}(1), -500, 'absolute', 1e-6);
+assertElementsAlmostEqual(ct.cubeHU{1}, huOriginal, 'absolute', 1e-6);
 
 function test_unsortedHlutIsSorted
 ct = helper_createWaterCt();

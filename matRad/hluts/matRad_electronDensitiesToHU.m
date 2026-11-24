@@ -57,37 +57,60 @@ end
 
 % the HLUT can only be inverted if the densities do not decrease with HU
 hlut = sortrows(hlut, [1 2]);
-isInvertible = all(diff(hlut(:, 2)) >= 0);
-
-% plateaus (several HU values with the same density) are not bijective:
-% use the lowest HU value of each plateau ('first' is needed for Octave)
-if isInvertible
-    [~, uniqueIx] = unique(hlut(:, 2), 'first');
-    if numel(uniqueIx) < size(hlut, 1)
-        matRad_cfg.dispWarning(['HLUT is not bijective, several HU values map to the same density. ', ...
-                                'Using the lowest HU value for each of these densities.']);
-        hlut = hlut(uniqueIx, :);
-    end
+if any(diff(hlut(:, 2)) < 0)
+    matRad_cfg.dispWarning('Reconversion of HU values could not be done because the densities of the HLUT decrease with HU.');
+    return
 end
 
-% interpolate rel. electron dens. to HU based on lookup table
-if isInvertible
+% plateaus (several HU values with the same density) are not bijective.
+% Densities on a plateau are mapped to its lowest HU value, densities
+% between two HLUT points are interpolated from the highest HU value of the
+% lower point to the lowest HU value of the upper point, so that the
+% segments adjacent to a plateau are inverted exactly. 'first' / 'last' are
+% needed for Octave.
+[densities, firstIx] = unique(hlut(:, 2), 'first');
+[~, lastIx] = unique(hlut(:, 2), 'last');
+huLow = hlut(firstIx, 1);
+huHigh = hlut(lastIx, 1);
+if numel(densities) < size(hlut, 1)
+    matRad_cfg.dispWarning(['HLUT is not bijective, several HU values map to the same density. ', ...
+                            'Using the lowest HU value for each of these densities.']);
+end
 
-    for i = 1:ct.numOfCtScen
-        % Manual adjustments if ct data is corrupt. If some values are out of range
-        % of the LUT, then these values are adjusted.
-        if max(ct.cube{i}(:)) > max(hlut(:, 2))
-            matRad_cfg.dispWarning('projecting out of range electron density values');
-            ct.cube{i}(ct.cube{i}(:) > max(hlut(:, 2))) = max(hlut(:, 2));
-        end
-        if min(ct.cube{i}(:)) < min(hlut(:, 2))
-            matRad_cfg.dispWarning('projecting out of range electron density values');
-            ct.cube{i}(ct.cube{i}(:) < min(hlut(:, 2))) = min(hlut(:, 2));
-        end
-
-        ct.cubeHU{i} = interp1(hlut(:, 2), hlut(:, 1), ct.cube{i});
+for i = 1:ct.numOfCtScen
+    % Manual adjustments if ct data is corrupt. If some values are out of range
+    % of the LUT, then these values are adjusted.
+    if max(ct.cube{i}(:)) > densities(end)
+        matRad_cfg.dispWarning('projecting out of range electron density values');
+        ct.cube{i}(ct.cube{i}(:) > densities(end)) = densities(end);
+    end
+    if min(ct.cube{i}(:)) < densities(1)
+        matRad_cfg.dispWarning('projecting out of range electron density values');
+        ct.cube{i}(ct.cube{i}(:) < densities(1)) = densities(1);
     end
 
-else
-    matRad_cfg.dispWarning('Reconversion of HU values could not be done because the densities of the HLUT decrease with HU.');
+    ct.cubeHU{i} = matRad_invertHlut(densities, huLow, huHigh, ct.cube{i});
+end
+
+end
+
+function hu = matRad_invertHlut(densities, huLow, huHigh, cube)
+% piecewise linear inverse of an HLUT with plateaus, see above. cube is
+% expected to lie within [densities(1), densities(end)]
+hu = NaN(size(cube));
+
+% densities on an HLUT point (including plateaus) get its lowest HU value
+[isPoint, pointIx] = ismember(cube, densities);
+hu(isPoint) = huLow(pointIx(isPoint));
+
+% all other densities lie strictly within a segment [k, k+1], NaN stays NaN
+isInSegment = ~isPoint & ~isnan(cube);
+if any(isInSegment(:))
+    q = cube(isInSegment);
+    k = floor(interp1(densities, (1:numel(densities))', q));
+    k = min(k, numel(densities) - 1);
+    t = (q - densities(k)) ./ (densities(k + 1) - densities(k));
+    hu(isInSegment) = huHigh(k) + t .* (huLow(k + 1) - huHigh(k));
+end
+
 end
