@@ -1,8 +1,9 @@
 function tf = matRad_isgpuarrayCompat(x)
-% matRad wrapper around Matlab's isgpuarray function for environments
-% without it. isgpuarray is part of the Parallel Computing Toolbox and is
-% not available in Octave or in Matlab installations without the toolbox,
-% where no gpuArray can exist either.
+% matRad wrapper around Matlab's isgpuarray function for compatibility.
+%   isgpuarray belongs to the Parallel Computing Toolbox, so calling it
+%   fails in Matlab installations without the toolbox and in Octave. This
+%   wrapper checks the class of the input instead, which works everywhere
+%   and is false for any input that cannot be a gpuArray.
 %
 % call:
 %   tf = matRad_isgpuarrayCompat(x)
@@ -11,7 +12,7 @@ function tf = matRad_isgpuarrayCompat(x)
 %   x       any variable
 %
 % output:
-%   tf      true if x is a gpuArray
+%   tf      true if x is a gpuArray, false otherwise
 %
 % References
 %   -

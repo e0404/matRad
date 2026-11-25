@@ -151,8 +151,9 @@ classdef (Abstract) matRad_DoseEngineBase < handle
             %given in the propDoseCalc struct
             if isfield(pln,'propDoseCalc') && isstruct(pln.propDoseCalc)
                 plnStruct = pln.propDoseCalc; %get remaining fields
-                if isfield(plnStruct,'engine') && ~isempty(plnStruct.engine) && ~any(strcmp(plnStruct.engine,this.shortName))
-                    matRad_cfg.dispWarning('Inconsistent dose engines given! pln asks for ''%s'', but you are using ''%s''!',plnStruct.engine,this.shortName);
+                if isfield(plnStruct, 'engine') && ~isempty(plnStruct.engine) && ~any(strcmpi(plnStruct.engine, this.shortName))
+                    matRad_cfg.dispWarning('Inconsistent dose engines given! pln asks for ''%s'', but you are using ''%s''!', ...
+                                           strjoin(cellstr(plnStruct.engine), ', '), this.shortName);
                 end
                 if isfield(plnStruct,'engine')
                     plnStruct = rmfield(plnStruct, 'engine'); % engine field is no longer needed and would throw an exception
@@ -424,7 +425,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
     % with OCTAVE we can't use abstract methods. If OCTAVE at some point 
     % in the far future implements this feature this should be abstract again.
     methods (Access = protected) %(Abstract)                
-        % the actual calculation method wich returns the final dij struct.
+        % the actual calculation method which returns the final dij struct.
         % Needs to be implemented in non abstract subclasses. 
         % (Internal logic is often split into multiple methods in order to make the whole calculation more modular)
         function dij = calcDose(this,ct,cst,stf)
@@ -466,7 +467,7 @@ classdef (Abstract) matRad_DoseEngineBase < handle
         end
         
         %Used to check against a machine file if a specific quantity can be
-        %computed. Needs to be overriden in subclasses if additional
+        %computed. Needs to be overridden in subclasses if additional
         %quantities are available.
         function q = providedQuantities(machine)
             %A dose engine will, by definition, return dose

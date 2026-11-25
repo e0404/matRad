@@ -85,7 +85,7 @@ classdef (Abstract) matRad_SequencerBase < handle
             % ones given in the propSeq struct
             if isfield(pln, 'propSeq') && isstruct(pln.propSeq)
                 plnStruct = pln.propSeq; % get remaining fields
-                if isfield(plnStruct, 'sequencer') && ~isempty(plnStruct.sequencer) && ~any(strcmp(plnStruct.sequencer, this.shortName))
+                if isfield(plnStruct, 'sequencer') && ~isempty(plnStruct.sequencer) && ~any(strcmpi(plnStruct.sequencer, this.shortName))
                     % sequencer may be given as a char or as a cell list of
                     % shortNames (e.g. the per-modality default) - format both
                     requestedSequencer = plnStruct.sequencer;
@@ -173,22 +173,21 @@ classdef (Abstract) matRad_SequencerBase < handle
             classList = matRad_SequencerBase.getAvailableSequencers(pln);
 
             % Check for a valid engine, and if the given engine isn't valid set boolean
-            % to initiliaze default engine at the end of this function
+            % to initialize default engine at the end of this function
             if isfield(pln, 'propSeq') && isa(pln.propSeq, mfilename('class'))
                 sequencer = pln.propSeq;
             elseif isfield(pln, 'propSeq') && isstruct(pln.propSeq) && isfield(pln.propSeq, 'sequencer')
-                if ischar(pln.propSeq.sequencer) || isstring(pln.propSeq.sequencer)
-                    matchSequencers = strcmpi({classList(:).shortName}, pln.propSeq.sequencer);
-                    if any(matchSequencers)
-                        % instantiate engine
-                        sequencerHandle = classList(matchSequencers).handle;
-                        sequencer = sequencerHandle(pln);
-                    else
-                        initDefaultSequencer = true;
-                    end
+                [ix, reason] = matRad_resolveClassSelection(pln.propSeq.sequencer, classList, ...
+                                                            @() matRad_SequencerBase.getAvailableSequencers(), pln);
+                if ~isempty(ix)
+                    % instantiate sequencer
+                    sequencerHandle = classList(ix).handle;
+                    sequencer = sequencerHandle(pln);
                 else
+                    matRad_cfg.dispSelectionFallback('Sequencer requested in pln.propSeq.sequencer cannot be used: %s.', reason);
+                    % the default sequencer would report the request as inconsistent
+                    pln.propSeq = rmfield(pln.propSeq, 'sequencer');
                     initDefaultSequencer = true;
-                    matRad_cfg.dispWarning('pln.propSeq.sequencer field not valid!');
                 end
             else
                 initDefaultSequencer = true;

@@ -28,6 +28,11 @@ classdef MatRad_Config < handle
 
         defaults
 
+        % Raise an error instead of falling back to a default if an explicitly
+        % requested dose engine, stf generator, sequencer, biological model or
+        % scenario model cannot be used
+        strictSelection = false
+
         % Disable GUI
         disableGUI = false
 
@@ -252,6 +257,8 @@ classdef MatRad_Config < handle
             obj.defaults.propSeq.arcFluenceSmoothing = 'gaussian';
             obj.defaults.propSeq.apertureSelection = 'doseAreaProduct';
 
+            obj.strictSelection = false;
+
             obj.disableGUI = false;
 
             obj.defaults.samplingScenarios = 25;
@@ -397,6 +404,23 @@ classdef MatRad_Config < handle
             obj.displayToConsole('warning', formatSpec, varargin{:});
         end
 
+        function dispSelectionFallback(obj, formatSpec, varargin)
+            % dispSelectionFallback reports that an explicitly requested
+            % dose engine, stf generator, sequencer or model cannot be used.
+            % This is a warning (log level >= 2) and a default is used
+            % instead, unless strictSelection is enabled: then it is an error.
+            %
+            % input:
+            %    formatSpec:    string to print using format specifications
+            %                   similar to 'warning'
+            %    varargin:      variables according to formatSpec
+            if obj.strictSelection
+                obj.dispError([formatSpec ' No default is used because MatRad_Config.strictSelection is enabled.'], varargin{:});
+            else
+                obj.dispWarning(formatSpec, varargin{:});
+            end
+        end
+
         function dispDeprecationWarning(obj, formatSpec, varargin)
             % dispDeprecationWarning wrapper for deprecation warnings forwarded to displayToConsole
             obj.displayToConsole('dep', formatSpec, varargin{:});
@@ -421,6 +445,14 @@ classdef MatRad_Config < handle
             else
                 obj.dispError('Invalid log level. Value must be between %d and %d', minLevel, maxLevel);
             end
+        end
+
+        function set.strictSelection(obj, isStrict)
+            % Property set method for strictSelection, accepts scalar logicals and numbers
+            if ~isscalar(isStrict) || ~(islogical(isStrict) || isnumeric(isStrict))
+                obj.dispError('strictSelection must be a scalar logical value!');
+            end
+            obj.strictSelection = logical(isStrict);
         end
 
         function set.userfolders(obj, userfolders)

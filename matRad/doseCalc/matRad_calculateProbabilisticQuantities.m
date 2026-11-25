@@ -59,25 +59,29 @@ for i = 1:size(cst,1)
     end
 end
 
-scens = find(pln.multScen.scenMask);
+% Full scenario indices in the order of the scenario numbers, so that they
+% match pln.multScen.scenProb and pln.multScen.linearMask
+scens = pln.multScen.scenNum2scenIx();
+scenProb = pln.multScen.scenProb;
 
 %Create structures
 for i = 1:numel(fNames)
     matRad_cfg.dispInfo('\tE[D] & Omega[D] for ''%s'':\n',fNames{1,i});
     if strcmpi(mode4D,'phase')
-        dij.([fNames{1,i} 'Exp']){1:pln.multScen.numOfCtScen} = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
-        dij.([fNames{1,i} 'Omega']) = cell(size(cst,1),pln.multScen.numOfCtScen);
-        
-        ixTmp = cell(ndims(pln.multScen.scenMask),1);
-        [ixTmp{:}] = ind2sub(size(pln.multScen.scenMask),scens);
-        ctIxMap = ixTmp{1};        
+        % expected quantities are indexed with the CT scenario id
+        numOfCtIx = size(pln.multScen.scenMask,1);
+        ctIxMap = pln.multScen.linearMask(:,1);
     else
-        dij.([fNames{1,i} 'Exp']){1} = spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1);
-        dij.([fNames{1,i} 'Omega']) = cell(size(cst,1),1);
+        numOfCtIx = 1;
         ctIxMap = ones(numel(scens),1);
     end
-    [dij.([fNames{1,i} 'Omega']){voiIx,:}] = deal(zeros(dij.totalNumOfBixels));
-    
+    usedCtIx = unique(ctIxMap)';
+
+    dij.([fNames{1,i} 'Exp']) = cell(1,numOfCtIx);
+    dij.([fNames{1,i} 'Exp'])(usedCtIx) = {spalloc(dij.doseGrid.numOfVoxels,dij.totalNumOfBixels,1)};
+    dij.([fNames{1,i} 'Omega']) = cell(size(cst,1),numOfCtIx);
+    [dij.([fNames{1,i} 'Omega']){voiIx,usedCtIx}] = deal(zeros(dij.totalNumOfBixels));
+
     %Now loop over the scenarios
     
     for s = 1:numel(scens)
@@ -86,25 +90,22 @@ for i = 1:numel(fNames)
         scenIx = scens(s);
         
         %Add up Expected value
-        dij.([fNames{1,i} 'Exp']){ctIx} = dij.([fNames{ctIx,i} 'Exp']){ctIx} + dij.([fNames{1,i}]){scenIx} .* pln.multScen.scenProb(s);
-        
+        dij.([fNames{1,i} 'Exp']){ctIx} = dij.([fNames{1,i} 'Exp']){ctIx} + dij.([fNames{1,i}]){scenIx} .* scenProb(s);
+
         %Add up Omega
          for v = voiIx
              dij.([fNames{1,i} 'Omega']){v,ctIx} = dij.([fNames{1,i} 'Omega']){v,ctIx} + ...
-                 (((dij.(fNames{1,i}){scenIx}(cst{v,4}{ctIx},:)' * pln.multScen.scenProb(s)) * ...
-                 (dij.(fNames{1,i}){scenIx}(cst{v,4}{ctIx},:)) * pln.multScen.scenProb(s)));
+                 (((dij.(fNames{1,i}){scenIx}(cst{v,4}{ctIx},:)' * scenProb(s)) * ...
+                 (dij.(fNames{1,i}){scenIx}(cst{v,4}{ctIx},:)) * scenProb(s)));
          end
          matRad_cfg.dispInfo('Done!\n');
     end
     matRad_cfg.dispInfo('\tFinalizing Omega...');
     %Finalize Omega matrices
-    unCtIx = unique(ctIx);    
-    for ctIx = unCtIx
+    for ctIx = usedCtIx
         for v = voiIx
             dij.([fNames{1,i} 'Omega']){v,ctIx} = dij.([fNames{1,i} 'Omega']){v,ctIx} - (dij.([fNames{1,i} 'Exp']){ctIx}(cst{v,4}{ctIx},:)' * dij.([fNames{1,i} 'Exp']){ctIx}(cst{v,4}{ctIx},:));
         end
     end  
     matRad_cfg.dispInfo('\tDone!\n');
 end
-
-

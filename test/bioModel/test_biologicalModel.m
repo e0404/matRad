@@ -298,3 +298,18 @@ assertEqual(RBEmin, 1);
 %     assertTrue(isstruct(resultGUI));
 %     assertTrue(isfield(resultGUI, 'BED'));
 %     assertElementsAlmostEqual(cumulativeBED,expectedCumulativeBED, 1e-04);
+
+function test_createUnknownModelFallsBackToEmptyModel
+% #943: the warning names the requested model and the available ones
+cleanup = helper_setStrictSelection(false);
+[logEntries, model] = helper_captureLog(@() matRad_BiologicalModel.create('notAModel'));
+assertTrue(isa(model, 'matRad_EmptyBiologicalModel'));
+assertTrue(helper_logContains(logEntries, 'WARNING', '''notAModel'''));
+assertTrue(helper_logContains(logEntries, 'WARNING', 'constRBE'));
+
+function test_createUnknownModelStrictSelection
+cleanup = helper_setStrictSelection(true);
+assertExceptionThrown(@() matRad_BiologicalModel.create('notAModel'), 'matRad:Error');
+assertExceptionThrown(@() matRad_BiologicalModel.create(struct('model', 'notAModel')), 'matRad:Error');
+model = matRad_BiologicalModel.create('constRBE');
+assertTrue(isa(model, 'matRad_ConstantRBE'));

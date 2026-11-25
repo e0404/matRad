@@ -377,7 +377,8 @@ end
 
 numOfVoxels = prod(ct.cubeDim);
 if dij.doseGrid.numOfVoxels ~= numOfVoxels || ...
-        ~isequal(dij.doseGrid.dimensions, ct.cubeDim)
+        ~isequal(dij.doseGrid.dimensions, ct.cubeDim) || ...
+        (isfield(dij, 'ctGrid') && ~matRad_isSameGrid(dij.ctGrid, dij.doseGrid))
     error('matRad:vmc:InvalidDoseGrid', 'VMC++ requires the dose grid to match the CT grid.');
 end
 if dij.numOfScenarios ~= 1 || ct.numOfCtScen ~= 1

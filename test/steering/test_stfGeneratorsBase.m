@@ -72,11 +72,45 @@ function test_getGeneratorFromPlnDefaults
     assertEqual(generator.machine,'HDR');
 
 function test_getGeneratorFromPlnByName
-    protonDummyPln = struct('radiationMode','protons','machine','Generic','propStf',struct('generator','ParticleIMPT'));
-    generator = matRad_StfGeneratorBase.getGeneratorFromPln(protonDummyPln);
-    assertTrue(isa(generator,'matRad_StfGeneratorParticleIMPT'));
+protonDummyPln = struct('radiationMode', 'protons', 'machine', 'Generic', 'propStf', struct('generator', 'ParticleIMPT'));
+generator = matRad_StfGeneratorBase.getGeneratorFromPln(protonDummyPln);
+assertTrue(isa(generator, 'matRad_StfGeneratorParticleIMPT'));
 
-    %Wrong name
-    photonDummyPln = struct('radiationMode','photons','machine','Generic','propStf',struct('generator','SimpleBrachy'));
-    generator = matRad_StfGeneratorBase.getGeneratorFromPln(photonDummyPln);
-    assertTrue(isa(generator,'matRad_StfGeneratorPhotonIMRT'));
+% Wrong name, falls back to the default generator without strict selection
+cleanup = helper_setStrictSelection(false);
+photonDummyPln = struct('radiationMode', 'photons', 'machine', 'Generic', 'propStf', struct('generator', 'SimpleBrachy'));
+generator = matRad_StfGeneratorBase.getGeneratorFromPln(photonDummyPln);
+assertTrue(isa(generator, 'matRad_StfGeneratorPhotonIMRT'));
+
+function test_getGeneratorFromPlnReportsUnavailableGenerator
+% #943: the fallback names the requested generator and why it is not used
+cleanup = helper_setStrictSelection(false);
+pln = struct('radiationMode', 'photons', 'machine', 'Generic', 'propStf', struct('generator', 'ParticleIMPT'));
+[logEntries, generator] = helper_captureLog(@() matRad_StfGeneratorBase.getGeneratorFromPln(pln));
+assertTrue(isa(generator, 'matRad_StfGeneratorPhotonIMRT'));
+assertTrue(helper_logContains(logEntries, 'WARNING', '''ParticleIMPT'''));
+assertTrue(helper_logContains(logEntries, 'WARNING', '''photons'''));
+assertFalse(helper_logContains(logEntries, 'WARNING', 'Inconsistent'));
+
+function test_getGeneratorFromPlnReportsUnknownGeneratorWithoutDefaultWarning
+% warnDefault only silences the use of the default, not the reason
+cleanup = helper_setStrictSelection(false);
+pln = struct('radiationMode', 'photons', 'machine', 'Generic', 'propStf', struct('generator', 'PhotonIMRTT'));
+[logEntries, generator] = helper_captureLog(@() matRad_StfGeneratorBase.getGeneratorFromPln(pln, false));
+assertTrue(isa(generator, 'matRad_StfGeneratorPhotonIMRT'));
+assertTrue(helper_logContains(logEntries, 'WARNING', '''PhotonIMRTT'' is unknown'));
+
+function test_getGeneratorFromPlnStrictSelection
+cleanup = helper_setStrictSelection(true);
+pln = struct('radiationMode', 'photons', 'machine', 'Generic', 'propStf', struct('generator', 'ParticleIMPT'));
+assertExceptionThrown(@() matRad_StfGeneratorBase.getGeneratorFromPln(pln), 'matRad:Error');
+pln.propStf.generator = 'PhotonIMRTT';
+assertExceptionThrown(@() matRad_StfGeneratorBase.getGeneratorFromPln(pln), 'matRad:Error');
+
+% a list of generators, as in the defaults, and no request still work
+pln.propStf.generator = {'PhotonIMRT', 'ParticleIMPT'};
+generator = matRad_StfGeneratorBase.getGeneratorFromPln(pln);
+assertTrue(isa(generator, 'matRad_StfGeneratorPhotonIMRT'));
+pln = struct('radiationMode', 'photons', 'machine', 'Generic');
+generator = matRad_StfGeneratorBase.getGeneratorFromPln(pln);
+assertTrue(isa(generator, 'matRad_StfGeneratorPhotonIMRT'));

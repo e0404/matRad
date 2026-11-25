@@ -55,3 +55,24 @@ We suggest to visit our `GitHub Discussion Forum <https://github.com/e0404/matRa
     While optimization itself will fulfil all constraints on the dose grid (where downsampled structures cover different volumes at the boundaries),
     the result will be compromised when resampling to the CT grid, and the optimizer will never be able to meet the constraints on the CT grid.
     To solve this, make sure to use a dose grid with a resolution that is close to the CT resolution, and to use the same grid for evaluation as well.
+
+.. admonition:: Why does matRad use a different dose engine (or stf generator, sequencer, model) than the one I set?
+    :class: dropdown
+
+    matRad selects the dose engine, stf generator, sequencer, biological model and scenario model from the corresponding fields in the :ref:`pln struct <pln>`
+    (e.g. ``pln.propDoseCalc.engine``). If the requested one cannot be used, matRad issues a warning with the reason and falls back to the default.
+    The reason is one of the following:
+
+    * the name is unknown (the warning lists the names available for the plan),
+    * the requested class does not support the radiation mode of the plan,
+    * the class is not available, e.g. because an external tool like VMC++ is not installed.
+
+    The fallback keeps plans working, but results are then computed with another engine or model than the requested one.
+    For scripts and batch studies where this would be wrong, enable strict selection to get an error instead:
+
+    .. code-block:: matlab
+
+        matRad_cfg = MatRad_Config.instance();
+        matRad_cfg.strictSelection = true;
+
+    Requests that are not made explicitly still use the defaults. See also :ref:`MatRad_Config <config>`.

@@ -87,7 +87,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                    'loadConverterFromFile', false)  % set true if you want to use your own SchneiderConverter written in "TOPAS_SchneiderConverter"
 
         arrayOrdering = 'F'  % 'C';
-        rsp_basematerial = 'Water'
+        rsp_basematerial = 'Water'   % mh:ignore_style
 
         % Scoring
         scorer = struct('volume', false, ...
@@ -113,10 +113,10 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         % Physics
         electronProductionCut = 0.5  % in mm
         radiationMode
-        modules_protons     = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay', 'g4h-elastic_HP', 'g4stopping', 'g4ion-QMD', 'g4radioactivedecay'}
-        modules_GenericIon  = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay', 'g4h-elastic_HP', 'g4stopping', 'g4ion-QMD', 'g4radioactivedecay'}
-        modules_photons     = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay'}
-        modules_VHEE        = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay', 'g4ion-binarycascade', 'g4h-elastic_HP', 'g4stopping'}  % From 10.1002/mp.16697
+        modules_protons     = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay', 'g4h-elastic_HP', 'g4stopping', 'g4ion-QMD', 'g4radioactivedecay'}   % mh:ignore_style
+        modules_GenericIon  = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay', 'g4h-elastic_HP', 'g4stopping', 'g4ion-QMD', 'g4radioactivedecay'}   % mh:ignore_style
+        modules_photons     = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay'}   % mh:ignore_style
+        modules_VHEE        = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay', 'g4ion-binarycascade', 'g4h-elastic_HP', 'g4stopping'}  % From 10.1002/mp.16697 % mh:ignore_style
 
         % Geometry / World
         worldMaterial = 'G4_AIR'
@@ -180,7 +180,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
             if this.enableGPU
                 matRad_cfg = MatRad_Config.instance();
-                matRad_cfg.dispWarning('Set enableGPU ot true but TOPAS does not support GPU computation! Setting back to false!');
+                matRad_cfg.dispWarning('Set enableGPU to true but TOPAS does not support GPU computation! Setting back to false!');
                 this.enableGPU = false;
             end
         end
@@ -198,7 +198,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
             end
 
             % Let's set some default commands taken from topas installation
-            % instructions for mac & debain/ubuntu
+            % instructions for mac & debian/ubuntu
             if ispc % We assume topas is installed in wsl (since no windows version)
                 this.topasExecCommand = 'wsl export TOPAS_G4_DATA_DIR=~/G4Data; ~/topas/bin/topas';
             elseif ismac
@@ -211,7 +211,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         end
 
         function writeAllFiles(obj, ct, cst, stf, machine, w)
-            % constructor to write all TOPAS fils for local or external simulation
+            % constructor to write all TOPAS files for local or external simulation
             %
             % call:
             %   topasConfig.writeAllFiles(ct,pln,stf,machine,w)
@@ -240,7 +240,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     switch obj.radiationMode
                         case 'protons'
                             obj.scorer.RBE_model = obj.scorer.defaultModelProtons;
-                        case {'carbon', 'helium','oxygen'}
+                        case {'carbon', 'helium', 'oxygen'}
                             obj.scorer.RBE_model = obj.scorer.defaultModelCarbon;
                         otherwise
                             matRad_cfg.dispError(['No RBE model implemented for ', obj.radiationMode]);
@@ -629,7 +629,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 % cout = splitlines(string(cmdout));
                                 cout = cmdout;
                                 if status == 0
-                                    matRad_cfg.dispInfo('TOPAS simulation completed succesfully\n');
+                                    matRad_cfg.dispInfo('TOPAS simulation completed successfully\n');
                                 else
                                     if status == 139
                                         matRad_cfg.dispError('TOPAS segmentation fault: might be caused from an outdated TOPAS version or Linux distribution');
@@ -720,9 +720,9 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 % Perform resampling to dose grid
                 for s = 1:ct.numOfCtScen
                     cubeHUresampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z, ct.cubeHU{s}, ...
-                                                         dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear');
+                                                         dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear', 'nearest');
                     cubeResampled{s} =  matRad_interp3(dij.ctGrid.x,  dij.ctGrid.y',  dij.ctGrid.z, ct.cube{s}, ...
-                                                       dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear');
+                                                       dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear', 'nearest');
                 end
 
                 % Allocate temporary resampled CT
@@ -1100,9 +1100,11 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             % loop through possible quantities
                             for p = 1:length(processedQuantities)
                                 % Check if current quantity is available and write to dij
-                                if isfield(topasCubes, [topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]) ...
-                                        && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]))
-                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen, 1}(:, d) = sum(w) * reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen}, [], 1);
+                                if isfield(topasCubes, [topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]) && ...
+                                        iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]))
+                                    dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen, 1}(:, d) = ...
+                                        sum(w) * ...
+                                        reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen}, [], 1);
                                 end
                             end
                         end
@@ -1134,30 +1136,39 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 % loop through possible quantities
                                 for p = 1:length(processedQuantities)
                                     % Check if current quantity is available and write to dij
-                                    if isfield(topasCubes, [topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]) ...
-                                            && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]))
-                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen, 1}(:, d) = sum(w) * reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen}, [], 1);
+                                    if isfield(topasCubes, [topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]) && ...
+                                            iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]))
+                                        dij.([topasCubesTallies{j} processedQuantities{p}]){ctScen, 1}(:, d) = ...
+                                            sum(w) * ...
+                                            reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) processedQuantities{p} '_beam' num2str(dij.beamNum(d))]){ctScen}, ...
+                                                    [], 1);
                                     end
                                 end
                                 % Handle RBE-related quantities (not multiplied by sum(w)!)
                             elseif ~isempty(strfind(lower(topasCubesTallies{j}), 'alpha'))
                                 modelName = strsplit(topasCubesTallies{j}, '_');
                                 modelName = modelName{end};
-                                if isfield(topasCubes, [topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]) ...
-                                        && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]))
-                                    dij.(['mAlphaDose_' modelName]){ctScen, 1}(:, d) = reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen}, [], 1) .* dij.physicalDose{ctScen, 1}(:, d);
+                                if isfield(topasCubes, [topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]) && ...
+                                        iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]))
+                                    dij.(['mAlphaDose_' modelName]){ctScen, 1}(:, d) = ...
+                                        reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen}, [], 1) .* ...
+                                        dij.physicalDose{ctScen, 1}(:, d);
                                 end
                             elseif ~isempty(strfind(lower(topasCubesTallies{j}), 'beta'))
                                 modelName = strsplit(topasCubesTallies{j}, '_');
                                 modelName = modelName{end};
-                                if isfield(topasCubes, [topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]) ...
-                                        && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]))
-                                    dij.(['mSqrtBetaDose_' modelName]){ctScen, 1}(:, d) = sqrt(reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen}, [], 1)) .* dij.physicalDose{ctScen, 1}(:, d);
+                                if isfield(topasCubes, [topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]) && ...
+                                        iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]))
+                                    dij.(['mSqrtBetaDose_' modelName]){ctScen, 1}(:, d) = ...
+                                        sqrt(reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen}, [], 1)) .* ...
+                                        dij.physicalDose{ctScen, 1}(:, d);
                                 end
                             elseif ~isempty(strfind(topasCubesTallies{j}, 'LET'))
-                                if isfield(topasCubes, [topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]) ...
-                                        && iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]))
-                                    dij.mLETDose{ctScen, 1}(:, d) = reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen}, [], 1) .* dij.physicalDose{ctScen, 1}(:, d);
+                                if isfield(topasCubes, [topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]) && ...
+                                        iscell(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]))
+                                    dij.mLETDose{ctScen, 1}(:, d) = ...
+                                        reshape(topasCubes.([topasCubesTallies{j} '_ray' num2str(dij.rayNum(d)) '_bixel' num2str(dij.bixelNum(d)) '_beam' num2str(dij.beamNum(d))]){ctScen}, [], 1) .* ...
+                                        dij.physicalDose{ctScen, 1}(:, d);
                                 end
                             else
                                 matRad_cfg.dispError('Postprocessing error: Tallies handles incorrectly');
@@ -1368,7 +1379,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             else
                                 matRad_cfg.dispError(['Model ', obj.scorer.RBE_model{i}, ' not implemented for ', obj.radiationMode]);
                             end
-                        case {'carbon', 'helium','oxygen'}
+                        case {'carbon', 'helium', 'oxygen'}
                             % Process available varRBE models for carbon and helium
                             if ~isempty(strfind(lower(obj.scorer.RBE_model{i}), 'libamtrack'))
                                 fname = fullfile(obj.topasFolder, filesep, obj.scorerFolder, filesep, obj.infilenames.Scorer_RBE_libamtrack);
@@ -1434,7 +1445,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 scorerTxt = strrep(scorerTxt, '_beta_libamtrack', ['_beta_libamtrack-matRad_cube' num2str(PhaseNum)]);
                                 scorerTxt = strrep(scorerTxt, '_RBE_libamtrack', ['_RBE_libamtrack-matRad_cube' num2str(PhaseNum)]);
                             end
-                            % dont allways write cell lines
+                            % dont always write cell lines
                             idx = strfind(scorerTxt, '### HCP Tabulated ###');
                             if ~isempty(idx)
                                 scorerTxt = scorerTxt(1:idx(1) - 1);
@@ -1474,7 +1485,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 fprintf(fID, ['d:Sc/CellLineGeneric' insertText '/AlphaBetaRatiox   = Sc/AlphaBetaX' insertText ' Gy\n\n']);
                             end
                         end
-                    case {'carbon', 'helium','oxygen'}
+                    case {'carbon', 'helium', 'oxygen'}
                         if length(obj.bioParameters.AlphaX) == 1
                             fprintf(fID, '\n### Biological Parameters ###\n');
                             fprintf(fID, 'sv:Sc/CellLines = 1 "CellGeneric_abR2"\n');
@@ -1701,6 +1712,9 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
         function writeStfFields(obj, ct, stf, w, baseData)
             % TODO: Insert documentation
+
+            %| pragma Justify(metric, "cyc", "Pre-existing complexity; refactoring is out of scope for this bugfix.");
+
             matRad_cfg = MatRad_Config.instance(); % Instance of matRad configuration class
 
             isPhoton = false;
@@ -1881,7 +1895,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         end
 
                         switch obj.radiationMode
-                            case {'protons', 'carbon', 'helium','oxygen', 'VHEE'}
+                            case {'protons', 'carbon', 'helium', 'oxygen', 'VHEE'}
                                 [~, ixTmp, ~] = intersect(energies, bixelEnergy);
                                 if obj.useOrigBaseData
                                     dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).energy;
@@ -1996,7 +2010,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
 
                 % NozzleAxialDistance
                 if isPhoton
-                    fprintf(fileID, 'd:Ge/Nozzle/TransZ = -%f mm\n', stf(beamIx).SCD + 40); % Phasespace hardcorded infront of MLC at SSD 46 cm
+                    fprintf(fileID, 'd:Ge/Nozzle/TransZ = -%f mm\n', stf(beamIx).SCD + 40); % Phasespace hardcorded in front of MLC at SSD 46 cm
                 else
                     fprintf(fileID, 'd:Ge/Nozzle/TransZ = -%f mm\n', nozzleToAxisDistance);
                 end
@@ -2026,7 +2040,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         % particleZ = 6;
 
                         modules = obj.modules_GenericIon;
-                  
+
                     case 'oxygen'
                         fprintf(fileID, 's:Sim/ParticleName = "GenericIon(8,16)"\n');
                         fprintf(fileID, 'u:Sim/ParticleMass = 16.0\n');
@@ -2207,7 +2221,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         fprintf(fileID, 'd:Sim/CouchAngle = %f deg\n', stf(beamIx).couchAngle);
                         % Here the phasespace file is loaded and referenced in the beamSetup file
                         if strcmp(obj.externalCalculation, 'write')
-                            matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' obj.infilenames.phaseSpaceSourcePhotons '.header and ' obj.infilenames.phaseSpaceSourcePhotons  '.phsp into your simulation directory.']);
+                            matRad_cfg.dispWarning(['External calculation and phaseSpace selected, manually place ' obj.infilenames.phaseSpaceSourcePhotons '.header and ' ...
+                                                    obj.infilenames.phaseSpaceSourcePhotons  '.phsp into your simulation directory.']);
                         else
                             if length(dir([obj.topasFolder filesep 'beamSetup' filesep 'phasespace' filesep obj.infilenames.phaseSpaceSourcePhotons '*'])) < 2
                                 matRad_cfg.dispError([phaseSpaceFileName ' header or phsp file could not be found in beamSetup/phasespace folder.']);
@@ -2282,7 +2297,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     [numOfLeaves, leafTimes] = size([stf(beamIx).ray.shapes(:).leftLeafPos]); % there are #numOfLeaves leaves and #leafTimes times/shapes
                     leftLeafPos = [stf(beamIx).ray.shapes(:).leftLeafPos] * SCD ./ SAD;
                     rightLeafPos = [stf(beamIx).ray.shapes(:).rightLeafPos] * SCD ./ SAD;
-                    % Set MLC paramters as in TOPAS example file https://topas.readthedocs.io/en/latest/parameters/geometry/specialized.html#multi-leaf-collimator
+                    % Set MLC parameters as in TOPAS example file https://topas.readthedocs.io/en/latest/parameters/geometry/specialized.html#multi-leaf-collimator
                     fprintf(fileID, 'd:Sim/Ge/MultiLeafCollimatorA/TransZ   = %f cm\n', 4);
                     fprintf(fileID, 'd:Ge/MultiLeafCollimatorA/MaximumLeafOpen   = %f cm\n', 15);
                     fprintf(fileID, 'd:Ge/MultiLeafCollimatorA/Thickness         = %f cm\n', 8);
@@ -2301,7 +2316,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     end
                     fprintf(fileID, 'mm \n');
 
-                    % initilization of time features
+                    % initialization of time features
                     fprintf(fileID, 'd:Tf/TimelineStart = 0 ms\n');
                     fprintf(fileID, 'd:Tf/TimelineEnd = %f ms\n', leafTimes * 10);
                     fprintf(fileID, 'i:Tf/NumberOfSequentialTimes = %i \n', leafTimes);
@@ -2323,7 +2338,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         fprintf(fileID, '%f ', rightLeafPos(i, :));
                         fprintf(fileID, ' mm\n\n');
                     end
-                    % Add aditional Leaf at the top and bottom to catch
+                    % Add additional Leaf at the top and bottom to catch
                     % scattering
                     for i = [0, numOfLeaves + 1]
                         fprintf(fileID, 's:Tf/LeafXMinus%i/Function  = "Step"\n', i);
@@ -2444,7 +2459,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             fprintf(fileID, '#-- time feature splitting for dij calculation\n');
                             fprintf(fileID, 's:Tf/ImageName/Function = "Step"\n');
                             % create time feature scorer and save with original rays and bixel names
-                            imageName = ['sv:Tf/ImageName/Values = ', num2str(cutNumOfBixel), cell2mat(strcat(strcat(' "ray', strsplit(num2str([dataTOPAS.ray]))), strcat('_bixel', strsplit(num2str([dataTOPAS.bixel])), '"')))];
+                            imageName = ['sv:Tf/ImageName/Values = ', num2str(cutNumOfBixel), ...
+                                         cell2mat(strcat(strcat(' "ray', strsplit(num2str([dataTOPAS.ray]))), strcat('_bixel', strsplit(num2str([dataTOPAS.bixel])), '"')))];
                             fprintf(fileID, '%s\n', imageName);
                             fprintf(fileID, 'dv:Tf/ImageName/Times = Tf/Beam/Spot/Times ms\n');
                         end
@@ -2668,14 +2684,17 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                     % write density correction
                                     fprintf(fID, '# -- Density correction\n');
                                     fprintf(fID, ['dv:Ge/Patient/DensityCorrection = %i', repmat(' %.6g', 1, numel(densityCorrection.density)), ' g/cm3\n'], numel(densityCorrection.density), densityCorrection.density);
-                                    fprintf(fID, ['iv:Ge/Patient/SchneiderHounsfieldUnitSections = %i', repmat(' %g', 1, numel(densityCorrection.unitSections)), '\n'], numel(densityCorrection.unitSections), densityCorrection.unitSections);
+                                    fprintf(fID, ['iv:Ge/Patient/SchneiderHounsfieldUnitSections = %i', repmat(' %g', 1, numel(densityCorrection.unitSections)), '\n'], ...
+                                            numel(densityCorrection.unitSections), densityCorrection.unitSections);
                                     fprintf(fID, ['uv:Ge/Patient/SchneiderDensityOffset = %i', repmat(' %g', 1, numel(densityCorrection.offset)), '\n'], numel(densityCorrection.offset), densityCorrection.offset);
                                     % this is needed for a custom fprintf format which formats integers i to 'i.' and floats without trailing zeros
-                                    % TODO: check whether this can be removed -> this is potentially not necessary but was done to mimick the original TOPAS Schneider converter file
+                                    % TODO: check whether this can be removed -> this is potentially not necessary but was done to mimic the original TOPAS Schneider converter file
                                     TOPASisFloat = mod(densityCorrection.factor, 1) == 0;
-                                    fprintf(fID, ['uv:Ge/Patient/SchneiderDensityFactor = %i ', strjoin(cellstr(char('%1.01f ' .* TOPASisFloat' + '%1.15g ' .* ~TOPASisFloat'))), '\n'], numel(densityCorrection.factor), densityCorrection.factor);
+                                    fprintf(fID, ['uv:Ge/Patient/SchneiderDensityFactor = %i ', strjoin(cellstr(char('%1.01f ' .* TOPASisFloat' + '%1.15g ' .* ~TOPASisFloat'))), '\n'], ...
+                                            numel(densityCorrection.factor), densityCorrection.factor);
                                     TOPASisFloat = mod(densityCorrection.factorOffset, 1) == 0;
-                                    fprintf(fID, ['uv:Ge/Patient/SchneiderDensityFactorOffset = %i ', strjoin(cellstr(char('%1.01f ' .* TOPASisFloat' + '%1.15g ' .* ~TOPASisFloat'))), '\n'], numel(densityCorrection.factorOffset), densityCorrection.factorOffset);
+                                    fprintf(fID, ['uv:Ge/Patient/SchneiderDensityFactorOffset = %i ', strjoin(cellstr(char('%1.01f ' .* TOPASisFloat' + '%1.15g ' .* ~TOPASisFloat'))), '\n'], ...
+                                            numel(densityCorrection.factorOffset), densityCorrection.factorOffset);
                                     %                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactor = 8 0.001029700665188 0.000893 0.0 0.001169 0.000592 0.0005 0.0 0.0\n');
                                     %                         fprintf(fID,'uv:Ge/Patient/SchneiderDensityFactorOffset = 8 1000. 0. 1000. 0. 0. -2000. 0. 0.0\n\n');
 
@@ -2705,7 +2724,8 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                                 fprintf(fID, 'uv:Ge/Patient/SchneiderMaterialsWeight%i = 5 0.10404040 0.75656566 0.03131313 0.10606061 0.00202020\n', length(materials) - 2);
                                                 ExcitationEnergies = [ExcitationEnergies' 75.3];
                                             end
-                                            fprintf(fID, ['dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = %i', repmat(' %.6g', 1, numel(ExcitationEnergies)), ' eV\n'], numel(ExcitationEnergies), ExcitationEnergies);
+                                            fprintf(fID, ['dv:Ge/Patient/SchneiderMaterialMeanExcitationEnergy = %i', repmat(' %.6g', 1, numel(ExcitationEnergies)), ' eV\n'], ...
+                                                    numel(ExcitationEnergies), ExcitationEnergies);
                                         case 'advanced'
                                             fprintf(fID, '\n%s\n', materials{:});
                                         case 'MCsquare'
@@ -2719,8 +2739,10 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                                 fprintf(fID, 'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0', counter);
                                                 counter = counter + 1;
                                             end
-                                            %                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.10404040 0.10606061 0.75656566 0.03131313 0.0 0.00202020 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0',counter);
-                                            fprintf(fID, 'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.101278 0.102310 0.028650 0.757072 0.000730 0.000800 0.002250 0.002660 0.0 0.000090 0.001840 0.001940 0.0 0.000370 0.000010', counter);
+                                            %                                 fprintf(fID,'uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.10404040 0.10606061 0.75656566 0.03131313
+                                            %                                 0.0 0.00202020 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0',counter);
+                                            fprintf(fID, ['uv:Ge/Patient/SchneiderMaterialsWeight%i = 15 0.101278 0.102310 0.028650 0.757072 0.000730 0.000800 ' ...
+                                                          '0.002250 0.002660 0.0 0.000090 0.001840 0.001940 0.0 0.000370 0.000010'], counter);
                                     end
                                 else
                                     fname = fullfile(obj.topasFolder, filesep, obj.converterFolder, filesep, obj.infilenames.matConv_Schneider_loadFromFile);

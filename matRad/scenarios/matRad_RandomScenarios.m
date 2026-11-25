@@ -170,9 +170,9 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
             end
             
 
-            tmpScenMask = permute(this.scenMask,[3 2 1]);
-            [x{3}, x{2}, x{1}] = ind2sub(size(tmpScenMask),find(tmpScenMask));
-            this.linearMask    = cell2mat(x);
+            % Scenario subscripts in the same order as scenForProb / scenProb
+            sampleIx = repmat((1:this.nSamples)', this.numOfCtScen, 1);
+            this.linearMask = [phases sampleIx sampleIx];
             totNumScen    = sum(this.scenMask(:));
 
             if totNumScen ~= this.totNumScen
@@ -184,4 +184,3 @@ classdef matRad_RandomScenarios < matRad_ScenarioModel
 
 
 end
-
