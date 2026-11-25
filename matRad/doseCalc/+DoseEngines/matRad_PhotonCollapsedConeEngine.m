@@ -168,7 +168,7 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             this.densityCubes = cell(1, numel(this.cubeWED));
             for s = 1:numel(this.cubeWED)
                 rho = matRad_interp3(dij.ctGrid.x, dij.ctGrid.y, dij.ctGrid.z, double(this.cubeWED{s}), ...
-                                     dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear');
+                                     dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear', 'nearest');
                 rho(~isfinite(rho) | rho < 0) = 0;
                 this.densityCubes{s} = reshape(rho, dij.doseGrid.dimensions);
             end
@@ -287,7 +287,7 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
                 dirs = currRay.cccDirections;
                 for ctScen = 1:this.multScen.numOfCtScen
                     for rangeShiftScen = 1:this.multScen.totNumRangeScen
-                        fullScenIdx = this.multScen.sub2scenIx(ctScen, shiftScen, rangeShiftScen);
+                        fullScenIdx = this.multScen.sub2scenIx(ctScen, shiftScen, rangeShiftScen, 'position');
                         if ~this.multScen.scenMask(fullScenIdx)
                             continue
                         end
