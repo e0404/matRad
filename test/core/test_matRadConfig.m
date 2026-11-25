@@ -71,3 +71,50 @@ function test_getDefaultProperties
     pln = matRad_cfg.getDefaultProperties(pln, {'propDoseCalc', 'propOpt'});
     assertTrue(isfield(pln, 'propDoseCalc'));
     assertTrue(isfield(pln, 'propOpt'));
+
+function test_strictSelectionDefaultsToFalse
+matRad_cfg = MatRad_Config.instance();
+cleanup = helper_setStrictSelection(true);
+
+% the standard defaults switch the strict selection off
+matRad_cfg.setDefaultProperties();
+assertFalse(matRad_cfg.strictSelection);
+
+matRad_cfg.setDefaultPropertiesForTesting();
+
+function test_strictSelectionAcceptsOnlyScalarLogicals
+matRad_cfg = MatRad_Config.instance();
+cleanup = helper_setStrictSelection(false);
+
+matRad_cfg.strictSelection = 1;
+assertTrue(islogical(matRad_cfg.strictSelection));
+assertTrue(matRad_cfg.strictSelection);
+
+assertExceptionThrown(@() helper_assignStrictSelection(matRad_cfg, 'yes'), 'matRad:Error');
+assertExceptionThrown(@() helper_assignStrictSelection(matRad_cfg, [true false]), 'matRad:Error');
+
+function helper_assignStrictSelection(cfg, value)
+cfg.strictSelection = value;
+
+function test_dispSelectionFallbackWarnsByDefault
+matRad_cfg = MatRad_Config.instance();
+cleanup = helper_setStrictSelection(false);
+
+logEntries = helper_captureLog(@() matRad_cfg.dispSelectionFallback('Requested thing ''%s'' is not available!', 'abc'));
+
+assertTrue(helper_logContains(logEntries, 'WARNING', 'Requested thing ''abc'' is not available!'));
+assertFalse(helper_logContains(logEntries, 'ERROR', 'abc'));
+
+function test_dispSelectionFallbackThrowsWhenStrict
+matRad_cfg = MatRad_Config.instance();
+cleanup = helper_setStrictSelection(true);
+
+assertExceptionThrown(@() matRad_cfg.dispSelectionFallback('Requested thing ''%s'' is not available!', 'abc'), 'matRad:Error');
+
+% the error points to the switch that disables the fallback
+try
+    matRad_cfg.dispSelectionFallback('Requested thing ''%s'' is not available!', 'abc');
+catch ME
+    assertFalse(isempty(strfind(ME.message, 'Requested thing ''abc'' is not available!')));
+    assertFalse(isempty(strfind(ME.message, 'strictSelection')));
+end

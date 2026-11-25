@@ -44,6 +44,7 @@ assertEqual(seq.shortName, 'xia');
 function test_getSequencerFromPlnInvalidFallsBackToDefault
 pln = helper_getPln('photons');
 pln.propSeq.sequencer = 'thisSequencerDoesNotExist';
+cleanup = helper_setStrictSelection(false);
 % warnDefault = false to keep the test output clean
 seq = matRad_SequencerBase.getSequencerFromPln(pln, false);
 % default photon sequencer is siochi (see MatRad_Config defaults)
@@ -117,3 +118,27 @@ seq.numLevels = 10;
 sequenceHigh = seq.sequence(p.resultGUI.w, p.stf);
 
 assertTrue(sum([sequenceHigh.beam.numOfShapes]) >= sum([sequenceLow.beam.numOfShapes]));
+
+function test_getSequencerFromPlnReportsUnavailableSequencer
+% #943: the fallback names the requested sequencer and why it is not used
+cleanup = helper_setStrictSelection(false);
+pln = helper_getPln('photons');
+pln.propSeq.sequencer = 'IMPT';
+[logEntries, seq] = helper_captureLog(@() matRad_SequencerBase.getSequencerFromPln(pln, false));
+assertEqual(seq.shortName, 'siochi');
+assertTrue(helper_logContains(logEntries, 'WARNING', '''IMPT'''));
+assertTrue(helper_logContains(logEntries, 'WARNING', '''photons'''));
+assertFalse(helper_logContains(logEntries, 'WARNING', 'Inconsistent'));
+
+function test_getSequencerFromPlnStrictSelection
+cleanup = helper_setStrictSelection(true);
+pln = helper_getPln('photons');
+pln.propSeq.sequencer = 'IMPT';
+assertExceptionThrown(@() matRad_SequencerBase.getSequencerFromPln(pln), 'matRad:Error');
+pln.propSeq.sequencer = 'thisSequencerDoesNotExist';
+assertExceptionThrown(@() matRad_SequencerBase.getSequencerFromPln(pln), 'matRad:Error');
+
+% the default list of sequencers selects the photon sequencer
+pln.propSeq.sequencer = {'siochi', 'IMPT'};
+seq = matRad_SequencerBase.getSequencerFromPln(pln);
+assertEqual(seq.shortName, 'siochi');

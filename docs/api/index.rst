@@ -1,7 +1,7 @@
 matRad API Documentation
 ========================
 
-matRad is separted into a top-level API that consists of a few functions to run the treatment planning workflow resting on the top-level of the the matRad folder / module. The core implementation is organized in several subdirectories / submodules that are called by the API functions and can be used for more fine-grained development.
+matRad is separated into a top-level API that consists of a few functions to run the treatment planning workflow resting on the top-level of the the matRad folder / module. The core implementation is organized in several subdirectories / submodules that are called by the API functions and can be used for more fine-grained development.
 Startup and configuration functions are located in the root of the repository.
 
 .. note::
@@ -24,6 +24,9 @@ It is implemented as a Singleton pattern and thus consistent throughout a matRad
 
 At the core, the class handles user folders, caches the environment (Matlab/Octave), provides matRad's version, and stores default parameters.
 The class also provides logging functionality enabling control over output via log levels.
+
+If an explicitly requested dose engine, stf generator, sequencer, biological model or scenario model cannot be used (because its name is unknown or because it is not available for the radiation mode, machine or installation), matRad warns with the reason and falls back to the default.
+Setting ``matRad_cfg.strictSelection = true`` turns this warning into an error, so that no other engine or model than the requested one is used silently.
 
 ----
 
