@@ -46,6 +46,44 @@ doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [
 doseMex = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], origin, 2);
 assertElementsAlmostEqual(doseMex, doseRef, 'absolute', relTol * max(doseRef(:)));
 
+function test_batchedMatchesReference
+[terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
+relTol = 1e-12;
+doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB]);
+doseBatched = matRad_collapsedConeTransportBatched(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB]);
+assertEqual(size(doseBatched), size(terma));
+assertElementsAlmostEqual(doseBatched, doseRef, 'absolute', relTol * max(doseRef(:)));
+
+origin = [5 -3 7];
+doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], origin);
+doseBatched = matRad_collapsedConeTransportBatched(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], origin);
+assertElementsAlmostEqual(doseBatched, doseRef, 'absolute', relTol * max(doseRef(:)));
+
+function test_batchedSparseTermaAndZeroWeights
+[terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
+terma(:) = 0;
+terma(6:8, 7:10, 5:7) = 1 + reshape(1:36, [3 4 3]) / 36;
+wB(1:3:end) = 0;
+doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], [2 0 -4]);
+doseBatched = matRad_collapsedConeTransportBatched(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], [2 0 -4]);
+assertElementsAlmostEqual(doseBatched, doseRef, 'absolute', 1e-12 * max(doseRef(:)));
+
+doseBatched = matRad_collapsedConeTransportBatched(zeros(size(terma)), rho, voxelSize, dirs, [wA; wB], [aA; aB]);
+assertEqual(doseBatched, zeros(size(terma)));
+
+function test_batchedPlanarArray
+[terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
+terma = terma(:, :, 3);
+rho = rho(:, :, 3);
+doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB]);
+doseBatched = matRad_collapsedConeTransportBatched(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB]);
+assertEqual(size(doseBatched), size(terma));
+assertElementsAlmostEqual(doseBatched, doseRef, 'absolute', 1e-12 * max(doseRef(:)));
+
+function test_batchedInvalidKernelSize
+[terma, rho, voxelSize, dirs, wA, aA] = helper_heterogeneousInput();
+assertExceptionThrown(@() matRad_collapsedConeTransportBatched(terma, rho, voxelSize, dirs, wA(1:3), aA(1:3)));
+
 function test_subVolumeConsistency
 [terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
 dims = size(terma);
