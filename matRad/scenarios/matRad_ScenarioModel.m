@@ -392,8 +392,15 @@ classdef (Abstract) matRad_ScenarioModel < handle
             modelClassList = matRad_ScenarioModel.getAvailableModels();
             modelNames = {modelClassList.shortName};
 
-            if ~isfield(modelMetadata, 'model') || ~any(strcmp(modelNames, modelMetadata.model))
+            if ~isfield(modelMetadata, 'model')
                 matRad_cfg.dispWarning('Scenario Model not found, creating nominal scenario instead!');
+                modelMetadata.model = 'nomScen';
+            elseif ~(ischar(modelMetadata.model) || isstring(modelMetadata.model))
+                matRad_cfg.dispSelectionFallback('Scenario model selection is not a model name, creating nominal scenario instead!');
+                modelMetadata.model = 'nomScen';
+            elseif ~any(strcmp(modelNames, modelMetadata.model))
+                matRad_cfg.dispSelectionFallback('Scenario model ''%s'' not found (available: %s), creating nominal scenario instead!', ...
+                                                 char(modelMetadata.model), strjoin(modelNames, ', '));
                 modelMetadata.model = 'nomScen';
             end
 

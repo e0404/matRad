@@ -202,3 +202,18 @@ function instanceTest_TYPE(model)
 function instanceTest_wcFactor(model)
     %assertWarning(@() model.wcFactor,'matRad:Deprecated');
     assertEqual(model.TYPE,model.shortName);
+
+function test_createUnknownModelFallsBackToNominalScenario
+% #943: the warning names the requested model and the available ones
+cleanup = helper_setStrictSelection(false);
+[logEntries, model] = helper_captureLog(@() matRad_ScenarioModel.create('wcScenario'));
+assertTrue(isa(model, 'matRad_NominalScenario'));
+assertTrue(helper_logContains(logEntries, 'WARNING', '''wcScenario'''));
+assertTrue(helper_logContains(logEntries, 'WARNING', 'wcScen'));
+
+function test_createUnknownModelStrictSelection
+cleanup = helper_setStrictSelection(true);
+assertExceptionThrown(@() matRad_ScenarioModel.create('wcScenario'), 'matRad:Error');
+assertExceptionThrown(@() matRad_ScenarioModel.create(struct('model', 'wcScenario')), 'matRad:Error');
+model = matRad_ScenarioModel.create('wcScen');
+assertTrue(isa(model, 'matRad_WorstCaseScenarios'));

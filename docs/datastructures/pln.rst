@@ -47,6 +47,11 @@ Current possible names are  ``propStf`` (steering information / geometry), ``pro
    Using top-level functions like :func:`matRad_calcDoseInfluence` from the root :mod:`matRad` folder will take pln as an argument, instantiate the appropriate object (e.g. :class:`matRad_ParticleHongPencilBeamEngine`), and try to configure its properties from the ``pln.prop{StepName}.{PropertyName}`` structure.
    Alternatively, these classes can be directly used and properties can be explicitly set.
 
+The class of a workflow step is selected by its short name in ``pln.propDoseCalc.engine``, ``pln.propStf.generator`` and ``pln.propSeq.sequencer`` (case-insensitive), or by a cell array of short names, of which the first one available for the plan is used.
+If none of the requested classes can be used, matRad warns with the reason (unknown name, unsupported radiation mode, or the availability message of the class) and uses the default instead.
+With ``MatRad_Config.instance().strictSelection = true``, an error is raised instead (see :ref:`MatRad_Config <config>`).
+The same applies to the model names in ``pln.bioModel`` and ``pln.multScen``.
+
 Here's an overview of the property mapping:
 
 .. include:: ../includes/planapi.rst

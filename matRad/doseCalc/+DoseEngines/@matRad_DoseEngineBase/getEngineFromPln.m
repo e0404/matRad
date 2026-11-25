@@ -11,25 +11,21 @@ initDefaultEngine = false;
 classList = DoseEngines.matRad_DoseEngineBase.getAvailableEngines(pln);
 
 % Check for a valid engine, and if the given engine isn't valid set boolean 
-% to initiliaze default engine at the end of this function
+% to initialize default engine at the end of this function
 if isfield(pln,'propDoseCalc') && isa(pln.propDoseCalc, 'DoseEngines.matRad_DoseEngineBase')
    engine = pln.propDoseCalc;
-elseif isfield(pln,'propDoseCalc') && isstruct(pln.propDoseCalc) && isfield(pln.propDoseCalc,'engine')         
-    
-    if ischar(pln.propDoseCalc.engine) || isstring(pln.propDoseCalc.engine)
-        matchEngines = strcmpi({classList(:).shortName},pln.propDoseCalc.engine);
-        if any(matchEngines)
-            %instantiate engine
-            engineHandle = classList(matchEngines).handle;
-            engine = engineHandle(pln);
-            
-            %engine.assignPropertiesFromPln(pln); %TODO: could this be in the constructor?
-        else
-            initDefaultEngine = true;
-        end
+elseif isfield(pln, 'propDoseCalc') && isstruct(pln.propDoseCalc) && isfield(pln.propDoseCalc, 'engine')
+    [ix, reason] = matRad_resolveClassSelection(pln.propDoseCalc.engine, classList, ...
+                                                @() DoseEngines.matRad_DoseEngineBase.getAvailableEngines(), pln);
+    if ~isempty(ix)
+        % instantiate engine
+        engineHandle = classList(ix).handle;
+        engine = engineHandle(pln);
     else
+        matRad_cfg.dispSelectionFallback('Dose engine requested in pln.propDoseCalc.engine cannot be used: %s.', reason);
+        % the default engine would report the request as inconsistent
+        pln.propDoseCalc = rmfield(pln.propDoseCalc, 'engine');
         initDefaultEngine = true;
-        matRad_cfg.dispWarning('pln.propDoseCalc.engine field not valid!');
     end
 else
     initDefaultEngine = true;
