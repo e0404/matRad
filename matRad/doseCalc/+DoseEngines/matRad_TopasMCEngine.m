@@ -118,6 +118,14 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         modules_photons     = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay'}
         modules_VHEE        = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay', 'g4ion-binarycascade', 'g4h-elastic_HP', 'g4stopping'}  % From 10.1002/mp.16697
 
+        % EM table range. TOPAS builds its dE/dx and range tables only up
+        % to 500 MeV by default. Alpha tables are in total kinetic energy,
+        % so helium above 125 MeV/u would be outside the tables (range too
+        % short). Empty values keep the TOPAS defaults.
+        emRangeMin       = 100       % in eV
+        emRangeMax       = 9500      % in MeV
+        emBinsPerDecade  = 20        % g4em-standard_opt4 uses 20 bins per decade
+
         % Geometry / World
         worldMaterial = 'G4_AIR'
 
@@ -240,7 +248,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                     switch obj.radiationMode
                         case 'protons'
                             obj.scorer.RBE_model = obj.scorer.defaultModelProtons;
-                        case {'carbon', 'helium','oxygen'}
+                        case {'carbon', 'helium', 'oxygen'}
                             obj.scorer.RBE_model = obj.scorer.defaultModelCarbon;
                         otherwise
                             matRad_cfg.dispError(['No RBE model implemented for ', obj.radiationMode]);
@@ -1368,7 +1376,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                             else
                                 matRad_cfg.dispError(['Model ', obj.scorer.RBE_model{i}, ' not implemented for ', obj.radiationMode]);
                             end
-                        case {'carbon', 'helium','oxygen'}
+                        case {'carbon', 'helium', 'oxygen'}
                             % Process available varRBE models for carbon and helium
                             if ~isempty(strfind(lower(obj.scorer.RBE_model{i}), 'libamtrack'))
                                 fname = fullfile(obj.topasFolder, filesep, obj.scorerFolder, filesep, obj.infilenames.Scorer_RBE_libamtrack);
@@ -1474,7 +1482,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                                 fprintf(fID, ['d:Sc/CellLineGeneric' insertText '/AlphaBetaRatiox   = Sc/AlphaBetaX' insertText ' Gy\n\n']);
                             end
                         end
-                    case {'carbon', 'helium','oxygen'}
+                    case {'carbon', 'helium', 'oxygen'}
                         if length(obj.bioParameters.AlphaX) == 1
                             fprintf(fID, '\n### Biological Parameters ###\n');
                             fprintf(fID, 'sv:Sc/CellLines = 1 "CellGeneric_abR2"\n');
@@ -1881,7 +1889,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         end
 
                         switch obj.radiationMode
-                            case {'protons', 'carbon', 'helium','oxygen', 'VHEE'}
+                            case {'protons', 'carbon', 'helium', 'oxygen', 'VHEE'}
                                 [~, ixTmp, ~] = intersect(energies, bixelEnergy);
                                 if obj.useOrigBaseData
                                     dataTOPAS(cutNumOfBixel).energy = selectedData(ixTmp).energy;
@@ -2026,7 +2034,7 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                         % particleZ = 6;
 
                         modules = obj.modules_GenericIon;
-                  
+
                     case 'oxygen'
                         fprintf(fileID, 's:Sim/ParticleName = "GenericIon(8,16)"\n');
                         fprintf(fileID, 'u:Sim/ParticleMass = 16.0\n');
@@ -2412,6 +2420,17 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 fprintf(fileID, '\n# MODULES\n');
                 moduleString = cellfun(@(s) sprintf('"%s"', s), modules, 'UniformOutput', false);
                 fprintf(fileID, 'sv:Ph/Default/Modules = %d %s\n', length(modules), strjoin(moduleString, ' '));
+
+                % EM table range
+                if ~isempty(obj.emRangeMin)
+                    fprintf(fileID, 'd:Ph/Default/EMRangeMin = %g eV\n', obj.emRangeMin);
+                end
+                if ~isempty(obj.emRangeMax)
+                    fprintf(fileID, 'd:Ph/Default/EMRangeMax = %g MeV\n', obj.emRangeMax);
+                end
+                if ~isempty(obj.emBinsPerDecade)
+                    fprintf(fileID, 'i:Ph/Default/EMBinsPerDecade = %d\n', round(obj.emBinsPerDecade));
+                end
 
                 fclose(fileID);
                 % Write run scripts for TOPAS
