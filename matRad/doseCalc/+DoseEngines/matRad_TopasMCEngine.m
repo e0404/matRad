@@ -118,6 +118,14 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
         modules_photons     = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay'}   % mh:ignore_style
         modules_VHEE        = {'g4em-standard_opt4', 'g4h-phy_QGSP_BIC_HP', 'g4decay', 'g4ion-binarycascade', 'g4h-elastic_HP', 'g4stopping'}  % From 10.1002/mp.16697 % mh:ignore_style
 
+        % EM table range. TOPAS builds its dE/dx and range tables only up
+        % to 500 MeV by default. Alpha tables are in total kinetic energy,
+        % so helium above 125 MeV/u would be outside the tables (range too
+        % short). Empty values keep the TOPAS defaults.
+        emRangeMin       = 100       % in eV
+        emRangeMax       = 9500      % in MeV
+        emBinsPerDecade  = 20        % g4em-standard_opt4 uses 20 bins per decade
+
         % Geometry / World
         worldMaterial = 'G4_AIR'
 
@@ -2427,6 +2435,17 @@ classdef matRad_TopasMCEngine < DoseEngines.matRad_MonteCarloEngineAbstract
                 fprintf(fileID, '\n# MODULES\n');
                 moduleString = cellfun(@(s) sprintf('"%s"', s), modules, 'UniformOutput', false);
                 fprintf(fileID, 'sv:Ph/Default/Modules = %d %s\n', length(modules), strjoin(moduleString, ' '));
+
+                % EM table range
+                if ~isempty(obj.emRangeMin)
+                    fprintf(fileID, 'd:Ph/Default/EMRangeMin = %g eV\n', obj.emRangeMin);
+                end
+                if ~isempty(obj.emRangeMax)
+                    fprintf(fileID, 'd:Ph/Default/EMRangeMax = %g MeV\n', obj.emRangeMax);
+                end
+                if ~isempty(obj.emBinsPerDecade)
+                    fprintf(fileID, 'i:Ph/Default/EMBinsPerDecade = %d\n', round(obj.emBinsPerDecade));
+                end
 
                 fclose(fileID);
                 % Write run scripts for TOPAS
