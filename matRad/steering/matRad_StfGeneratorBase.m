@@ -148,8 +148,9 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             %ones given in the propStf struct
             if isfield(pln,'propStf') && isstruct(pln.propStf)
                 plnStruct = pln.propStf; %get remaining fields
-                if isfield(plnStruct,'generator') && ~isempty(plnStruct.generator) && ~any(strcmp(plnStruct.generator,this.shortName))
-                    matRad_cfg.dispWarning('Inconsistent stf generators given! pln asks for ''%s'', but you are using ''%s''!',plnStruct.generator,this.shortName);
+                if isfield(plnStruct, 'generator') && ~isempty(plnStruct.generator) && ~any(strcmpi(plnStruct.generator, this.shortName))
+                    matRad_cfg.dispWarning('Inconsistent stf generators given! pln asks for ''%s'', but you are using ''%s''!', ...
+                                           strjoin(cellstr(plnStruct.generator), ', '), this.shortName);
                 end
                 if isfield(plnStruct,'generator')
                     plnStruct = rmfield(plnStruct, 'generator'); % generator field is no longer needed and would throw an exception
@@ -361,22 +362,21 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             classList = matRad_StfGeneratorBase.getAvailableGenerators(pln);
 
             % Check for a valid engine, and if the given engine isn't valid set boolean
-            % to initiliaze default engine at the end of this function
+            % to initialize default engine at the end of this function
             if isfield(pln,'propStf') && isa(pln.propStf, mfilename('class'))
                 generator = pln.propStf;
             elseif isfield(pln,'propStf') && isstruct(pln.propStf) && isfield(pln.propStf,'generator')
-                if ischar(pln.propStf.generator) || isstring(pln.propStf.generator)
-                    matchGenerators = strcmpi({classList(:).shortName},pln.propStf.generator);
-                    if any(matchGenerators)
-                        %instantiate engine
-                        generatorHandle = classList(matchGenerators).handle;
-                        generator = generatorHandle(pln);
-                    else
-                        initDefaultGenerator = true;
-                    end
+                [ix, reason] = matRad_resolveClassSelection(pln.propStf.generator, classList, ...
+                                                            @() matRad_StfGeneratorBase.getAvailableGenerators(), pln);
+                if ~isempty(ix)
+                    % instantiate generator
+                    generatorHandle = classList(ix).handle;
+                    generator = generatorHandle(pln);
                 else
+                    matRad_cfg.dispSelectionFallback('Stf generator requested in pln.propStf.generator cannot be used: %s.', reason);
+                    % the default generator would report the request as inconsistent
+                    pln.propStf = rmfield(pln.propStf, 'generator');
                     initDefaultGenerator = true;
-                    matRad_cfg.dispWarning('pln.propStf.generator field not valid!');
                 end
             else
                 initDefaultGenerator = true;
@@ -414,7 +414,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
         end
 
         function classList = getAvailableGenerators(pln,optionalPaths)
-            % Returns a list of names and coresponding handle for stf
+            % Returns a list of names and corresponding handle for stf
             % generators. Returns all stf generators when no arg is
             % given. If no generators are found return gonna be empty.
             %
@@ -422,7 +422,7 @@ classdef (Abstract) matRad_StfGeneratorBase < handle
             %   classList = matRad_StfGeneratorBase.getAvailableGenerators(pln,optional_path)
             %
             % input:
-            %   pln:            containing proposed generator and machine file informations
+            %   pln:            containing proposed generator and machine file information
             %   optionalPath:   cell array of other folders to search in
             %
             % returns:

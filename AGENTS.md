@@ -118,9 +118,11 @@ that reset it (`reset`, `setDefaultProperties*`) from library code.
   `disp`/`fprintf`/`warning`/`error`:
   `matRad_cfg = MatRad_Config.instance(); matRad_cfg.dispInfo(...) / dispWarning(...) / dispError(...)`.
   Default parameters live in `MatRad_Config` too.
-- Every `.m` file carries the matRad license header (copy it from any existing file and
-  keep the year range current) and a docstring in the established format, since the
-  API documentation is generated from it (see `docs/`).
+- Every `.m` file in `matRad/` and the top-level entry points carries the matRad license
+  header (copy it from any existing file and keep the year range current) and a docstring
+  in the established format, since the API documentation is generated from it (see
+  `docs/`). Tests and test helpers in `test/` follow the template in `test/README.md`;
+  a license header is optional there.
 - Keep functions small: `.miss_hit` limits cyclomatic complexity to 25, nesting depth to 6,
   parameters to 15 and file length to 1000 lines; line length is 150.
 - Backwards compatibility matters for user-facing APIs (`pln`, `cst`, `ct`, `stf`, `dij`,

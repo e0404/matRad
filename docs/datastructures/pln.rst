@@ -47,6 +47,11 @@ Current possible names are  ``propStf`` (steering information / geometry), ``pro
    Using top-level functions like :func:`matRad_calcDoseInfluence` from the root :mod:`matRad` folder will take pln as an argument, instantiate the appropriate object (e.g. :class:`matRad_ParticleHongPencilBeamEngine`), and try to configure its properties from the ``pln.prop{StepName}.{PropertyName}`` structure.
    Alternatively, these classes can be directly used and properties can be explicitly set.
 
+The class of a workflow step is selected by its short name in ``pln.propDoseCalc.engine``, ``pln.propStf.generator`` and ``pln.propSeq.sequencer`` (case-insensitive), or by a cell array of short names, of which the first one available for the plan is used.
+If none of the requested classes can be used, matRad warns with the reason (unknown name, unsupported radiation mode, or the availability message of the class) and uses the default instead.
+With ``MatRad_Config.instance().strictSelection = true``, an error is raised instead (see :ref:`MatRad_Config <config>`).
+The same applies to the model names in ``pln.bioModel`` and ``pln.multScen``.
+
 Here's an overview of the property mapping:
 
 .. include:: ../includes/planapi.rst
@@ -120,6 +125,10 @@ The following properties of the pln struct can additionally be adjusted. If they
 **pln.propDoseCalc.doseGrid.resolution**
 
     Specifies the resolution for the dose calculation. Default: x direction: *3* mm, y direction: *3* mm, z direction: *3* mm.
+    The dose grid is centered on the CT and covers it completely: the number of dose voxels along each axis is the smallest one that spans the CT volume (``ceil(numel(ct.x) * ct.resolution.x / doseGrid.resolution.x)`` in x direction, analogously for y and z).
+    If the extent of the CT is not a multiple of the dose grid resolution, the outermost dose voxels therefore reach slightly beyond the CT, and data is resampled between the grids using the nearest edge value outside of the voxel centers.
+    If the dose grid resolution equals the CT resolution along an axis, the dose grid is identical to the CT grid along this axis.
+    Instead of a resolution only, the voxel center coordinates ``pln.propDoseCalc.doseGrid.x``, ``.y`` and ``.z`` can be provided directly, in which case the dose grid is used as given.
 
 **pln.propDoseCalc.defaultLateralCutOff**
 

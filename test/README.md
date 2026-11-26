@@ -56,3 +56,20 @@ function test_matrad_environment
     [~,verstr] = matRad_getEnvironment();
     assertTrue(ischar(verstr));
 ```
+
+### Testing a specific engine, generator or model
+If the dose engine, stf generator, sequencer, biological model or scenario model requested in `pln` cannot be used, matRad warns and falls back to the default.
+With the reduced log level of the test runner, this warning is not shown, so a test meant to exercise a specific class may pass while it actually runs the default.
+Such tests should enable strict selection, which turns the fallback into an error.
+`helper_setStrictSelection` returns a cleanup object that restores the previous setting when the test ends:
+```matlab
+function test_myEngineCalculatesDose
+cleanup = helper_setStrictSelection(true); %#ok<NASGU>
+pln.propDoseCalc.engine = 'MyEngine';
+...
+```
+To check warnings or other messages independent of the log level, `helper_captureLog` returns the log entries recorded while calling a function, and `helper_logContains` searches them:
+```matlab
+logEntries = helper_captureLog(@() DoseEngines.matRad_DoseEngineBase.getEngineFromPln(pln));
+assertTrue(helper_logContains(logEntries, 'WARNING', 'not available'));
+```

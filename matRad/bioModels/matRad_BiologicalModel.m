@@ -8,8 +8,8 @@ classdef (Abstract) matRad_BiologicalModel < handle
     %
     %  Additional methods that can be implemented are:
     %
-    %   getTissueInformation()                  to collect meta information about the tissue defintion and paramters
-    %   assignBioModelPropertiesFromEngine()    to translate user defined paramters directly to the biological model subclass
+    %   getTissueInformation()                  to collect meta information about the tissue definition and parameters
+    %   assignBioModelPropertiesFromEngine()    to translate user defined parameters directly to the biological model subclass
     %
     %
     % All subclasses should also declare the  properties:
@@ -48,7 +48,7 @@ classdef (Abstract) matRad_BiologicalModel < handle
 
     methods %(Abstract)
         function bixel = calcBiologicalQuantitiesForBixel(this)
-            % the actual calculation method wich calculates biological quantities for individual beamlets
+            % the actual calculation method which calculates biological quantities for individual beamlets
             % Needs to be implemented in non abstract subclasses. 
             throw(MException('MATLAB:class:AbstractMember','Abstract function calcBiologicalQuantitiesForBixel of your BiologicalModel needs to be implemented!'));
         end
@@ -179,10 +179,19 @@ classdef (Abstract) matRad_BiologicalModel < handle
             modelClassList = matRad_BiologicalModel.getAvailableModels();
             modelNames = {modelClassList.model};
             
-            if ~isfield(modelMetadata,'model') || ~any(strcmp(modelNames,modelMetadata.model))
+            if ~isfield(modelMetadata, 'model')
                 matRad_cfg.dispWarning('Biological Model not found, creating Empty Model!');
                 model = matRad_EmptyBiologicalModel();
-                return;
+                return
+            elseif ~(ischar(modelMetadata.model) || isstring(modelMetadata.model))
+                matRad_cfg.dispSelectionFallback('Biological model selection is not a model name, creating Empty Model!');
+                model = matRad_EmptyBiologicalModel();
+                return
+            elseif ~any(strcmp(modelNames, modelMetadata.model))
+                matRad_cfg.dispSelectionFallback('Biological model ''%s'' not found (available: %s), creating Empty Model!', ...
+                                                 char(modelMetadata.model), strjoin(modelNames, ', '));
+                model = matRad_EmptyBiologicalModel();
+                return
             end
 
             usedModel = find(strcmp(modelNames,modelMetadata.model));

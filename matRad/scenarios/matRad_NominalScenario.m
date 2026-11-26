@@ -70,9 +70,8 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
             this.scenMask = false(this.numOfAvailableCtScen,this.totNumShiftScen,this.totNumRangeScen);
             this.scenMask(this.ctScenIx,:,:) = true;
 
-            %generic code
-            [x{1}, x{2}, x{3}] = ind2sub(size(this.scenMask),find(this.scenMask));
-            this.linearMask    = cell2mat(x);
+            % Scenario subscripts in the same order as scenForProb / scenProb
+            this.linearMask = [this.ctScenIx(:) ones(this.numOfCtScen, 2)];
             totNumScen    = sum(this.scenMask(:));
             
             %Get Scenario probability
@@ -100,4 +99,3 @@ classdef matRad_NominalScenario < matRad_ScenarioModel
         
     end
 end
-
