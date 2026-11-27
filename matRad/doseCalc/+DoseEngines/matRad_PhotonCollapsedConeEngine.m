@@ -35,19 +35,15 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
     %   Limitations: the spectral hardening of the TERMA is approximated by a
     %   depth dependent effective attenuation coefficient (no off-axis
     %   softening, no spectral kernel) and the kernel is computed in water
-    %   and scaled with the relative electron density.
+    %   and scaled with the relative electron density. For range uncertainty
+    %   scenarios, the radiological depth scaling is applied to the TERMA
+    %   calculation, whereas the kernel transport uses the unscaled relative
+    %   electron density cube.
     %
     % References
     %   [1] Ahnesjo, Med. Phys. 16, 577 (1989)
     %   [2] Bortfeld, Schlegel, Rhein, Med. Phys. 20, 311 (1993)
     %
-    %   Limitations: the spectral hardening of the TERMA is approximated by a
-    %   depth dependent effective attenuation coefficient (no off-axis
-    %   softening, no spectral kernel) and the kernel is computed in water
-    %   and scaled with the relative electron density. For range uncertainty
-    %   scenarios, the radiological depth scaling is applied to the TERMA
-    %   calculation, whereas the kernel transport uses the unscaled relative
-    %   electron density cube.
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
     % Copyright 2026 the matRad development team.

@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstring>
 #include <vector>
 
 #ifdef _OPENMP
@@ -290,6 +291,22 @@ void runMex(int nrhs, const mxArray* prhs[], mxArray* plhs[], mwSize numDims, co
 
 void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
 {
+    if (nrhs == 1 && mxIsChar(prhs[0])) {
+        char cmd[16];
+        if (mxGetString(prhs[0], cmd, sizeof(cmd)) == 0 && std::strcmp(cmd, "unlock") == 0) {
+            if (mexIsLocked()) {
+                mexUnlock();
+            }
+            return;
+        }
+    }
+
+#if defined(_MSC_VER) && defined(_OPENMP)
+    if (!mexIsLocked()) {
+        mexLock();
+    }
+#endif
+
     if (nrhs < 6 || nrhs > 8) {
         mexErrMsgIdAndTxt("matRad:collapsedConeMex:nrhs", "Six to eight inputs required.");
     }

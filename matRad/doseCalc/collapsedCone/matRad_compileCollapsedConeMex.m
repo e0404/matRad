@@ -65,7 +65,7 @@ sourceFile = fullfile(sourceFolder, 'matRad_collapsedConeMex.cpp');
 currDir = pwd;
 cleaner = onCleanup(@() cd(currDir));
 cd(dest);
-clear('matRad_collapsedConeMex');
+matRad_clearCollapsedConeMex();
 
 try
     switch compiler
@@ -93,6 +93,17 @@ if ~success
                           'If your compiler is newer than the one supported by MATLAB, try staticRuntime = true.'], msg);
 end
 
+end
+
+function matRad_clearCollapsedConeMex()
+if exist('matRad_collapsedConeMex', 'file') == 3
+    try
+        matRad_collapsedConeMex('unlock');
+    catch
+        % Ignore if an older binary without the unlock command is loaded
+    end
+end
+clear('matRad_collapsedConeMex');
 end
 
 function [compiler, flags] = matRad_collapsedConeMexFlags(useOpenMP, staticRuntime)
@@ -133,7 +144,7 @@ end
 end
 
 function [success, msg] = matRad_testCollapsedConeMex()
-clear('matRad_collapsedConeMex');
+matRad_clearCollapsedConeMex();
 msg = '';
 try
     dose = matRad_collapsedConeMex(ones(2, 2, 2), ones(2, 2, 2), [1 1 1], [0; 0; 1], 1, 1);
