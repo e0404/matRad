@@ -80,6 +80,44 @@ doseBatched = matRad_collapsedConeTransportBatched(terma, rho, voxelSize, dirs, 
 assertEqual(size(doseBatched), size(terma));
 assertElementsAlmostEqual(doseBatched, doseRef, 'absolute', 1e-12 * max(doseRef(:)));
 
+function test_batchedSinglePrecision
+[terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
+doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], [5 -3 7]);
+doseSingle = matRad_collapsedConeTransportBatched(single(terma), single(rho), voxelSize, dirs, [wA; wB], [aA; aB], [5 -3 7]);
+assertTrue(isa(doseSingle, 'single'));
+assertEqual(size(doseSingle), size(terma));
+assertElementsAlmostEqual(double(doseSingle), doseRef, 'absolute', 1e-5 * max(doseRef(:)));
+
+function test_batchedGpuArray
+if ~helper_gpuAvailable()
+    moxunit_throw_test_skipped_exception('No GPU available.');
+end
+[terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
+wB(1:3:end) = 0;
+doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], [5 -3 7]);
+
+doseGpu = matRad_collapsedConeTransportBatched(gpuArray(terma), gpuArray(rho), voxelSize, dirs, [wA; wB], [aA; aB], [5 -3 7]);
+assertTrue(isa(doseGpu, 'gpuArray'));
+assertEqual(matRad_underlyingTypeCompat(doseGpu), 'double');
+assertElementsAlmostEqual(gather(doseGpu), doseRef, 'absolute', 1e-12 * max(doseRef(:)));
+
+% the device follows either input
+doseGpu = matRad_collapsedConeTransportBatched(terma, gpuArray(rho), voxelSize, dirs, [wA; wB], [aA; aB], [5 -3 7]);
+assertTrue(isa(doseGpu, 'gpuArray'));
+assertElementsAlmostEqual(gather(doseGpu), doseRef, 'absolute', 1e-12 * max(doseRef(:)));
+
+doseGpu = matRad_collapsedConeTransportBatched(gpuArray(single(terma)), gpuArray(single(rho)), voxelSize, dirs, [wA; wB], [aA; aB], [5 -3 7]);
+assertEqual(matRad_underlyingTypeCompat(doseGpu), 'single');
+assertElementsAlmostEqual(double(gather(doseGpu)), doseRef, 'absolute', 1e-5 * max(doseRef(:)));
+
+function tf = helper_gpuAvailable()
+tf = false;
+try
+    tf = license('test', 'Distrib_Computing_Toolbox') && gpuDeviceCount > 0;
+catch
+    tf = false;
+end
+
 function test_batchedInvalidKernelSize
 [terma, rho, voxelSize, dirs, wA, aA] = helper_heterogeneousInput();
 assertExceptionThrown(@() matRad_collapsedConeTransportBatched(terma, rho, voxelSize, dirs, wA(1:3), aA(1:3)));
