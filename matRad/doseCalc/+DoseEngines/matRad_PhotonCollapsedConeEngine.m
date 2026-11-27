@@ -41,6 +41,13 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
     %   [1] Ahnesjo, Med. Phys. 16, 577 (1989)
     %   [2] Bortfeld, Schlegel, Rhein, Med. Phys. 20, 311 (1993)
     %
+    %   Limitations: the spectral hardening of the TERMA is approximated by a
+    %   depth dependent effective attenuation coefficient (no off-axis
+    %   softening, no spectral kernel) and the kernel is computed in water
+    %   and scaled with the relative electron density. For range uncertainty
+    %   scenarios, the radiological depth scaling is applied to the TERMA
+    %   calculation, whereas the kernel transport uses the unscaled relative
+    %   electron density cube.
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
     % Copyright 2026 the matRad development team.
@@ -172,7 +179,10 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
                 rho(~isfinite(rho) | rho < 0) = 0;
                 this.densityCubes{s} = cast(reshape(rho, dij.doseGrid.dimensions), this.precision);
             end
-
+            if this.multScen.totNumRangeScen > 1
+                matRad_cfg.dispInfo(['Collapsed cone engine: range scenarios scale the radiological depth ' ...
+                                     'for TERMA calculation, while kernel transport uses unscaled densities.\n']);
+            end
             this.mexAvailable = this.useMex && exist('matRad_collapsedConeMex', 'file') == 3;
             if this.useMex && ~this.mexAvailable
                 matRad_cfg.dispWarning(['matRad_collapsedConeMex is not compiled, using the slower MATLAB implementation. ' ...
