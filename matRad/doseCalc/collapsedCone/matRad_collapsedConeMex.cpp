@@ -7,8 +7,8 @@
  *   dose = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, weights, att, origin, numThreads)
  *
  * input:
- *   terma:       3D double array of TERMA
- *   rho:         3D double array of relative electron densities (same size)
+ *   terma:       3D single or double array of TERMA
+ *   rho:         3D single or double array of relative electron densities (same size and class as terma)
  *   voxelSize:   voxel size along the three array dimensions [mm]
  *   dirs:        3 x nDirs unit transport directions in array axes
  *   weights:     nComponents x nDirs kernel weights of the exponential
@@ -22,7 +22,7 @@
  *   numThreads:  (optional) number of OpenMP threads, 0 = default
  *
  * output:
- *   dose:        3D double array of deposited dose (same size as terma)
+ *   dose:        3D array of deposited dose (same size and class as terma)
  *
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
@@ -52,50 +52,55 @@ namespace {
 
 const long maxComponents = 8;
 
+template <typename T>
 struct Component {
-    double weight;
-    double att;
+    T weight;
+    T att;
 };
 
+template <typename T>
 struct Grid {
     long n[3];
-    double s[3];
+    T s[3];
     long origin[3];
 };
 
-inline void depositStep(double dt, double t, const Component& c, double& p, double& d)
+template <typename T>
+inline void depositStep(T dt, T t, const Component<T>& c, T& p, T& d)
 {
-    if (c.weight == 0.0) {
+    if (c.weight == T(0)) {
         return;
     }
-    const double x = c.att * dt;
-    double g;
-    double oneMinusE;
-    if (x > 0.0) {
+    const T x = c.att * dt;
+    T g;
+    T oneMinusE;
+    if (x > T(0)) {
         oneMinusE = -std::expm1(-x);
         g = oneMinusE / x;
     } else {
-        oneMinusE = 0.0;
-        g = 1.0;
+        oneMinusE = T(0);
+        g = T(1);
     }
-    const double source = t * c.weight;
-    d += p * g + source * (1.0 - g);
-    p = p * (1.0 - oneMinusE) + source * oneMinusE;
+    const T source = t * c.weight;
+    d += p * g + source * (T(1) - g);
+    p = p * (T(1) - oneMinusE) + source * oneMinusE;
 }
 
-inline long roundShift(double x)
+template <typename T>
+inline long roundShift(T x)
 {
-    return static_cast<long>(std::floor(x + 0.5));
+    return static_cast<long>(std::floor(x + T(0.5)));
 }
 
-void transportDirection(const double* terma, const double* rho, double* dose, const Grid& grid, const double dir[3],
-                        const Component* comps, long numComps)
+template <typename T>
+void transportDirection(const T* terma, const T* rho, T* dose, const Grid<T>& grid, const T dir[3],
+                        const Component<T>* comps, long numComps)
 {
-    double flow[maxComponents];
+    T flow[maxComponents];
     int k = 0;
-    double best = -1.0;
+    T best = T(-1);
     for (int ax = 0; ax < 3; ++ax) {
-        const double r = std::fabs(dir[ax]) / grid.s[ax];
+        const T r = std::fabs(dir[ax]) / grid.s[ax];
         if (r > best) {
             best = r;
             k = ax;
@@ -108,14 +113,14 @@ void transportDirection(const double* terma, const double* rho, double* dose, co
     const long n1 = grid.n[t1];
     const long n2 = grid.n[t2];
 
-    const double step = grid.s[k] / std::fabs(dir[k]);
-    const double sigma1 = dir[t1] * grid.s[k] / (dir[k] * grid.s[t1]);
-    const double sigma2 = dir[t2] * grid.s[k] / (dir[k] * grid.s[t2]);
+    const T step = grid.s[k] / std::fabs(dir[k]);
+    const T sigma1 = dir[t1] * grid.s[k] / (dir[k] * grid.s[t1]);
+    const T sigma2 = dir[t2] * grid.s[k] / (dir[k] * grid.s[t2]);
 
     std::vector<long> sh1(nk);
     std::vector<long> sh2(nk);
     for (long p = 0; p < nk; ++p) {
-        const double globalPlane = static_cast<double>(p + grid.origin[k]);
+        const T globalPlane = static_cast<T>(p + grid.origin[k]);
         sh1[p] = roundShift(globalPlane * sigma1) - grid.origin[t1];
         sh2[p] = roundShift(globalPlane * sigma2) - grid.origin[t2];
     }
@@ -124,12 +129,12 @@ void transportDirection(const double* terma, const double* rho, double* dose, co
     const long minLine2 = -*std::max_element(sh2.begin(), sh2.end());
     const long maxLine2 = n2 - 1 - *std::min_element(sh2.begin(), sh2.end());
 
-    const bool forward = dir[k] > 0.0;
+    const bool forward = dir[k] > T(0);
 
     for (long j0 = minLine2; j0 <= maxLine2; ++j0) {
         for (long i0 = minLine1; i0 <= maxLine1; ++i0) {
             for (long c = 0; c < numComps; ++c) {
-                flow[c] = 0.0;
+                flow[c] = T(0);
             }
             for (long q = 0; q < nk; ++q) {
                 const long p = forward ? q : nk - 1 - q;
@@ -139,9 +144,21 @@ void transportDirection(const double* terma, const double* rho, double* dose, co
                     continue;
                 }
                 const long ix = p * stride[k] + i * stride[t1] + j * stride[t2];
-                const double dt = step * rho[ix];
-                const double t = terma[ix];
-                double d = 0.0;
+                const T t = terma[ix];
+                if (t == T(0)) {
+                    bool zeroFlow = true;
+                    for (long c = 0; c < numComps; ++c) {
+                        if (flow[c] != T(0)) {
+                            zeroFlow = false;
+                            break;
+                        }
+                    }
+                    if (zeroFlow) {
+                        continue;
+                    }
+                }
+                const T dt = step * rho[ix];
+                T d = T(0);
                 for (long c = 0; c < numComps; ++c) {
                     depositStep(dt, t, comps[c], flow[c], d);
                 }
@@ -151,7 +168,8 @@ void transportDirection(const double* terma, const double* rho, double* dose, co
     }
 }
 
-void directionComponents(const double* weights, const double* att, long d, long numComps, Component* comps)
+template <typename T>
+void directionComponents(const T* weights, const T* att, long d, long numComps, Component<T>* comps)
 {
     for (long c = 0; c < numComps; ++c) {
         comps[c].weight = weights[d * numComps + c];
@@ -159,8 +177,9 @@ void directionComponents(const double* weights, const double* att, long d, long 
     }
 }
 
-void transportAll(const double* terma, const double* rho, double* dose, const Grid& grid, const double* dirs,
-                  const double* weights, const double* att, long numComps, long numDirs, std::size_t numVox,
+template <typename T>
+void transportAll(const T* terma, const T* rho, T* dose, const Grid<T>& grid, const T* dirs,
+                  const T* weights, const T* att, long numComps, long numDirs, std::size_t numVox,
                   int numThreads)
 {
 #ifdef _OPENMP
@@ -169,12 +188,12 @@ void transportAll(const double* terma, const double* rho, double* dose, const Gr
     }
     numThreads = static_cast<int>(std::min<long>(numThreads, std::max<long>(numDirs, 1)));
     if (numThreads > 1) {
-        std::vector<std::vector<double> > buffers(numThreads);
+        std::vector<std::vector<T> > buffers(numThreads);
 #pragma omp parallel num_threads(numThreads)
         {
             const int tid = omp_get_thread_num();
-            buffers[tid].assign(numVox, 0.0);
-            Component comps[maxComponents];
+            buffers[tid].assign(numVox, T(0));
+            Component<T> comps[maxComponents];
 #pragma omp for schedule(static)
             for (long d = 0; d < numDirs; ++d) {
                 directionComponents(weights, att, d, numComps, comps);
@@ -194,11 +213,61 @@ void transportAll(const double* terma, const double* rho, double* dose, const Gr
 #else
     (void)numThreads;
 #endif
-    Component comps[maxComponents];
+    Component<T> comps[maxComponents];
     for (long d = 0; d < numDirs; ++d) {
         directionComponents(weights, att, d, numComps, comps);
         transportDirection(terma, rho, dose, grid, dirs + 3 * d, comps, numComps);
     }
+}
+
+template <typename T>
+std::vector<T> readNumericVector(const mxArray* arr)
+{
+    const std::size_t n = mxGetNumberOfElements(arr);
+    std::vector<T> out(n);
+    if (mxIsDouble(arr)) {
+        const double* ptr = static_cast<const double*>(mxGetData(arr));
+        for (std::size_t i = 0; i < n; ++i) {
+            out[i] = static_cast<T>(ptr[i]);
+        }
+    } else {
+        const float* ptr = static_cast<const float*>(mxGetData(arr));
+        for (std::size_t i = 0; i < n; ++i) {
+            out[i] = static_cast<T>(ptr[i]);
+        }
+    }
+    return out;
+}
+
+template <typename T>
+void runMex(int nrhs, const mxArray* prhs[], mxArray* plhs[], mwSize numDims, const mwSize* dims,
+            std::size_t numVox, long numDirs, long numComps, int numThreads)
+{
+    Grid<T> grid = {{1, 1, 1}, {T(0), T(0), T(0)}, {0, 0, 0}};
+    for (mwSize d = 0; d < numDims; ++d) {
+        grid.n[d] = static_cast<long>(dims[d]);
+    }
+    const std::vector<T> s = readNumericVector<T>(prhs[2]);
+    for (int d = 0; d < 3; ++d) {
+        grid.s[d] = s[d];
+    }
+    if (nrhs > 6 && !mxIsEmpty(prhs[6])) {
+        const std::vector<double> o = readNumericVector<double>(prhs[6]);
+        for (int d = 0; d < 3; ++d) {
+            grid.origin[d] = static_cast<long>(o[d]);
+        }
+    }
+
+    const std::vector<T> dirs = readNumericVector<T>(prhs[3]);
+    const std::vector<T> weights = readNumericVector<T>(prhs[4]);
+    const std::vector<T> att = readNumericVector<T>(prhs[5]);
+
+    const T* termaPtr = static_cast<const T*>(mxGetData(prhs[0]));
+    const T* rhoPtr = static_cast<const T*>(mxGetData(prhs[1]));
+    T* dosePtr = static_cast<T*>(mxGetData(plhs[0]));
+
+    transportAll<T>(termaPtr, rhoPtr, dosePtr, grid, dirs.data(), weights.data(), att.data(),
+                    numComps, numDirs, numVox, numThreads);
 }
 
 }
@@ -212,19 +281,20 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
         mexErrMsgIdAndTxt("matRad:collapsedConeMex:nlhs", "One output allowed.");
     }
     for (int i = 0; i < nrhs; ++i) {
-        if (!mxIsDouble(prhs[i]) || mxIsComplex(prhs[i]) || mxIsSparse(prhs[i])) {
-            mexErrMsgIdAndTxt("matRad:collapsedConeMex:type", "All inputs must be real, full double arrays.");
+        if ((!mxIsDouble(prhs[i]) && !mxIsSingle(prhs[i])) || mxIsComplex(prhs[i]) || mxIsSparse(prhs[i])) {
+            mexErrMsgIdAndTxt("matRad:collapsedConeMex:type", "All inputs must be real, full single or double arrays.");
         }
+    }
+
+    const bool isSingle = mxIsSingle(prhs[0]);
+    if (mxIsSingle(prhs[1]) != isSingle) {
+        mexErrMsgIdAndTxt("matRad:collapsedConeMex:precisionMismatch", "TERMA and density must have the same precision.");
     }
 
     const mwSize numDims = mxGetNumberOfDimensions(prhs[0]);
     const mwSize* dims = mxGetDimensions(prhs[0]);
     if (numDims > 3) {
         mexErrMsgIdAndTxt("matRad:collapsedConeMex:dims", "TERMA must be a 3D array.");
-    }
-    Grid grid = {{1, 1, 1}, {0.0, 0.0, 0.0}, {0, 0, 0}};
-    for (mwSize d = 0; d < numDims; ++d) {
-        grid.n[d] = static_cast<long>(dims[d]);
     }
     const std::size_t numVox = mxGetNumberOfElements(prhs[0]);
     if (mxGetNumberOfElements(prhs[1]) != numVox) {
@@ -246,26 +316,20 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
         mexErrMsgIdAndTxt("matRad:collapsedConeMex:kernel",
                           "Kernel weights and attenuation coefficients must be nComponents x nDirs arrays.");
     }
+    if (nrhs > 6 && !mxIsEmpty(prhs[6]) && mxGetNumberOfElements(prhs[6]) != 3) {
+        mexErrMsgIdAndTxt("matRad:collapsedConeMex:origin", "Origin must have three elements.");
+    }
 
-    const double* s = mxGetPr(prhs[2]);
-    for (int d = 0; d < 3; ++d) {
-        grid.s[d] = s[d];
-    }
-    if (nrhs > 6 && !mxIsEmpty(prhs[6])) {
-        if (mxGetNumberOfElements(prhs[6]) != 3) {
-            mexErrMsgIdAndTxt("matRad:collapsedConeMex:origin", "Origin must have three elements.");
-        }
-        const double* o = mxGetPr(prhs[6]);
-        for (int d = 0; d < 3; ++d) {
-            grid.origin[d] = static_cast<long>(o[d]);
-        }
-    }
     int numThreads = 0;
-    if (nrhs > 7) {
+    if (nrhs > 7 && !mxIsEmpty(prhs[7])) {
         numThreads = static_cast<int>(mxGetScalar(prhs[7]));
     }
 
-    plhs[0] = mxCreateNumericArray(numDims, dims, mxDOUBLE_CLASS, mxREAL);
-    transportAll(mxGetPr(prhs[0]), mxGetPr(prhs[1]), mxGetPr(plhs[0]), grid, mxGetPr(prhs[3]), mxGetPr(prhs[4]),
-                 mxGetPr(prhs[5]), numComps, numDirs, numVox, numThreads);
+    if (isSingle) {
+        plhs[0] = mxCreateNumericArray(numDims, dims, mxSINGLE_CLASS, mxREAL);
+        runMex<float>(nrhs, prhs, plhs, numDims, dims, numVox, numDirs, numComps, numThreads);
+    } else {
+        plhs[0] = mxCreateNumericArray(numDims, dims, mxDOUBLE_CLASS, mxREAL);
+        runMex<double>(nrhs, prhs, plhs, numDims, dims, numVox, numDirs, numComps, numThreads);
+    }
 }

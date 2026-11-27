@@ -167,10 +167,10 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
 
             this.densityCubes = cell(1, numel(this.cubeWED));
             for s = 1:numel(this.cubeWED)
-                rho = matRad_interp3(dij.ctGrid.x, dij.ctGrid.y, dij.ctGrid.z, double(this.cubeWED{s}), ...
+                rho = matRad_interp3(dij.ctGrid.x, dij.ctGrid.y, dij.ctGrid.z, cast(this.cubeWED{s}, this.precision), ...
                                      dij.doseGrid.x, dij.doseGrid.y', dij.doseGrid.z, 'linear', 'nearest');
                 rho(~isfinite(rho) | rho < 0) = 0;
-                this.densityCubes{s} = reshape(rho, dij.doseGrid.dimensions);
+                this.densityCubes{s} = cast(reshape(rho, dij.doseGrid.dimensions), this.precision);
             end
 
             this.mexAvailable = this.useMex && exist('matRad_collapsedConeMex', 'file') == 3;
@@ -295,7 +295,7 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
                         if isempty(a)
                             scenIdx(end + 1) = fullScenIdx; %#ok<AGROW>
                             a = numel(scenIdx);
-                            acc(a).terma = zeros(numVox, 1);
+                            acc(a).terma = zeros(numVox, 1, this.precision);
                             acc(a).mask = false(numVox, 1);
                             acc(a).boxLo = inf(1, 3);
                             acc(a).boxHi = -inf(1, 3);
@@ -342,7 +342,7 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             % bixel and returns the dose on the ray voxels
             terma = this.rayTerma(currRay);
             if ~any(terma > 0)
-                dose = zeros(numel(currRay.ix), 1);
+                dose = zeros(numel(currRay.ix), 1, this.precision);
                 return
             end
             [boxLo, boxHi] = this.sourceBox(currRay.ix, terma);
@@ -353,8 +353,8 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             % TERMA of a bixel on the voxels of its ray
             sigma = this.penumbraFWHM / sqrt(8 * log(2));
             terma = this.calcTerma(currRay.SAD, this.hardeningMu0, sigma, currRay.bixelWidth, ...
-                                   this.machine.data.primaryFluence, currRay.rayPos_bev, double(currRay.radDepths), ...
-                                   double(currRay.geoDepths), double(currRay.isoLatDists), this.hardeningBeta);
+                                   this.machine.data.primaryFluence, currRay.rayPos_bev, currRay.radDepths, ...
+                                   currRay.geoDepths, currRay.isoLatDists, this.hardeningBeta);
         end
 
         function [boxLo, boxHi] = sourceBox(this, ix, terma)
@@ -379,14 +379,14 @@ classdef matRad_PhotonCollapsedConeEngine < DoseEngines.matRad_PencilBeamEngineA
             boxDims = boxHi - boxLo + 1;
 
             [inSource, sourceLocal] = this.boxIndices(sourceIx, dims, boxLo, boxHi);
-            termaBox = zeros(boxDims);
+            termaBox = zeros(boxDims, 'like', terma);
             termaBox(sourceLocal) = terma(inSource);
             rhoBox = rho(boxLo(1):boxHi(1), boxLo(2):boxHi(2), boxLo(3):boxHi(3));
 
             doseBox = this.transport(termaBox, rhoBox, res, dirs, this.directionWeights, boxLo - 1);
 
             [isOutInBox, outLocal] = this.boxIndices(outIx, dims, boxLo, boxHi);
-            dose = zeros(numel(outIx), 1);
+            dose = zeros(numel(outIx), 1, 'like', doseBox);
             dose(isOutInBox) = this.normalizationFactor * doseBox(outLocal);
 
             if ~this.ignoreInvalidValues && any(~isfinite(dose) | dose < 0)
