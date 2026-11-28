@@ -142,6 +142,52 @@ The following properties of the pln struct can additionally be adjusted. If they
 
     Specifies the ssd density threshold. Default: *0.05* rel.
 
+The following fields configure the collapsed cone engine (``pln.propDoseCalc.engine = 'CCC'``, :class:`DoseEngines.matRad_PhotonCollapsedConeEngine`):
+
+**pln.propDoseCalc.numPolarAngles**
+
+    Number of polar cone bins, must divide 48. Default: *12*.
+
+**pln.propDoseCalc.numAzimuthalAngles**
+
+    Number of azimuthal cones per polar bin. Default: *8*.
+
+**pln.propDoseCalc.scatterCutOff**
+
+    Lateral margin of the transport sub-volume around the TERMA of each bixel; dose is stored within the maximum of this value and the geometric lateral cut-off. Default: *150* mm.
+
+**pln.propDoseCalc.normalizationDepth**
+
+    Depth of the absolute dose normalization to the machine depth dose. Default: *100* mm.
+
+**pln.propDoseCalc.hardeningCorrection**
+
+    Use the fitted depth dependent effective attenuation of the TERMA. Default: *true*.
+
+**pln.propDoseCalc.kernelTilt**
+
+    Polar axis of the cones, ``'beam'`` (beam axis) or ``'ray'`` (ray of each bixel). Default: *'beam'*.
+
+**pln.propDoseCalc.kernelFile**
+
+    Kernel data file. Default: the 6 MV water kernel in ``matRad/doseCalc/collapsedCone``.
+
+**pln.propDoseCalc.numScatterExponentials**
+
+    Number of exponential terms of the scatter kernel; the kernel is refitted if it differs from the stored fit. Default: *1*.
+
+**pln.propDoseCalc.beamForward**
+
+    Forward dose with a single transport of the weighted TERMA of all bixels of a beam (only with ``kernelTilt = 'beam'``). Default: *true*.
+
+**pln.propDoseCalc.useMex** / **pln.propDoseCalc.numThreads**
+
+    Use the compiled transport if available, and the number of OpenMP threads (*0*: default). Default: *true* / *0*.
+
+**pln.propDoseCalc.enableDijSampling** / **pln.propDoseCalc.dijSampling**
+
+    Lateral dij sampling as for the SVD pencil beam engine, see :func:`matRad_sampleDij`. Default: *true*.
+
 **pln.propOpt.defaultMaxIter**
 
     Specifies the number of maximum iterations. Default: *500*.

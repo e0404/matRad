@@ -3,12 +3,12 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017-2026 the matRad development team.
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -53,7 +53,7 @@ disp(cst);
 % alphaX and betaX correspond to the tissue's photon-radiosensitivity
 % parameter of the linear quadratic model. These parameter are required for
 % biological treatment planning using a variable RBE. Let's output the meta
-% optimization parameter of the target, which is stored in the thrid row:
+% optimization parameter of the target, which is stored in the third row:
 
 ixTarget = 3;
 disp(cst{ixTarget, 5});
@@ -82,7 +82,7 @@ disp(cst{ixTarget, 6});
 % will look for 'photons_Generic.mat' in our root directory and will use
 % the data provided in there for dose calculation.
 % The number of fractions is set to 30. Internally, matRad considers the
-% fraction dose for optimization, however, objetives and constraints are
+% fraction dose for optimization, however, objectives and constraints are
 % defined for the entire treatment.
 
 pln.radiationMode   = 'photons';
@@ -168,6 +168,39 @@ figure;
 imagesc(resultGUI.physicalDose(:, :, slice));
 colorbar;
 colormap(jet);
+
+%% Recalculation with the Collapsed Cone Engine
+% The plan above was optimized on a pencil beam dose influence matrix. To
+% check how the dose model affects the result, we recalculate the very same
+% bixel weights with the collapsed cone convolution/superposition engine
+% ('CCC'). It transports the scattered energy through the actual electron
+% densities instead of scaling a water kernel with the radiological depth.
+% Only a forward calculation is needed, so no new optimization is done.
+% The engine uses a compiled MEX file if available and falls back to a
+% slower MATLAB implementation otherwise.
+plnCCC = pln;
+plnCCC.propDoseCalc.engine = 'CCC';
+resultCCC = matRad_calcDoseForward(ct, cst, stf, plnCCC, resultGUI.w);
+
+%%
+% Let's plot the difference between the pencil beam and the collapsed cone
+% dose in the iso-center slice. Positive values mean that the pencil beam
+% engine computes a higher dose.
+pbCccDiff = resultGUI.physicalDose - resultCCC.physicalDose;
+figure;
+title('pencil beam - collapsed cone');
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', pbCccDiff, 'plane', 3, 'slice', slice, 'contourColorMap', colorcube);
+
+%%
+% Finally we compare the dose volume histograms of both dose calculations.
+% Solid lines show the pencil beam dose, dashed lines the collapsed cone
+% dose.
+dvhPB  = matRad_calcDVH(cst, resultGUI.physicalDose);
+dvhCCC = matRad_calcDVH(cst, resultCCC.physicalDose);
+figure;
+matRad_showDVH(dvhPB, cst, pln, 'axesHandle', gca, 'LineStyle', '-');
+matRad_showDVH(dvhCCC, cst, pln, 'axesHandle', gca, 'LineStyle', '--', 'plotLegend', false);
+title('DVH: pencil beam (solid) vs. collapsed cone (dashed)');
 
 %% Now let's create another treatment plan but this time use a coarser beam spacing.
 % Instead of 40 degree spacing use a 50 degree geantry beam spacing

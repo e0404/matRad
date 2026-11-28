@@ -38,6 +38,17 @@ The base class of the engine hierarchy and the FRED engine live in class folders
    :show-inheritance:
    :private-members:
 
+Collapsed Cone
+--------------
+
+Transport, kernel fit and compilation helper of the collapsed cone convolution engine :class:`DoseEngines.matRad_PhotonCollapsedConeEngine`.
+
+.. automodule:: matRad.doseCalc.collapsedCone
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
 FRED
 ----
 

@@ -86,6 +86,42 @@ The dose delivered to a certain voxel *i* from bixel *j* is stored as dose influ
 
 An experimental Monte Carlo dose engine based on a the reimplementation `ompMC <https://github.com/edoerner/ompMC>`_ of the `EGSnrc <https://www.irs.inms.nrc.ca/EGSnrc/>`_ Monte Carlo code by Edgardo Doerner is available in :class:`DoseEngines.matRad_PhotonOmpMCEngine` class. It is not yet fully functional, especially the source characteristics are not fully compatible with the machine files / base data.
 
+Collapsed Cone Convolution
+##########################
+
+The collapsed cone convolution/superposition engine :class:`DoseEngines.matRad_PhotonCollapsedConeEngine` (short name ``'CCC'``) follows `Ahnesjö (1989) Medical Physics <https://doi.org/10.1118/1.596360>`_. It handles lateral electron and scatter disequilibrium in heterogeneous tissue, e.g. in and behind lung, considerably better than the pencil beam engine, while being much faster than Monte Carlo. It computes both dose influence matrices and forward doses with the same per-bixel algorithm, so that ``dij.physicalDose{1} * w`` equals the forward dose when the dij sampling is disabled.
+
+For each bixel the engine
+
+1. computes the TERMA on the dose grid voxels found by the ray tracer: rectangular bixel fluence convolved with the machine penumbra, multiplied by the primary fluence profile ``machine.data.primaryFluence``, the inverse square law and the attenuation along the radiological depth,
+2. transports the TERMA with collapsed cones (default 12 polar x 8 azimuthal directions, polar axis along the beam axis) on a sub-volume of the dose grid that extends ``scatterCutOff`` around the TERMA. For each direction the volume is traversed plane by plane on a sheared lattice anchored to the dose grid, so that every voxel is visited exactly once per direction, and the recursion of Ahnesjö is applied to the primary and scatter kernel components with density scaled step lengths (relative electron density of the ray tracing, interpolated on the dose grid),
+3. returns the dose on the voxels within ``max(geometricLateralCutOff, scatterCutOff)`` around the ray, optionally reduced by the lateral dij sampling shared with the SVD engine (:func:`matRad_sampleDij`).
+
+For forward dose calculations with the default ``kernelTilt = 'beam'`` all bixels of a beam share the cone directions and the transport lattice. Since the transport is linear in the TERMA, the engine then accumulates the weighted TERMA of all bixels of a beam and runs a single transport per beam (``beamForward``, default *true*), which is much faster than the bixel by bixel calculation. Without the lateral cut-offs the result equals the dose influence matrix times the weights; with the cut-offs the beam level dose additionally contains the scatter of each bixel beyond ``scatterCutOff``.
+
+The polyenergetic 6 MV energy deposition kernel in water (``matRad/doseCalc/collapsedCone/matRad_collapsedConeKernel_6MV.mat``) was computed with EGSnrc/EDKnrc for nine energies between 0.25 and 6 MeV, combined with the TERMA weights of the Mohan 6 MV spectrum and fitted per polar bin with one exponential for the primary and one for the scatter component (:func:`matRad_fitCollapsedConeKernel`). The scripts that generate the kernel are in ``tools/collapsedConeKernels``. The monoenergetic kernels are stored in the file as well.
+
+The absolute dose is normalized at initialization so that the broad field central axis depth dose in water matches the analytical depth dose of the SVD pencil beam base data of the machine at ``normalizationDepth``. With ``hardeningCorrection`` (default) the TERMA uses the effective attenuation :math:`\mu(d) = \mu_0 / (1 + \beta d)` of the radiological depth :math:`d`, with :math:`\mu_0` and :math:`\beta` fitted to the same machine depth dose between 10 and 300 mm, which approximates the spectral hardening of the beam.
+
+The transport is implemented as C++ mex file ``matRad_collapsedConeMex`` with optional OpenMP parallelization, and as MATLAB/Octave reference :func:`matRad_collapsedConeTransport` that is used automatically, with identical results, when the mex file is not compiled. The mex file is compiled with
+
+.. code-block:: matlab
+
+    matRad_compileCollapsedConeMex();                         % mex (MATLAB) or mkoctfile --mex (Octave), with OpenMP
+    matRad_compileCollapsedConeMex('useOpenMP', false);       % without OpenMP
+    matRad_compileCollapsedConeMex('staticRuntime', true);    % MATLAB on Linux: link libstdc++/libgcc statically
+
+The static C++ runtime is needed when the system compiler is newer than the one supported by the MATLAB release.
+
+The engine specific options in ``pln.propDoseCalc`` are listed in the :ref:`pln documentation <pln>`. Known limitations:
+
+* the spectral hardening is approximated by the effective attenuation above; there is no off-axis softening and no spectral kernel,
+* the kernel is computed in water and scaled with the relative electron density,
+* with ``kernelTilt = 'ray'`` the transport lattice differs between bixels and the summed dose shows ray effect aliasing; the default ``'beam'`` tilt avoids it, but some residual ray effect remains for narrow fields in low density tissue,
+* the computation time grows with ``scatterCutOff``; smaller values underestimate the scatter dose of large fields. Dose influence matrices are computed bixel by bixel (about 1 s per bixel on a 3 mm grid with the default settings).
+
+The script ``tools/matRad_validatePhotonCollapsedCone.m`` compares the engine with the SVD pencil beam engine and ompMC in water and in a water/lung/water slab phantom, and ``matRad_example23_photonCollapsedCone`` shows its use in a treatment plan.
+
 Base data / Machine
 ###################
 
