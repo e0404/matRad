@@ -169,6 +169,39 @@ imagesc(resultGUI.physicalDose(:, :, slice));
 colorbar;
 colormap(jet);
 
+%% Recalculation with the Collapsed Cone Engine
+% The plan above was optimized on a pencil beam dose influence matrix. To
+% check how the dose model affects the result, we recalculate the very same
+% bixel weights with the collapsed cone convolution/superposition engine
+% ('CCC'). It transports the scattered energy through the actual electron
+% densities instead of scaling a water kernel with the radiological depth.
+% Only a forward calculation is needed, so no new optimization is done.
+% The engine uses a compiled MEX file if available and falls back to a
+% slower MATLAB implementation otherwise.
+plnCCC = pln;
+plnCCC.propDoseCalc.engine = 'CCC';
+resultCCC = matRad_calcDoseForward(ct, cst, stf, plnCCC, resultGUI.w);
+
+%%
+% Let's plot the difference between the pencil beam and the collapsed cone
+% dose in the iso-center slice. Positive values mean that the pencil beam
+% engine computes a higher dose.
+pbCccDiff = resultGUI.physicalDose - resultCCC.physicalDose;
+figure;
+title('pencil beam - collapsed cone');
+matRad_plotSlice(ct, 'axesHandle', gca, 'cst', cst, 'cubeIdx', 1, 'dose', pbCccDiff, 'plane', 3, 'slice', slice, 'contourColorMap', colorcube);
+
+%%
+% Finally we compare the dose volume histograms of both dose calculations.
+% Solid lines show the pencil beam dose, dashed lines the collapsed cone
+% dose.
+dvhPB  = matRad_calcDVH(cst, resultGUI.physicalDose);
+dvhCCC = matRad_calcDVH(cst, resultCCC.physicalDose);
+figure;
+matRad_showDVH(dvhPB, cst, pln, 'axesHandle', gca, 'LineStyle', '-');
+matRad_showDVH(dvhCCC, cst, pln, 'axesHandle', gca, 'LineStyle', '--', 'plotLegend', false);
+title('DVH: pencil beam (solid) vs. collapsed cone (dashed)');
+
 %% Now let's create another treatment plan but this time use a coarser beam spacing.
 % Instead of 40 degree spacing use a 50 degree geantry beam spacing
 pln.propStf.gantryAngles = [0:50:359];
