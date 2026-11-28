@@ -3,12 +3,12 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Copyright 2017-2026 the matRad development team.
-% 
-% This file is part of the matRad project. It is subject to the license 
-% terms in the LICENSE file found in the top-level directory of this 
-% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part 
-% of the matRad project, including this file, may be copied, modified, 
-% propagated, or distributed except according to the terms contained in the 
+%
+% This file is part of the matRad project. It is subject to the license
+% terms in the LICENSE file found in the top-level directory of this
+% distribution and at https://github.com/e0404/matRad/LICENSE.md. No part
+% of the matRad project, including this file, may be copied, modified,
+% propagated, or distributed except according to the terms contained in the
 % LICENSE file.
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -53,7 +53,7 @@ disp(cst);
 % alphaX and betaX correspond to the tissue's photon-radiosensitivity
 % parameter of the linear quadratic model. These parameter are required for
 % biological treatment planning using a variable RBE. Let's output the meta
-% optimization parameter of the target, which is stored in the thrid row:
+% optimization parameter of the target, which is stored in the third row:
 
 ixTarget = 3;
 disp(cst{ixTarget, 5});
@@ -82,7 +82,7 @@ disp(cst{ixTarget, 6});
 % will look for 'photons_Generic.mat' in our root directory and will use
 % the data provided in there for dose calculation.
 % The number of fractions is set to 30. Internally, matRad considers the
-% fraction dose for optimization, however, objetives and constraints are
+% fraction dose for optimization, however, objectives and constraints are
 % defined for the entire treatment.
 
 pln.radiationMode   = 'photons';
