@@ -207,3 +207,54 @@ function test_invalidKernelTilt
 [ct, cst, pln, stf] = helper_waterBox(12, 6, 4, 12);
 pln.propDoseCalc.kernelTilt = 'voxel';
 assertExceptionThrown(@() matRad_calcDoseInfluence(ct, cst, stf, pln));
+
+function test_multiScenarioDijMatchesSingleScenarios
+% Every scenario of a worst case dij (setup and range shifts) has to equal
+% the same scenario computed alone
+[ct, cst, pln, stf] = helper_waterBox(12, 6, 4, 12);
+ct.cubeHU{1}(5:6, :, :) = -700;
+model = matRad_WorstCaseScenarios(ct);
+pln.multScen = model;
+dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
+
+nominalIx = model.sub2scenIx(1, 1, 1);
+nominalDose = full(dij.physicalDose{nominalIx});
+isShift = any(model.isoShift ~= 0, 2);
+isRange = model.relRangeShift ~= 0 | model.absRangeShift ~= 0;
+assertTrue(any(isShift) && any(isRange));
+for s = 1:model.totNumScen
+    scenIx = model.scenNum2scenIx(s);
+    scenDose = full(dij.physicalDose{scenIx});
+    assertTrue(nnz(scenDose) > 0);
+    assertTrue(all(isfinite(scenDose(:))) && all(scenDose(:) >= 0));
+
+    pln.multScen = model.extractSingleScenario(s);
+    dijRef = matRad_calcDoseInfluence(ct, cst, stf, pln);
+    refDose = full(dijRef.physicalDose{1});
+    assertElementsAlmostEqual(scenDose, refDose, 'absolute', 1e-6 * max(refDose(:)));
+
+    if isShift(s) || isRange(s)
+        assertTrue(max(abs(scenDose(:) - nominalDose(:))) > 1e-3 * max(nominalDose(:)));
+    end
+end
+
+function test_multiCtScenarioBeamForward
+% The beam level forward path has to reproduce dij * w on every CT scenario
+[ct, cst, pln, stf] = helper_waterBox(12, 6, 4, 12);
+ct.numOfCtScen = 2;
+ct.cubeHU{2} = ct.cubeHU{1};
+ct.cubeHU{2}(5:6, :, :) = -700;
+cst(:, 4) = cellfun(@(c) repmat(c(1), 1, 2), cst(:, 4), 'UniformOutput', false);
+pln.multScen = matRad_NominalScenario(ct);
+pln.propDoseCalc.beamForward = true;
+pln.propDoseCalc.scatterCutOff = 1000;
+pln.propDoseCalc.geometricLateralCutOff = 1000;
+dij = matRad_calcDoseInfluence(ct, cst, stf, pln);
+w = linspace(0.5, 1.5, dij.totalNumOfBixels)';
+resultGUI = matRad_calcDoseForward(ct, cst, stf, pln, w);
+assertEqual(numel(resultGUI.phaseDose), 2);
+for ctScen = 1:2
+    doseDij = reshape(full(dij.physicalDose{ctScen} * w), dij.doseGrid.dimensions);
+    assertElementsAlmostEqual(resultGUI.phaseDose{ctScen}, doseDij, 'absolute', 1e-10 * max(doseDij(:)));
+end
+assertTrue(max(abs(resultGUI.phaseDose{2}(:) - resultGUI.phaseDose{1}(:))) > 1e-3 * max(resultGUI.phaseDose{1}(:)));
