@@ -59,10 +59,12 @@ struct Component {
     T att;
 };
 
-template <typename T>
+// The geometry (voxel sizes, directions and the lattice derived from them) is
+// kept in double for both precisions, so that single and double transports
+// follow the same lattice lines as the MATLAB implementations.
 struct Grid {
     std::ptrdiff_t n[3];
-    T s[3];
+    double s[3];
     std::ptrdiff_t origin[3];
 };
 
@@ -87,21 +89,20 @@ inline void depositStep(T dt, T t, const Component<T>& c, T& p, T& d)
     p = p * (T(1) - oneMinusE) + source * oneMinusE;
 }
 
-template <typename T>
-inline std::ptrdiff_t roundShift(T x)
+inline std::ptrdiff_t roundShift(double x)
 {
-    return static_cast<std::ptrdiff_t>(std::floor(x + T(0.5)));
+    return static_cast<std::ptrdiff_t>(std::floor(x + 0.5));
 }
 
 template <typename T>
-void transportDirection(const T* terma, const T* rho, T* dose, const Grid<T>& grid, const T dir[3],
+void transportDirection(const T* terma, const T* rho, T* dose, const Grid& grid, const double dir[3],
                         const Component<T>* comps, std::ptrdiff_t numComps)
 {
     T flow[maxComponents];
     int k = 0;
-    T best = T(-1);
+    double best = -1.0;
     for (int ax = 0; ax < 3; ++ax) {
-        const T r = std::fabs(dir[ax]) / grid.s[ax];
+        const double r = std::fabs(dir[ax]) / grid.s[ax];
         if (r > best) {
             best = r;
             k = ax;
@@ -114,14 +115,14 @@ void transportDirection(const T* terma, const T* rho, T* dose, const Grid<T>& gr
     const std::ptrdiff_t n1 = grid.n[t1];
     const std::ptrdiff_t n2 = grid.n[t2];
 
-    const T step = grid.s[k] / std::fabs(dir[k]);
-    const T sigma1 = dir[t1] * grid.s[k] / (dir[k] * grid.s[t1]);
-    const T sigma2 = dir[t2] * grid.s[k] / (dir[k] * grid.s[t2]);
+    const T step = static_cast<T>(grid.s[k] / std::fabs(dir[k]));
+    const double sigma1 = dir[t1] * grid.s[k] / (dir[k] * grid.s[t1]);
+    const double sigma2 = dir[t2] * grid.s[k] / (dir[k] * grid.s[t2]);
 
     std::vector<std::ptrdiff_t> sh1(nk);
     std::vector<std::ptrdiff_t> sh2(nk);
     for (std::ptrdiff_t p = 0; p < nk; ++p) {
-        const T globalPlane = static_cast<T>(p + grid.origin[k]);
+        const double globalPlane = static_cast<double>(p + grid.origin[k]);
         sh1[p] = roundShift(globalPlane * sigma1) - grid.origin[t1];
         sh2[p] = roundShift(globalPlane * sigma2) - grid.origin[t2];
     }
@@ -130,7 +131,7 @@ void transportDirection(const T* terma, const T* rho, T* dose, const Grid<T>& gr
     const std::ptrdiff_t minLine2 = -*std::max_element(sh2.begin(), sh2.end());
     const std::ptrdiff_t maxLine2 = n2 - 1 - *std::min_element(sh2.begin(), sh2.end());
 
-    const bool forward = dir[k] > T(0);
+    const bool forward = dir[k] > 0.0;
 
     for (std::ptrdiff_t j0 = minLine2; j0 <= maxLine2; ++j0) {
         for (std::ptrdiff_t i0 = minLine1; i0 <= maxLine1; ++i0) {
@@ -180,7 +181,7 @@ void directionComponents(const T* weights, const T* att, std::ptrdiff_t d, std::
 }
 
 template <typename T>
-void transportAll(const T* terma, const T* rho, T* dose, const Grid<T>& grid, const T* dirs,
+void transportAll(const T* terma, const T* rho, T* dose, const Grid& grid, const double* dirs,
                   const T* weights, const T* att, std::ptrdiff_t numComps, std::ptrdiff_t numDirs,
                   std::size_t numVox, int numThreads)
 {
@@ -245,13 +246,13 @@ template <typename T>
 void runMex(int nrhs, const mxArray* prhs[], mxArray* plhs[], mwSize numDims, const mwSize* dims,
             std::size_t numVox, std::ptrdiff_t numDirs, std::ptrdiff_t numComps, int numThreads)
 {
-    Grid<T> grid = {{1, 1, 1}, {T(0), T(0), T(0)}, {0, 0, 0}};
+    Grid grid = {{1, 1, 1}, {0.0, 0.0, 0.0}, {0, 0, 0}};
     for (mwSize d = 0; d < numDims; ++d) {
         grid.n[d] = static_cast<std::ptrdiff_t>(dims[d]);
     }
-    const std::vector<T> s = readNumericVector<T>(prhs[2]);
+    const std::vector<double> s = readNumericVector<double>(prhs[2]);
     for (int d = 0; d < 3; ++d) {
-        if (!std::isfinite(s[d]) || s[d] <= T(0)) {
+        if (!std::isfinite(s[d]) || s[d] <= 0.0) {
             mexErrMsgIdAndTxt("matRad:collapsedConeMex:voxelSize",
                               "Voxel size elements must be finite and strictly positive.");
         }
@@ -264,13 +265,13 @@ void runMex(int nrhs, const mxArray* prhs[], mxArray* plhs[], mwSize numDims, co
         }
     }
 
-    const std::vector<T> dirs = readNumericVector<T>(prhs[3]);
+    const std::vector<double> dirs = readNumericVector<double>(prhs[3]);
     for (std::ptrdiff_t d = 0; d < numDirs; ++d) {
-        const T dx = dirs[3 * d];
-        const T dy = dirs[3 * d + 1];
-        const T dz = dirs[3 * d + 2];
-        const T norm = std::sqrt(dx * dx + dy * dy + dz * dz);
-        if (!std::isfinite(norm) || std::fabs(norm - T(1)) > T(1e-3)) {
+        const double dx = dirs[3 * d];
+        const double dy = dirs[3 * d + 1];
+        const double dz = dirs[3 * d + 2];
+        const double norm = std::sqrt(dx * dx + dy * dy + dz * dz);
+        if (!std::isfinite(norm) || std::fabs(norm - 1.0) > 1e-3) {
             mexErrMsgIdAndTxt("matRad:collapsedConeMex:dirs",
                               "Each direction vector must be finite and unit-length.");
         }

@@ -46,6 +46,24 @@ doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [
 doseMex = matRad_collapsedConeMex(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], origin, 2);
 assertElementsAlmostEqual(doseMex, doseRef, 'absolute', relTol * max(doseRef(:)));
 
+function test_mexSinglePrecision
+if exist('matRad_collapsedConeMex', 'file') ~= 3
+    moxunit_throw_test_skipped_exception('matRad_collapsedConeMex not compiled');
+end
+[terma, rho, ~, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
+% include directions whose lattice shifts hit ties of the rounding; the
+% lattice is computed in double for both precisions
+tieDirs = [1 2 0; 2 0 1; 0 1 2; -1 0 2; 2 -1 0; 1 1 0; 0 -1 1; 3 0 2]';
+tieDirs = tieDirs ./ repmat(sqrt(sum(tieDirs.^2, 1)), 3, 1);
+dirs(:, 1:size(tieDirs, 2)) = tieDirs;
+voxelSize = [2 2 2];
+origin = [5 -3 7];
+doseRef = matRad_collapsedConeTransport(terma, rho, voxelSize, dirs, [wA; wB], [aA; aB], origin);
+doseMex = matRad_collapsedConeMex(single(terma), single(rho), voxelSize, dirs, [wA; wB], [aA; aB], origin, 2);
+assertTrue(isa(doseMex, 'single'));
+assertElementsAlmostEqual(double(doseMex), doseRef, 'absolute', 1e-5 * max(doseRef(:)));
+assertExceptionThrown(@() matRad_collapsedConeMex(single(terma), rho, voxelSize, dirs, [wA; wB], [aA; aB]));
+
 function test_batchedMatchesReference
 [terma, rho, voxelSize, dirs, wA, aA, wB, aB] = helper_heterogeneousInput();
 relTol = 1e-12;
